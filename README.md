@@ -7,3 +7,5 @@
 ## TypeDB IAM
 
 TypeDB IAM schema, data generator, simulation and benchmark.
+
+N.B: This project is currently **under development**.
