@@ -4,6 +4,6 @@
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typedb-796de3.svg)](https://stackoverflow.com/questions/tagged/typedb)
 [![Stack Overflow](https://img.shields.io/badge/stackoverflow-typeql-3dce8c.svg)](https://stackoverflow.com/questions/tagged/typeql)
 
-## TypeDB IAM: An Open Source IAM Schema and Simulation
+## TypeDB IAM: Open Source IAM Schema and Simulation
 
 TypeDB IAM schema, data generator, simulation and benchmark.
