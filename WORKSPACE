@@ -67,10 +67,6 @@ vaticle_dependencies_ci_pip()
 load("@vaticle_dependencies//tool/checkstyle:deps.bzl", checkstyle_deps = "deps")
 checkstyle_deps()
 
-# Load //tool/unuseddeps
-load("@vaticle_dependencies//tool/unuseddeps:deps.bzl", unuseddeps_deps = "deps")
-unuseddeps_deps()
-
 # Load //tool/sonarcloud
 load("@vaticle_dependencies//tool/sonarcloud:deps.bzl", "sonarcloud_dependencies")
 sonarcloud_dependencies()
@@ -93,7 +89,9 @@ rules_pkg_dependencies()
 ################################
 
 # Load repositories
-load("//dependencies/vaticle:repositories.bzl", "vaticle_factory_tracing", "vaticle_typedb_client_java")
+load("//dependencies/vaticle:repositories.bzl", "vaticle_typedb_simulation")
+vaticle_typedb_simulation()
+load("@vaticle_typedb_simulation//dependencies/vaticle:repositories.bzl", "vaticle_factory_tracing", "vaticle_typedb_client_java")
 vaticle_factory_tracing()
 vaticle_typedb_client_java()
 load("@vaticle_typedb_client_java//dependencies/vaticle:repositories.bzl", "vaticle_typedb_common", "vaticle_typeql", "vaticle_typedb_protocol")

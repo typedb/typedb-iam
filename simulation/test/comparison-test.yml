@@ -15,31 +15,27 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("@io_bazel_rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
-load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+agents:
+  - name: "PersonAgent"
+    isEnabled: true
+    trace: true
+  - name: "FriendshipAgent"
+    isEnabled: true
+    trace: true
+  - name: "MarriageAgent"
+    isEnabled: true
+    trace: true
+  - name: "ParenthoodAgent"
+    isEnabled: true
+    trace: true
 
-exports_files(["iam-schema.tql"])
+run:
+  randomSeed: 1
+  iterations: 5
+  databaseName: "simulation"
 
-define_kt_toolchain(
-    name = "kotlin_toolchain_strict_deps",
-    api_version = "1.7",
-    language_version = "1.7",
-    experimental_strict_kotlin_deps = "error",
-)
-
-checkstyle_test(
-    name = "checkstyle",
-    include = glob(["*", ".factory/*"]),
-    exclude = glob([
-        ".bazelversion",
-        "LICENSE",
-        "README.md",
-    ]),
-    license_type = "agpl-header",
-)
-
-checkstyle_test(
-    name = "checkstyle-license",
-    include = ["LICENSE"],
-    license_type = "agpl-fulltext",
-)
+model:
+  populationGrowth: 5
+  ageOfFriendship: 1
+  ageOfAdulthood: 2
+  yearsBeforeParenthood: 1

@@ -14,16 +14,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.vaticle.typedb.benchmark.simulation.agent
+package com.vaticle.typedb.iam.simulation.agent
 
-import com.vaticle.typedb.benchmark.common.concept.Country
-import com.vaticle.typedb.benchmark.common.concept.Person
-import com.vaticle.typedb.benchmark.common.params.Context
-import com.vaticle.typedb.benchmark.common.seed.RandomSource
-import com.vaticle.typedb.benchmark.simulation.driver.Client
-import com.vaticle.typedb.benchmark.simulation.driver.Session
-import com.vaticle.typedb.benchmark.simulation.driver.Transaction
-import com.vaticle.typedb.common.collection.Pair
+import com.vaticle.typedb.iam.simulation.common.concept.Country
+import com.vaticle.typedb.iam.simulation.common.concept.Person
+import com.vaticle.typedb.iam.simulation.common.Context
+import com.vaticle.typedb.iam.simulation.common.ModelParams
+import com.vaticle.typedb.simulation.Agent
+import com.vaticle.typedb.simulation.common.driver.Client
+import com.vaticle.typedb.simulation.common.driver.Session
+import com.vaticle.typedb.simulation.common.driver.Transaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
 import java.time.LocalDateTime
 import java.util.Comparator.comparing
 import java.util.stream.Collectors.toList
@@ -31,22 +32,22 @@ import java.util.stream.Stream
 import kotlin.math.ln
 
 abstract class FriendshipAgent<TX: Transaction> protected constructor(client: Client<Session<TX>>, context: Context) :
-    Agent<Country, TX>(client, context) {
+    Agent<Country, TX, ModelParams>(client, context) {
     override val agentClass = FriendshipAgent::class.java
-    override val regions = context.seedData.countries
+    override val partitions = context.seedData.countries
 
-    override fun run(session: Session<TX>, region: Country, random: RandomSource): List<Report> {
+    override fun run(session: Session<TX>, partition: Country, random: RandomSource): List<Report> {
         val reports = mutableListOf<Report>()
         session.writeTransaction().use { tx ->
             val birthDate = context.today().minusYears(context.model.ageOfFriendship.toLong())
-            val teenagers = matchTeenagers(tx, region, birthDate).sorted(comparing { it.email }).collect(toList())
-            random.randomPairs(teenagers, log2(context.scaleFactor).coerceAtMost(1)).forEach { friends ->
-                val inserted = insertFriends(tx, friends.first().email, friends.second().email)
+            val teenagers = matchTeenagers(tx, partition, birthDate).sorted(comparing { it.email }).collect(toList())
+            random.randomPairs(teenagers, log2(context.model.populationGrowth).coerceAtMost(1)).forEach { friends ->
+                val inserted = insertFriends(tx, friends.first.email, friends.second.email)
                 if (context.isReporting) {
                     requireNotNull(inserted)
                     reports.add(Report(
-                        input = listOf(friends.first().email, friends.second().email),
-                        output = listOf(inserted.first(), inserted.second())
+                        input = listOf(friends.first.email, friends.second.email),
+                        output = listOf(inserted.first, inserted.second)
                     ))
                 } else assert(inserted == null)
             }

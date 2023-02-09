@@ -15,31 +15,33 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("@io_bazel_rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-exports_files(["iam-schema.tql"])
+kt_jvm_library(
+    name = "agent",
+    srcs = glob(["*.kt", "*/*.kt"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//simulation/common",
 
-define_kt_toolchain(
-    name = "kotlin_toolchain_strict_deps",
-    api_version = "1.7",
-    language_version = "1.7",
-    experimental_strict_kotlin_deps = "error",
+        # External Vaticle Dependencies
+        "@vaticle_typedb_common//:common",
+        "@vaticle_typedb_simulation//:typedb_simulation",
+        "@vaticle_typedb_simulation//common",
+
+        # External Maven Dependencies
+        "@maven//:com_google_code_findbugs_jsr305",
+        "@maven//:info_picocli_picocli",
+        "@maven//:io_github_microutils_kotlin_logging_jvm",
+        "@maven//:org_slf4j_slf4j_api",
+        "@maven//:org_yaml_snakeyaml",
+    ],
+    data = ["//simulation/data"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", ".factory/*"]),
-    exclude = glob([
-        ".bazelversion",
-        "LICENSE",
-        "README.md",
-    ]),
+    include = glob(["*", "*/*"]),
     license_type = "agpl-header",
-)
-
-checkstyle_test(
-    name = "checkstyle-license",
-    include = ["LICENSE"],
-    license_type = "agpl-fulltext",
 )

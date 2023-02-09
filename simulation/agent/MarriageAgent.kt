@@ -14,43 +14,44 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.vaticle.typedb.benchmark.simulation.agent
+package com.vaticle.typedb.iam.simulation.agent
 
-import com.vaticle.typedb.benchmark.common.concept.Country
-import com.vaticle.typedb.benchmark.common.concept.Gender
-import com.vaticle.typedb.benchmark.common.concept.Gender.FEMALE
-import com.vaticle.typedb.benchmark.common.concept.Gender.MALE
-import com.vaticle.typedb.benchmark.common.concept.Marriage
-import com.vaticle.typedb.benchmark.common.concept.Person
-import com.vaticle.typedb.benchmark.common.params.Context
-import com.vaticle.typedb.benchmark.common.seed.RandomSource
-import com.vaticle.typedb.benchmark.simulation.driver.Client
-import com.vaticle.typedb.benchmark.simulation.driver.Session
-import com.vaticle.typedb.benchmark.simulation.driver.Transaction
-import com.vaticle.typedb.common.collection.Pair
+import com.vaticle.typedb.iam.simulation.common.concept.Country
+import com.vaticle.typedb.iam.simulation.common.concept.Gender
+import com.vaticle.typedb.iam.simulation.common.concept.Gender.FEMALE
+import com.vaticle.typedb.iam.simulation.common.concept.Gender.MALE
+import com.vaticle.typedb.iam.simulation.common.concept.Marriage
+import com.vaticle.typedb.iam.simulation.common.concept.Person
+import com.vaticle.typedb.iam.simulation.common.Context
+import com.vaticle.typedb.iam.simulation.common.ModelParams
+import com.vaticle.typedb.simulation.Agent
+import com.vaticle.typedb.simulation.common.driver.Client
+import com.vaticle.typedb.simulation.common.driver.Session
+import com.vaticle.typedb.simulation.common.driver.Transaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
 import java.time.LocalDateTime
 import java.util.Comparator.comparing
 import java.util.stream.Collectors.toList
 import java.util.stream.Stream
 
 abstract class MarriageAgent<TX: Transaction> protected constructor(client: Client<Session<TX>>, context: Context) :
-    Agent<Country, TX>(client, context) {
+    Agent<Country, TX, ModelParams>(client, context) {
     override val agentClass = MarriageAgent::class.java
-    override val regions = context.seedData.countries
+    override val partitions = context.seedData.countries
 
-    override fun run(session: Session<TX>, region: Country, random: RandomSource): List<Report> {
+    override fun run(session: Session<TX>, partition: Country, random: RandomSource): List<Report> {
         val reports = mutableListOf<Report>()
         session.writeTransaction().use { tx ->
             val partnerBirthDate = context.today().minusYears(context.model.ageOfAdulthood.toLong())
-            val women = matchPartner(tx, region, partnerBirthDate, FEMALE).sorted(comparing { it.email }).collect(toList())
-            val men = matchPartner(tx, region, partnerBirthDate, MALE).sorted(comparing { it.email }).collect(toList())
-            random.randomPairs(women, men).forEach { pair: Pair<Person, Person> ->
-                val licence = pair.first().email + pair.second().email
-                val inserted = insertMarriage(tx, pair.first().email, pair.second().email, licence, context.today())
+            val women = matchPartner(tx, partition, partnerBirthDate, FEMALE).sorted(comparing { it.email }).collect(toList())
+            val men = matchPartner(tx, partition, partnerBirthDate, MALE).sorted(comparing { it.email }).collect(toList())
+            random.randomPairs(women, men).forEach { (woman, man) ->
+                val licence = woman.email + man.email
+                val inserted = insertMarriage(tx, woman.email, man.email, licence, context.today())
                 if (context.isReporting) {
                     requireNotNull(inserted)
                     reports.add(Report(
-                        input = listOf(pair.first().email, pair.second().email, licence, context.today()),
+                        input = listOf(woman.email, man.email, licence, context.today()),
                         output = listOf(inserted)
                     ))
                 } else assert(inserted == null)

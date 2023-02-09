@@ -19,36 +19,32 @@ load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
 kt_jvm_library(
-    name = "runner",
-    srcs = glob(["*.kt"]),
-    resource_strip_prefix = "config/",
+    name = "typedb",
+    srcs = glob(["*.kt", "*/*.kt"]),
+    visibility = ["//visibility:public"],
     deps = [
+        "//simulation/agent",
         "//simulation/common",
-        "//simulation/typedb",
-        "//simulation/neo4j",
 
         # External Vaticle Dependencies
-        "@vaticle_factory_tracing//client",
+        "@vaticle_typedb_client_java//api",
+        "@vaticle_typedb_client_java//:client-java",
+        "@vaticle_typedb_common//:common",
         "@vaticle_typedb_simulation//:typedb_simulation",
-        "@vaticle_typedb_simulation//common",
+        "@vaticle_typedb_simulation//typedb",
+        "@vaticle_typeql//java:typeql-lang",
+        "@vaticle_typeql//java/pattern",
+        "@vaticle_typeql//java/query",
 
         # External Maven Dependencies
-        "@maven//:com_google_code_findbugs_jsr305",
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-)
-
-java_binary(
-    name = "run",
-    runtime_deps = [":runner"],
-    main_class = "com.vaticle.typedb.simulation.Runner",
-    classpath_resources = ["//simulation/config:logback.xml"],
-    visibility = ["//visibility:public"],
+    data = ["//:iam-schema.tql"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", "*/*"]),
+    include = glob(["*", "*/*", "*/*/*"]),
     license_type = "agpl-header",
 )

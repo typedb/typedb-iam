@@ -18,7 +18,7 @@
 build:
   correctness:
     build:
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       command: |
         export ARTIFACT_USERNAME=$REPO_VATICLE_USERNAME
         export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
@@ -27,19 +27,18 @@ build:
         bazel run @vaticle_dependencies//tool/checkstyle:test-coverage
         bazel test $(bazel query 'kind(checkstyle_test, //...)') --test_output=streamed
     build-dependency:
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       command: |
         dependencies/maven/update.sh
         git diff --exit-code dependencies/maven/artifacts.snapshot
-        bazel run @vaticle_dependencies//tool/unuseddeps:unused-deps -- list
     test-comparison-typedb-core-server:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       type: background
       timeout: "30m"
       command: |
         bazel run @vaticle_dependencies//tool/util:create-systemd-service -- typedb "\/home\/factory\/$FACTORY_REPO\/dist\/typedb-all-linux\/typedb server"
-        bazel run //test:typedb-extractor-linux -- dist/typedb-all-linux
+        bazel run //simulation/test:typedb-extractor-linux -- dist/typedb-all-linux
         cd ./dist/typedb-all-linux/
 
         sudo systemctl daemon-reload
@@ -50,7 +49,7 @@ build:
         tail -f -n +1 /home/factory/$FACTORY_REPO/dist/typedb-all-linux/server/logs/typedb.log
     test-comparison-neo4j-server:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       type: background
       timeout: "30m"
       command: |
@@ -72,7 +71,7 @@ build:
         journalctl -fu neo4j
     test-comparison:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       timeout: "30m"
       dependencies: [test-comparison-typedb-core-server, test-comparison-neo4j-server]
       command: |
@@ -90,18 +89,18 @@ build:
             attempt_counter=$(($attempt_counter+1))
             sleep 3
         done
-        bazel test //test:comparison \
+        bazel test //simulation/test:comparison \
           --test_output=streamed \
           --test_arg=--typedb=$FACTORY_EXPORT_TEST_COMPARISON_TYPEDB_URI \
           --test_arg=--neo4j=bolt://$FACTORY_EXPORT_TEST_COMPARISON_NEO4J_URI
   performance:
-    test-performance-typedb-core-server:
+    test-performance-typedb-server:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       type: background
       timeout: "30m"
       command: |
-        bazel run //test:typedb-extractor-linux -- dist/typedb-all-linux
+        bazel run //simulation/test:typedb-extractor-linux -- dist/typedb-all-linux
         bazel run @vaticle_dependencies//tool/util:create-systemd-service -- typedb "\/home\/factory\/$FACTORY_REPO\/dist\/typedb-all-linux\/typedb server"
 
         sudo systemctl daemon-reload
@@ -111,13 +110,13 @@ build:
       monitor: |
         sleep 10s
         tail -f -n +1 ./dist/typedb-all-linux/server/logs/typedb.log
-    test-performance-typedb-core-benchmark:
+    test-performance-typedb-simulation:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
-      dependencies: [test-performance-typedb-core-server]
+      image: vaticle-ubuntu-22.04
+      dependencies: [test-performance-typedb-server]
       timeout: "30m"
       command: |
-        bazel run //:benchmark -- \
+        bazel run //simulation:run -- \
           --database typedb \
           --address $FACTORY_EXPORT_PERFORMANCE_TYPEDB_CORE_URI \
           --config /home/factory/$FACTORY_REPO/config/simulation.yml \
@@ -129,7 +128,7 @@ build:
 #          --token $FACTORY_TOKEN
     test-performance-neo4j-server:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       type: background
       timeout: "30m"
       monitor: |
@@ -149,9 +148,9 @@ build:
         echo 'dbms.memory.heap.max_size=24G' | sudo tee -a /etc/neo4j/neo4j.conf
         sudo systemctl restart neo4j
         export FACTORY_EXPORT_PERFORMANCE_NEO4J_URI="${HOSTNAME}:7687"
-    test-performance-neo4j-benchmark:
+    test-performance-neo4j-simulation:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       dependencies: [ test-performance-neo4j-server ]
       timeout: "30m"
       command: |
@@ -168,7 +167,7 @@ build:
             attempt_counter=$(($attempt_counter+1))
             sleep 3
         done
-        bazel run //:benchmark -- \
+        bazel run //simulation:run -- \
           --database neo4j \
           --address bolt://$FACTORY_EXPORT_PERFORMANCE_NEO4J_URI \
           --config /home/factory/$FACTORY_REPO/config/simulation.yml \
@@ -180,7 +179,7 @@ build:
 #          --token $FACTORY_TOKEN
     test-performance-typedb-cluster-one-server:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       type: background
       timeout: "30m"
       command: |
@@ -198,13 +197,13 @@ build:
       monitor: |
         sleep 20s
         tail -f -n +1 ./dist/typedb-cluster-all-linux/server/logs/typedb.log
-    test-performance-typedb-cluster-one-benchmark:
+    test-performance-typedb-cluster-one-simulation:
       machine: 8-core-32-gb
-      image: vaticle-ubuntu-20.04
+      image: vaticle-ubuntu-22.04
       dependencies: [test-performance-typedb-cluster-one-server]
       timeout: "30m"
       command: |
-       bazel run //:benchmark -- \
+       bazel run //simulation:run -- \
          --database typedb-cluster \
          --address $FACTORY_EXPORT_PERFORMANCE_TYPEDB_CLUSTER_SERVER_URI \
          --config /home/factory/$FACTORY_REPO/config/simulation.yml \
@@ -215,7 +214,7 @@ build:
 #         --username $FACTORY_OWNER \
 #         --token $FACTORY_TOKEN
 #    test-performance-typedb-cluster-three-bootstrapper:
-#      image: vaticle-ubuntu-20.04
+#      image: vaticle-ubuntu-22.04
 #      type: background
 #      command: |
 #        bazel run @vaticle_dependencies//tool/util:install-ssh-credential
@@ -241,7 +240,7 @@ build:
 #        sleep 1800
 #    test-performance-typedb-cluster-three-server-1:
 #      machine: 8-core-32-gb
-#      image: vaticle-ubuntu-20.04
+#      image: vaticle-ubuntu-22.04
 #      type: background
 #      dependencies: [test-performance-typedb-cluster-three-bootstrapper]
 #      timeout: "30m"
@@ -279,7 +278,7 @@ build:
 #        tail -f -n +1 ./dist/typedb-cluster-all-linux/server/logs/typedb.log
 #    test-performance-typedb-cluster-three-server-2:
 #      machine: 8-core-32-gb
-#      image: vaticle-ubuntu-20.04
+#      image: vaticle-ubuntu-22.04
 #      type: background
 #      dependencies: [test-performance-typedb-cluster-three-bootstrapper]
 #      timeout: "30m"
@@ -317,7 +316,7 @@ build:
 #        tail -f -n +1 ./dist/typedb-cluster-all-linux/server/logs/typedb.log
 #    test-performance-typedb-cluster-three-server-3:
 #      machine: 8-core-32-gb
-#      image: vaticle-ubuntu-20.04
+#      image: vaticle-ubuntu-22.04
 #      type: background
 #      dependencies: [test-performance-typedb-cluster-three-bootstrapper]
 #      timeout: "30m"
@@ -355,7 +354,7 @@ build:
 #        tail -f -n +1 ./dist/typedb-cluster-all-linux/server/logs/typedb.log
 #    test-performance-typedb-cluster-three-benchmark:
 #      machine: 8-core-32-gb
-#      image: vaticle-ubuntu-20.04
+#      image: vaticle-ubuntu-22.04
 #      dependencies: [test-performance-typedb-cluster-three-server-1, test-performance-typedb-cluster-three-server-2, test-performance-typedb-cluster-three-server-3]
 #      timeout: "30m"
 #      command: |

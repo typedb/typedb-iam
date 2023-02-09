@@ -15,40 +15,41 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
+load("@vaticle_bazel_distribution//artifact:rules.bzl", "artifact_extractor")
 
-kt_jvm_library(
-    name = "runner",
-    srcs = glob(["*.kt"]),
-    resource_strip_prefix = "config/",
+artifact_extractor(
+    name = "typedb-extractor-linux",
+    artifact = "@vaticle_typedb_artifact_linux//file",
+)
+
+artifact_extractor(
+    name = "typedb-cluster-extractor-linux",
+    artifact = "@vaticle_typedb_cluster_artifact_linux//file",
+)
+
+kt_jvm_test(
+    name = "comparison",
+    srcs = ["ComparisonTest.kt"],
+    test_class = "com.vaticle.typedb.iam.simulation.test.ComparisonTest",
     deps = [
         "//simulation/common",
         "//simulation/typedb",
         "//simulation/neo4j",
 
-        # External Vaticle Dependencies
-        "@vaticle_factory_tracing//client",
-        "@vaticle_typedb_simulation//:typedb_simulation",
-        "@vaticle_typedb_simulation//common",
-
         # External Maven Dependencies
-        "@maven//:com_google_code_findbugs_jsr305",
-        "@maven//:io_github_microutils_kotlin_logging_jvm",
-        "@maven//:org_slf4j_slf4j_api",
+        "@maven//:info_picocli_picocli",
+        "@maven//:junit_junit",
     ],
-)
-
-java_binary(
-    name = "run",
-    runtime_deps = [":runner"],
-    main_class = "com.vaticle.typedb.simulation.Runner",
-    classpath_resources = ["//simulation/config:logback.xml"],
-    visibility = ["//visibility:public"],
+    size = "enormous",
+    resource_strip_prefix = "simulation/config/",
+    resources = ["//simulation/config:logback.xml"],
+    data = [":comparison-test.yml"],
 )
 
 checkstyle_test(
     name = "checkstyle",
-    include = glob(["*", "*/*"]),
+    include = glob(["*"]),
     license_type = "agpl-header",
 )
