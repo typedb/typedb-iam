@@ -37,41 +37,66 @@ import com.vaticle.typedb.iam.simulation.neo4j.Literals.PERSON
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.PERSON_LABEL
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.RESIDES_IN
 import com.vaticle.typedb.iam.simulation.agent.FriendshipAgent
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jClient
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.neo4j.Neo4jClient
 import org.neo4j.driver.Query
 import org.neo4j.driver.Record
+import org.neo4j.driver.Session
+import org.neo4j.driver.Transaction
 import java.time.LocalDateTime
+import java.util.Comparator
+import java.util.stream.Collectors.toList
 import java.util.stream.Stream
 
-class Neo4jFriendshipAgent(client: Neo4jClient, context: Context) : FriendshipAgent<Neo4jTransaction>(client, context) {
-    override fun matchTeenagers(tx: Neo4jTransaction, country: Country, birthDate: LocalDateTime): Stream<Person> {
+class Neo4jFriendshipAgent(client: Neo4jClient, context: Context) : FriendshipAgent<Session>(client, context) {
+
+    override fun run(session: Session, partition: Country, random: RandomSource): List<Report> {
+        val reports = mutableListOf<Report>()
+        session.writeTransaction { tx ->
+            val birthDate = context.today().minusYears(context.model.ageOfFriendship.toLong())
+            val teenagers = matchTeenagers(tx, partition, birthDate).sorted(Comparator.comparing { it.email }).collect(toList())
+            random.randomPairs(teenagers, log2(context.model.populationGrowth).coerceAtMost(1)).forEach { friends ->
+                val inserted = insertFriends(tx, friends.first.email, friends.second.email)
+                if (context.isReporting) {
+                    requireNotNull(inserted)
+                    reports.add(Report(
+                        input = listOf(friends.first.email, friends.second.email),
+                        output = listOf(inserted.first, inserted.second)
+                    ))
+                } else assert(inserted == null)
+            }
+            tx.commit()
+        }
+        return reports
+    }
+
+    private fun matchTeenagers(tx: Transaction, country: Country, birthDate: LocalDateTime): Stream<Person> {
         val query = "$MATCH ($PERSON:$PERSON_LABEL {$BIRTH_DATE: \$$BIRTH_DATE})" +
                 "-[:$RESIDES_IN]->($CITY:$CITY_LABEL)-[:$CONTAINED_IN]->($COUNTRY:$COUNTRY_LABEL {$CODE: \$$CODE}) \n" +
                 "$RETURN $PERSON.$EMAIL"
         val parameters = mapOf(CODE to country.code, BIRTH_DATE to birthDate)
-        return tx.execute(Query(query, parameters)).stream()
+        return tx.run(Query(query, parameters)).stream()
             .map { record: Record -> Person(email = record.asMap()["person.$EMAIL"] as String) }
     }
 
-    override fun insertFriends(tx: Neo4jTransaction, email1: String, email2: String): Pair<Person, Person>? {
+    private fun insertFriends(tx: Transaction, email1: String, email2: String): Pair<Person, Person>? {
         val query = "$MATCH " +
                 "($X:$PERSON_LABEL {$EMAIL: \$$EMAIL1}), \n" +
                 "($Y:$PERSON_LABEL {$EMAIL: \$$EMAIL2}) \n" +
                 "$CREATE ($X)-[:$FRIENDS_WITH]->($Y)"
         val parameters = mapOf(EMAIL1 to email1, EMAIL2 to email2)
-        tx.execute(Query(query, parameters))
+        tx.run(Query(query, parameters))
         return if (context.isReporting) report(tx, email1, email2) else null
     }
 
-    private fun report(tx: Neo4jTransaction, email1: String, email2: String): Pair<Person, Person> {
+    private fun report(tx: Transaction, email1: String, email2: String): Pair<Person, Person> {
         val query = "$MATCH " +
                 "($X:$PERSON_LABEL {$EMAIL: \$$EMAIL1}), \n" +
                 "($Y:$PERSON_LABEL {$EMAIL: \$$EMAIL2}), \n" +
                 "($X)-[:$FRIENDS_WITH]->($Y) \n" +
                 "$RETURN $X.$EMAIL, $Y.$EMAIL"
         val parameters = mapOf(EMAIL1 to email1, EMAIL2 to email2)
-        val answers = tx.execute(Query(query, parameters))
+        val answers = tx.run(Query(query, parameters)).list()
         assert(answers.size == 1)
         val inserted = answers[0].asMap()
         val person1 = Person(email = inserted["$X.$EMAIL"] as String)

@@ -20,25 +20,14 @@ import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.ModelParams
 import com.vaticle.typedb.simulation.Agent
-import com.vaticle.typedb.simulation.common.driver.Client
-import com.vaticle.typedb.simulation.common.driver.Session
-import com.vaticle.typedb.simulation.common.driver.Transaction
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import java.time.LocalDateTime
+import com.vaticle.typedb.simulation.common.DBClient
 
-abstract class CoupleFriendshipAgent<TX: Transaction> protected constructor(
-    client: Client<Session<TX>>, context: Context
-) : Agent<Country, TX, ModelParams>(client, context) {
+abstract class CoupleFriendshipAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context)
+    : Agent<Country, SESSION, ModelParams>(client, context) {
     override val agentClass = CoupleFriendshipAgent::class.java
     override val partitions = context.seedData.countries
 
-    override fun run(session: Session<TX>, partition: Country, random: RandomSource): List<Report> {
-        // This agent targets the expense of the `put` operation of reasoning. More specifically the cost of `get` to
-        // check whether a relation is pre-existing
-        if (context.isReporting) throw RuntimeException("Reports are not comparable for reasoning agents.")
-        session.reasoningTransaction().use { tx -> matchFriendships(tx, partition, context.today()) }
-        return emptyList()
+    init {
+        if (!context.isReporting) throw NotImplementedError("Reporting is not yet implemented in ${javaClass.simpleName}")
     }
-
-    protected abstract fun matchFriendships(tx: TX, country: Country, marriageBirthDate: LocalDateTime)
 }

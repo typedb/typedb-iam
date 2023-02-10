@@ -43,30 +43,61 @@ import com.vaticle.typedb.iam.simulation.neo4j.Literals.PERSON
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.PERSON_LABEL
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.RESIDES_IN
 import com.vaticle.typedb.iam.simulation.agent.ParenthoodAgent
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jClient
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.neo4j.Neo4jClient
 import org.neo4j.driver.Query
 import org.neo4j.driver.Record
+import org.neo4j.driver.Session
+import org.neo4j.driver.Transaction
 import java.time.LocalDateTime
+import java.util.Comparator
+import java.util.stream.Collectors
 import java.util.stream.Stream
 
-class Neo4jParenthoodAgent(client: Neo4jClient, context: Context) : ParenthoodAgent<Neo4jTransaction>(client, context) {
-    override fun matchNewborns(tx: Neo4jTransaction, country: Country, today: LocalDateTime): Stream<Person> {
+class Neo4jParenthoodAgent(client: Neo4jClient, context: Context) : ParenthoodAgent<Session>(client, context) {
+
+    override fun run(session: Session, partition: Country, random: RandomSource): List<Report> {
+        val reports: MutableList<Report> = ArrayList()
+        session.writeTransaction { tx ->
+            val marriageDate = context.today().minusYears(context.model.yearsBeforeParenthood.toLong())
+            val marriages = matchMarriages(tx, partition, marriageDate).sorted(Comparator.comparing { it.licence }).collect(
+                Collectors.toList()
+            )
+            val newBorns = matchNewborns(tx, partition, context.today()).sorted(Comparator.comparing { it.email }).collect(
+                Collectors.toList()
+            )
+            val parenthoods = random.randomAllocation(marriages, newBorns)
+            parenthoods.forEach { (marriage, person) ->
+                val wife = marriage.wife.email
+                val husband = marriage.husband.email
+                val child = person.email
+                val inserted = insertParenthood(tx, wife, husband, child)
+                if (context.isReporting) {
+                    requireNotNull(inserted)
+                    reports.add(Report(input = listOf(wife, husband, child), output = listOf(inserted)))
+                } else assert(inserted == null)
+            }
+            tx.commit()
+        }
+        return reports
+    }
+
+    private fun matchNewborns(tx: Transaction, country: Country, today: LocalDateTime): Stream<Person> {
         val query = "$MATCH ($PERSON:$PERSON_LABEL {$BIRTH_DATE: \$$BIRTH_DATE})" +
                 "-[:$BORN_IN]->(:$CITY_LABEL)-[:$CONTAINED_IN]->($COUNTRY:$COUNTRY_LABEL {$CODE: \$$CODE}) \n" +
                 "$RETURN $PERSON.$EMAIL"
         val parameters = mapOf(CODE to country.code, BIRTH_DATE to today)
-        return tx.execute(Query(query, parameters)).stream()
+        return tx.run(Query(query, parameters)).stream()
             .map { record: Record -> Person(email = record.asMap()["$PERSON.$EMAIL"] as String) }
     }
 
-    override fun matchMarriages(tx: Neo4jTransaction, country: Country, marriageDate: LocalDateTime): Stream<Marriage> {
+    private fun matchMarriages(tx: Transaction, country: Country, marriageDate: LocalDateTime): Stream<Marriage> {
         val query = "$MATCH ($W:$PERSON_LABEL)-[:$RESIDES_IN]->(:$CITY_LABEL)-[:$CONTAINED_IN]->($COUNTRY:$COUNTRY_LABEL {$CODE: \$$CODE}),\n" +
                 "($W)-[$M:$MARRIED_TO {$MARRIAGE_DATE: \$$MARRIAGE_DATE}]->($H:$PERSON_LABEL)" +
                 "$RETURN $W.$EMAIL, $H.$EMAIL, $M.$MARRIAGE_LICENCE, $M.$MARRIAGE_DATE"
         val parameters = mapOf(MARRIAGE_DATE to marriageDate, CODE to country.code)
-        tx.execute(Query(query, parameters))
-        return tx.execute(Query(query, parameters)).stream().map { record: Record ->
+        tx.run(Query(query, parameters))
+        return tx.run(Query(query, parameters)).stream().map { record: Record ->
             Marriage(
                 wife = Person(email = record.asMap()["$W.$EMAIL"] as String),
                 husband = Person(email = record.asMap()["$H.$EMAIL"] as String),
@@ -76,8 +107,8 @@ class Neo4jParenthoodAgent(client: Neo4jClient, context: Context) : ParenthoodAg
         }
     }
 
-    override fun insertParenthood(
-        tx: Neo4jTransaction, motherEmail: String, fatherEmail: String, childEmail: String
+    private fun insertParenthood(
+        tx: Transaction, motherEmail: String, fatherEmail: String, childEmail: String
     ): Parenthood? {
         val query = "$MATCH " +
                 "($M:$PERSON_LABEL {$EMAIL: \$$MOTHER_EMAIL}),\n" +
@@ -86,11 +117,11 @@ class Neo4jParenthoodAgent(client: Neo4jClient, context: Context) : ParenthoodAg
                 "$CREATE ($M)-[:$PARENT_OF]->($C),\n" +
                 "($F)-[:$PARENT_OF]->($C)"
         val parameters = mapOf(MOTHER_EMAIL to motherEmail, FATHER_EMAIL to fatherEmail, CHILD_EMAIL to childEmail)
-        tx.execute(Query(query, parameters))
+        tx.run(Query(query, parameters))
         return if (context.isReporting) report(tx, motherEmail, fatherEmail, childEmail) else null
     }
 
-    private fun report(tx: Neo4jTransaction, motherEmail: String, fatherEmail: String, childEmail: String): Parenthood {
+    private fun report(tx: Transaction, motherEmail: String, fatherEmail: String, childEmail: String): Parenthood {
         val query = "$MATCH " +
                 "($M:$PERSON_LABEL {$EMAIL: \$$MOTHER_EMAIL}),\n" +
                 "($F:$PERSON_LABEL {$EMAIL: \$$FATHER_EMAIL}),\n" +
@@ -99,7 +130,7 @@ class Neo4jParenthoodAgent(client: Neo4jClient, context: Context) : ParenthoodAg
                 "($F)-[:$PARENT_OF]->($C)\n" +
                 "$RETURN $M.$EMAIL, $F.$EMAIL, $C.$EMAIL"
         val parameters = mapOf(MOTHER_EMAIL to motherEmail, FATHER_EMAIL to fatherEmail, CHILD_EMAIL to childEmail)
-        val answers = tx.execute(Query(query, parameters))
+        val answers = tx.run(Query(query, parameters)).list()
         assert(answers.size == 1)
         val inserted = answers[0].asMap()
         val mother = Person(email = inserted["$M.$EMAIL"] as String)

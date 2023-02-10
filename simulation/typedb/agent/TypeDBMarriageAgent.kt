@@ -16,6 +16,8 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.concept.Gender
 import com.vaticle.typedb.iam.simulation.common.concept.Marriage
@@ -41,17 +43,46 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENTSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.WIFE
 import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.typedb.TypeDBSessionEx.writeTransaction
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.`var`
 import java.time.LocalDateTime
+import java.util.Comparator
 import java.util.stream.Collectors.toList
 import java.util.stream.Stream
 
-class TypeDBMarriageAgent(client: TypeDBClient, context: Context) : MarriageAgent<TypeDBTransaction>(client, context) {
-    override fun matchPartner(
+class TypeDBMarriageAgent(client: TypeDBClient, context: Context) : MarriageAgent<TypeDBSession>(client, context) {
+
+    override fun run(session: TypeDBSession, partition: Country, random: RandomSource): List<Report> {
+        val reports = mutableListOf<Report>()
+        session.writeTransaction().use { tx ->
+            val partnerBirthDate = context.today().minusYears(context.model.ageOfAdulthood.toLong())
+            val women = matchPartner(tx, partition, partnerBirthDate,
+                Gender.FEMALE
+            ).sorted(Comparator.comparing { it.email }).collect(toList())
+            val men = matchPartner(tx, partition, partnerBirthDate,
+                Gender.MALE
+            ).sorted(Comparator.comparing { it.email }).collect(toList())
+            random.randomPairs(women, men).forEach { (woman, man) ->
+                val licence = woman.email + man.email
+                val inserted = insertMarriage(tx, woman.email, man.email, licence, context.today())
+                if (context.isReporting) {
+                    requireNotNull(inserted)
+                    reports.add(Report(
+                        input = listOf(woman.email, man.email, licence, context.today()),
+                        output = listOf(inserted)
+                    ))
+                } else assert(inserted == null)
+            }
+            tx.commit()
+        }
+        return reports
+    }
+
+    private fun matchPartner(
         tx: TypeDBTransaction, country: Country, birthDate: LocalDateTime, gender: Gender
     ): Stream<Person> {
         return tx.query().match(match(
@@ -63,7 +94,7 @@ class TypeDBMarriageAgent(client: TypeDBClient, context: Context) : MarriageAgen
         )).map { conceptMap: ConceptMap -> Person(email = conceptMap[EMAIL].asAttribute().asString().value) }
     }
 
-    override fun insertMarriage(
+    private fun insertMarriage(
         tx: TypeDBTransaction, wifeEmail: String,
         husbandEmail: String, marriageLicence: String, marriageDate: LocalDateTime
     ): Marriage? {

@@ -20,25 +20,14 @@ import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.ModelParams
 import com.vaticle.typedb.simulation.Agent
-import com.vaticle.typedb.simulation.common.driver.Client
-import com.vaticle.typedb.simulation.common.driver.Session
-import com.vaticle.typedb.simulation.common.driver.Transaction
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import java.time.LocalDateTime
+import com.vaticle.typedb.simulation.common.DBClient
 
-abstract class MaritalStatusAgent<TX: Transaction> protected constructor(client: Client<Session<TX>>, context: Context) :
-    Agent<Country, TX, ModelParams>(client, context) {
+abstract class MaritalStatusAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
+    Agent<Country, SESSION, ModelParams>(client, context) {
     override val agentClass = MaritalStatusAgent::class.java
     override val partitions = context.seedData.countries
 
-    override fun run(session: Session<TX>, partition: Country, random: RandomSource): List<Report> {
-        if (context.isReporting) throw RuntimeException("Reports are not comparable for reasoning agents.")
-        session.reasoningTransaction().use { tx ->
-            // Pick people who are exactly old enough to be married since this determines their status
-            matchMaritalStatus(tx, partition, context.today().minusYears(context.model.ageOfAdulthood.toLong()))
-        }
-        return emptyList()
+    init {
+        if (!context.isReporting) throw NotImplementedError("Reporting is not yet implemented in ${javaClass.simpleName}")
     }
-
-    protected abstract fun matchMaritalStatus(tx: TX, country: Country, marriageBirthDate: LocalDateTime)
 }

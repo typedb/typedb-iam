@@ -16,6 +16,8 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.agent.LineageAgent
@@ -33,16 +35,23 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.DESCENDENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.LINEAGE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PERSON
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PLACE
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.typedb.TypeDBSessionEx.readTransaction
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.`var`
 import java.time.LocalDateTime
 import java.util.stream.Collectors.toList
 
-class TypeDBLineageAgent(client: TypeDBClient, context: Context) : LineageAgent<TypeDBTransaction>(client, context) {
-    override fun matchLineages(tx: TypeDBTransaction, country: Country, startDay: LocalDateTime, today: LocalDateTime) {
+class TypeDBLineageAgent(client: TypeDBClient, context: Context) : LineageAgent<TypeDBSession>(client, context) {
+
+    override fun run(session: TypeDBSession, partition: Country, random: RandomSource): List<Report> {
+        session.readTransaction(infer = true).use { tx -> matchLineages(tx, partition, context.startDay(), context.today()) }
+        return emptyList()
+    }
+
+    private fun matchLineages(tx: TypeDBTransaction, country: Country, startDay: LocalDateTime, today: LocalDateTime) {
         tx.query().match(match(
             rel(CONTAINER, COUNTRY).rel(CONTAINED, CITY).isa(CONTAINS),
             `var`(COUNTRY).isa(COUNTRY).has(CODE, country.code),

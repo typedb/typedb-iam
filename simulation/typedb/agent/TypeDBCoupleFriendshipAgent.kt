@@ -16,6 +16,8 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.agent.CoupleFriendshipAgent
@@ -32,8 +34,9 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PERSON
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENCE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENTSHIP
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.typedb.TypeDBSessionEx.readTransaction
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.`var`
@@ -41,8 +44,16 @@ import java.time.LocalDateTime
 import java.util.stream.Collectors.toList
 
 class TypeDBCoupleFriendshipAgent(client: TypeDBClient, context: Context) :
-    CoupleFriendshipAgent<TypeDBTransaction>(client, context) {
-    override fun matchFriendships(tx: TypeDBTransaction, country: Country, marriageBirthDate: LocalDateTime) {
+    CoupleFriendshipAgent<TypeDBSession>(client, context) {
+
+    override fun run(session: TypeDBSession, partition: Country, random: RandomSource): List<Report> {
+        // This agent targets the expense of the `put` operation of reasoning. More specifically the cost of `get` to
+        // check whether a relation is pre-existing
+        session.readTransaction(infer = true).use { tx -> matchFriendships(tx, partition, context.today()) }
+        return emptyList()
+    }
+
+    private fun matchFriendships(tx: TypeDBTransaction, country: Country, marriageBirthDate: LocalDateTime) {
         tx.query().match(match(
             `var`(COUNTRY).isa(COUNTRY).has(CODE, country.code),
             `var`(X).isa(PERSON).has(BIRTH_DATE, marriageBirthDate),

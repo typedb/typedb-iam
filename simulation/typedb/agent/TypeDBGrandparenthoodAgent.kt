@@ -16,6 +16,8 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.agent.GrandparenthoodAgent
@@ -33,8 +35,9 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PERSON
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENCE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENTSHIP
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.typedb.TypeDBSessionEx.readTransaction
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.`var`
@@ -42,8 +45,14 @@ import java.time.LocalDateTime
 import java.util.stream.Collectors.toList
 
 class TypeDBGrandparenthoodAgent(client: TypeDBClient, context: Context) :
-    GrandparenthoodAgent<TypeDBTransaction>(client, context) {
-    override fun matchGrandparents(tx: TypeDBTransaction, country: Country, birthDate: LocalDateTime) {
+    GrandparenthoodAgent<TypeDBSession>(client, context) {
+
+    override fun run(session: TypeDBSession, partition: Country, random: RandomSource): List<Report> {
+        session.readTransaction(infer = true).use { tx -> matchGrandparents(tx, partition, context.today()) }
+        return emptyList()
+    }
+
+    private fun matchGrandparents(tx: TypeDBTransaction, country: Country, birthDate: LocalDateTime) {
         tx.query().match(
             match(
                 `var`(PERSON).isa(PERSON).has(BIRTH_DATE, birthDate),
