@@ -136,11 +136,11 @@ class TypeDBSimulation private constructor(
         private const val Y = "y"
 
         fun core(address: String, context: Context): TypeDBSimulation {
-            return TypeDBSimulation(TypeDBClient.core(address, context.dbName), context).apply { initialise() }
+            return TypeDBSimulation(TypeDBClient.core(address, context.dbName), context).apply { init() }
         }
 
         fun cluster(address: String, context: Context): TypeDBSimulation {
-            return TypeDBSimulation(TypeDBClient.cluster(address, context.dbName), context).apply { initialise() }
+            return TypeDBSimulation(TypeDBClient.cluster(address, context.dbName), context).apply { init() }
         }
     }
 }
