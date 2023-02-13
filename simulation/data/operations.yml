@@ -1,0 +1,120 @@
+- value: "create file"
+  objectTypes:
+    - "directory"
+- value: "view file"
+  objectTypes:
+    - "file"
+    - "directory"
+- value: "move file"
+  objectTypes:
+    - "directory"
+- value: "edit file"
+  objectTypes:
+    - "file"
+    - "directory"
+- value: "delete file"
+  objectTypes:
+    - "file"
+    - "directory"
+- value: "create subdirectory"
+  objectTypes:
+    - "directory"
+- value: "move subdirectory"
+  objectTypes:
+    - "directory"
+- value: "delete subdirectory"
+  objectTypes:
+    - "directory"
+- value: "create interface"
+  objectTypes:
+    - "application"
+- value: "view interface"
+  objectTypes:
+    - "interface"
+    - "application"
+- value: "modify interface"
+  objectTypes:
+    - "interface"
+    - "application"
+- value: "delete interface"
+  objectTypes:
+    - "interface"
+    - "application"
+- value: "start application"
+  objectTypes:
+    - "application"
+- value: "modify application"
+  objectTypes:
+    - "application"
+- value: "stop application"
+  objectTypes:
+    - "application"
+- value: "insert record"
+  objectTypes:
+    - "table"
+    - "database"
+- value: "select record"
+  objectTypes:
+    - "record"
+    - "table"
+    - "database"
+- value: "update record"
+  objectTypes:
+    - "record"
+    - "table"
+    - "database"
+- value: "delete record"
+  objectTypes:
+    - "record"
+    - "table"
+    - "database"
+- value: "create table"
+  objectTypes:
+    - "database"
+- value: "alter table"
+  objectTypes:
+    - "table"
+    - "database"
+- value: "drop table"
+  objectTypes:
+    - "table"
+    - "database"
+- value: "drop database"
+  objectTypes:
+    - "database"
+- value: "grant permission"
+  objectTypes:
+    - "file"
+    - "directory"
+    - "interface"
+    - "application"
+    - "record"
+    - "table"
+    - "database"
+- value: "revoke permission"
+  objectTypes:
+    - "file"
+    - "directory"
+    - "interface"
+    - "application"
+    - "record"
+    - "table"
+    - "database"
+- value: "grant ownership"
+  objectTypes:
+    - "file"
+    - "directory"
+    - "interface"
+    - "application"
+    - "record"
+    - "table"
+    - "database"
+- value: "revoke ownership"
+  objectTypes:
+    - "file"
+    - "directory"
+    - "interface"
+    - "application"
+    - "record"
+    - "table"
+    - "database"

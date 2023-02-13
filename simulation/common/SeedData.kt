@@ -16,6 +16,7 @@
  */
 package com.vaticle.typedb.iam.simulation.common
 
+import com.vaticle.typedb.common.yaml.YAML
 import com.vaticle.typedb.iam.simulation.common.concept.City
 import com.vaticle.typedb.iam.simulation.common.concept.Continent
 import com.vaticle.typedb.iam.simulation.common.concept.Country
@@ -44,23 +45,22 @@ class SeedData(val global: Global) {
         return countries.flatMap { it.universities }
     }
 
-    class Words {
-        val adjectives = mutableListOf<String>()
-        val nouns = mutableListOf<String>()
-    }
-
     companion object {
         private val LOGGER = KotlinLogging.logger {}
-        private val ADJECTIVES_FILE = Paths.get("simulation/data/adjectives.csv").toFile()
-        private val CITIES_FILE = Paths.get("simulation/data/cities.csv").toFile()
-        private val CONTINENTS_FILE = Paths.get("simulation/data/continents.csv").toFile()
-        private val COUNTRIES_FILE = Paths.get("simulation/data/countries.csv").toFile()
-        private val CURRENCIES_FILE = Paths.get("simulation/data/currencies.csv").toFile()
-        private val FIRST_NAMES_FEMALE_FILE = Paths.get("simulation/data/first-names-female.csv").toFile()
-        private val FIRST_NAMES_MALE_FILE = Paths.get("simulation/data/first-names-male.csv").toFile()
-        private val LAST_NAMES_FILE = Paths.get("simulation/data/last-names.csv").toFile()
-        private val NOUNS_FILE = Paths.get("simulation/data/nouns.csv").toFile()
-        private val UNIVERSITIES_FILE = Paths.get("simulation/data/universities.csv").toFile()
+        private val ADJECTIVES_FILE = Paths.get("simulation/data/adjectives.yml")
+        private val APPLICATION_NAMES_FILE = Paths.get("simulation/data/application-names.yml")
+        private val APPLICATION_ROLES_FILE = Paths.get("simulation/data/application-roles.yml")
+        private val BUSINESS_UNIT_NAMES_FILE = Paths.get("simulation/data/business-unit-names.yml")
+        private val COMPANY_NAMES_FILE = Paths.get("simulation/data/company-names.yml")
+        private val FEMALE_NAMES_FILE = Paths.get("simulation/data/female-names.yml")
+        private val FILE_EXTENSIONS_FILE = Paths.get("simulation/data/file-extensions.yml")
+        private val LAST_NAMES_FILE = Paths.get("simulation/data/last-names.yml")
+        private val MALE_NAMES_FILE = Paths.get("simulation/data/male-names.yml")
+        private val NOUNS_FILE = Paths.get("simulation/data/nouns.yml")
+        private val OBJECT_TYPES_FILE = Paths.get("simulation/data/object-types.yml")
+        private val OPERATION_SETS_FILE = Paths.get("simulation/data/operation-sets.yml")
+        private val OPERATIONS_FILE = Paths.get("simulation/data/operations.yml")
+        private val OWNERSHIP_TYPES_FILE = Paths.get("simulation/data/ownership-types.yml")
 
         fun initialise(): SeedData {
             val global = Global()
@@ -74,11 +74,18 @@ class SeedData(val global: Global) {
             initialiseLastNames(continents)
             initialiseFemaleFirstNames(continents)
             initialiseMaleFirstNames(continents)
-            val words = Words()
             initialiseAdjectives(words)
             initialiseNouns(words)
             prune(global)
             return SeedData(global)
+        }
+
+        private fun initialiseAdjectives() {
+            val adjectives = YAML.load(ADJECTIVES_FILE)
+        }
+
+        private fun initialiseApplicationNames() {
+            words.adjectives += parse(ADJECTIVES_FILE).map { it.readSingle() }
         }
 
         private fun initialiseContinents(global: Global, continents: MutableMap<String, Continent>) {
@@ -144,43 +151,8 @@ class SeedData(val global: Global) {
             }
         }
 
-        private fun initialiseAdjectives(words: Words) {
-            words.adjectives += parse(ADJECTIVES_FILE).map { it.readSingle() }
-        }
-
         private fun initialiseNouns(words: Words) {
             words.nouns += parse(NOUNS_FILE).map { it.readSingle() }
-        }
-
-        private fun prune(global: Global) {
-            val continents = global.continents.listIterator()
-            while (continents.hasNext()) {
-                val continent = continents.next()
-                if (continent.countries.isEmpty()) {
-                    continents.remove()
-                    LOGGER.warn("The continent '{}' is excluded as it has no countries in the seed dataset", continent)
-                } else if (continent.commonLastNames.isEmpty() ||
-                    continent.commonFemaleFirstNames.isEmpty() ||
-                    continent.commonMaleFirstNames.isEmpty()
-                ) {
-                    continents.remove()
-                    LOGGER.warn(
-                        "The continent '{}' is excluded as it has no first/last names in the seed dataset",
-                        continent
-                    )
-                } else prune(continent)
-            }
-        }
-
-        private fun prune(continent: Continent) {
-            val countries = continent.countries.listIterator()
-            while (countries.hasNext()) {
-                val country = countries.next()
-                if (country.cities.isEmpty()) {
-                    countries.remove()
-                    LOGGER.warn("The country {} is excluded as has no cities in the seed dataset", country)
-                }
-            }
         }
     }
 }

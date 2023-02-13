@@ -1,0 +1,6 @@
+- value: "administrator"
+- value: "moderator"
+- value: "editor"
+- value: "member"
+- value: "contributor"
+- value: "viewer"

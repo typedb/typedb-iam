@@ -1,0 +1,84 @@
+- value: "write file"
+  objectTypes:
+    - "file"
+    - "directory"
+  setMembers:
+    - "create file"
+    - "view file"
+    - "edit file"
+    - "delete file"
+- value: "manage subdirectories"
+  objectTypes:
+    - "directory"
+  setMembers:
+    - "create subdirectory"
+    - "move subdirectory"
+    - "delete subdirectory"
+    - "move file"
+- value: "manage interface"
+  objectTypes:
+    - "interface"
+    - "application"
+  setMembers:
+    - "create interface"
+    - "view interface"
+    - "modify interface"
+    - "delete interface"
+- value: "manage application"
+  objectTypes:
+    - "application"
+  setMembers:
+    - "start application"
+    - "modify application"
+    - "stop application"
+    - "manage interface"
+- value: "write record"
+  objectTypes:
+    - "record"
+    - "table"
+    - "database"
+  setMembers:
+    - "insert record"
+    - "select record"
+    - "update record"
+    - "delete record"
+- value: "manage table"
+  objectTypes:
+    - "table"
+    - "database"
+  setMembers:
+    - "create table"
+    - "alter table"
+    - "drop table"
+    - "write record"
+- value: "manage database"
+  objectTypes:
+    - "database"
+  setMembers:
+    - "manage table"
+    - "drop database"
+- value: "manage permissions"
+  objectTypes:
+    - "file"
+    - "directory"
+    - "interface"
+    - "application"
+    - "record"
+    - "table"
+    - "database"
+  setMembers:
+    - "grant permission"
+    - "revoke permission"
+- value: "manage ownership"
+  objectTypes:
+    - "file"
+    - "directory"
+    - "interface"
+    - "application"
+    - "record"
+    - "table"
+    - "database"
+  setMembers:
+    - "grant ownership"
+    - "revoke ownership"
+    - "manage permissions"
