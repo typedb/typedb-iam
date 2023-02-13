@@ -1,0 +1,200 @@
+- value: "Apple"
+  rank: 1
+- value: "Microsoft"
+  rank: 2
+- value: "Saudi Aramco"
+  rank: 3
+- value: "Alphabet"
+  rank: 4
+- value: "Amazon"
+  rank: 5
+- value: "Berkshire Hathaway"
+  rank: 6
+- value: "Tesla"
+  rank: 7
+- value: "NVIDIA"
+  rank: 8
+- value: "TSMC"
+  rank: 9
+- value: "Visa"
+  rank: 10
+- value: "Meta Platforms"
+  rank: 11
+- value: "Tencent"
+  rank: 12
+- value: "Exxon Mobil"
+  rank: 13
+- value: "UnitedHealth"
+  rank: 14
+- value: "LVMH"
+  rank: 15
+- value: "Johnson & Johnson"
+  rank: 16
+- value: "JPMorgan Chase"
+  rank: 17
+- value: "Walmart"
+  rank: 18
+- value: "Mastercard"
+  rank: 19
+- value: "Samsung"
+  rank: 20
+- value: "Kweichow Moutai"
+  rank: 21
+- value: "Chevron"
+  rank: 22
+- value: "Nestlé"
+  rank: 23
+- value: "Home Depot"
+  rank: 24
+- value: "Procter & Gamble"
+  rank: 25
+- value: "Eli Lilly"
+  rank: 26
+- value: "Novo Nordisk"
+  rank: 27
+- value: "Bank of America"
+  rank: 28
+- value: "Alibaba"
+  rank: 29
+- value: "Merck"
+  rank: 30
+- value: "ASML"
+  rank: 31
+- value: "Coca-Cola"
+  rank: 32
+- value: "AbbVie"
+  rank: 33
+- value: "Roche"
+  rank: 34
+- value: "Broadcom"
+  rank: 35
+- value: "Pfizer"
+  rank: 36
+- value: "International Holding Company"
+  rank: 37
+- value: "Pepsico"
+  rank: 38
+- value: "Oracle"
+  rank: 39
+- value: "Thermo Fisher Scientific"
+  rank: 40
+- value: "Costco"
+  rank: 41
+- value: "L'Oréal"
+  rank: 42
+- value: "ICBC"
+  rank: 43
+- value: "Shell"
+  rank: 44
+- value: "Walt Disney"
+  rank: 45
+- value: "AstraZeneca"
+  rank: 46
+- value: "Hermès"
+  rank: 47
+- value: "Toyota"
+  rank: 48
+- value: "Reliance Industries"
+  rank: 49
+- value: "Cisco"
+  rank: 50
+- value: "McDonald"
+  rank: 51
+- value: "Abbott Laboratories"
+  rank: 52
+- value: "Danaher"
+  rank: 53
+- value: "Nike"
+  rank: 54
+- value: "Wells Fargo"
+  rank: 55
+- value: "Novartis"
+  rank: 56
+- value: "Accenture"
+  rank: 57
+- value: "T-Mobile US"
+  rank: 58
+- value: "Adobe"
+  rank: 59
+- value: "Verizon"
+  rank: 60
+- value: "Salesforce"
+  rank: 61
+- value: "BHP Group"
+  rank: 62
+- value: "Morgan Stanley"
+  rank: 63
+- value: "CATL"
+  rank: 64
+- value: "Prosus"
+  rank: 65
+- value: "Linde"
+  rank: 66
+- value: "China Construction Bank"
+  rank: 67
+- value: "Comcast"
+  rank: 68
+- value: "Netflix"
+  rank: 69
+- value: "United Parcel Service"
+  rank: 70
+- value: "Texas Instruments"
+  rank: 71
+- value: "Tata Consultancy Services"
+  rank: 72
+- value: "China Mobile"
+  rank: 73
+- value: "Dior"
+  rank: 74
+- value: "Philip Morris"
+  rank: 75
+- value: "Bristol-Myers Squibb"
+  rank: 76
+- value: "Agricultural Bank of China"
+  rank: 77
+- value: "Charles Schwab"
+  rank: 78
+- value: "TotalEnergies"
+  rank: 79
+- value: "Nextera Energy"
+  rank: 80
+- value: "QUALCOMM"
+  rank: 81
+- value: "HSBC"
+  rank: 82
+- value: "CM Bank"
+  rank: 83
+- value: "Raytheon Technologies"
+  rank: 84
+- value: "Royal Bank Of Canada"
+  rank: 85
+- value: "SAP"
+  rank: 86
+- value: "AT&T"
+  rank: 87
+- value: "AMD"
+  rank: 88
+- value: "PetroChina"
+  rank: 89
+- value: "Ping An Insurance"
+  rank: 90
+- value: "Honeywell"
+  rank: 91
+- value: "ConocoPhillips"
+  rank: 92
+- value: "Bank of China"
+  rank: 93
+- value: "American Express"
+  rank: 94
+- value: "AIA"
+  rank: 95
+- value: "Siemens"
+  rank: 96
+- value: "Commonwealth Bank"
+  rank: 97
+- value: "Caterpillar"
+  rank: 98
+- value: "Lowe's Companies"
+  rank: 99
+- value: "Amgen"
+  rank: 100
