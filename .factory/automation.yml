@@ -187,7 +187,7 @@ build:
         export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
         bazel run @vaticle_dependencies//distribution/artifact:create-netrc
 
-        bazel run //test:typedb-cluster-extractor-linux -- dist/typedb-cluster-all-linux
+        bazel run //simulation/test:typedb-cluster-extractor-linux -- dist/typedb-cluster-all-linux
         bazel run @vaticle_dependencies//tool/util:create-systemd-service -- typedb-cluster "\/home\/factory\/$FACTORY_REPO\/dist\/typedb-cluster-all-linux\/typedb cluster --server.address=${HOSTNAME}:1729"
 
         sudo systemctl daemon-reload
