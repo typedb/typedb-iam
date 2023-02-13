@@ -16,7 +16,7 @@
  */
 package com.vaticle.typedb.iam.simulation.neo4j
 
-import com.vaticle.typedb.iam.simulation.agent.AgentFactory
+import com.vaticle.typedb.iam.simulation.agent.PersonAgent
 import com.vaticle.typedb.iam.simulation.common.Util.printDuration
 import com.vaticle.typedb.iam.simulation.common.concept.City
 import com.vaticle.typedb.iam.simulation.common.concept.Continent
@@ -68,7 +68,7 @@ import java.time.Instant
 class Neo4jSimulation private constructor(client: Neo4jClient, context: Context)
     : com.vaticle.typedb.simulation.neo4j.Neo4jSimulation<Context>(client, context, Neo4jAgentFactory(client, context)) {
 
-    override val agentPackage: String = AgentFactory::class.java.packageName
+    override val agentPackage: String = PersonAgent::class.java.packageName
 
     override val name = "IAM"
 
