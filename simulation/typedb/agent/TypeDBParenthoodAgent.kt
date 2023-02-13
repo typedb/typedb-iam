@@ -16,6 +16,8 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.concept.Marriage
 import com.vaticle.typedb.iam.simulation.common.concept.Parenthood
@@ -45,17 +47,42 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENTSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.WIFE
 import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.typedb.TypeDBSessionEx.writeTransaction
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.`var`
 import java.time.LocalDateTime
+import java.util.Comparator
 import java.util.stream.Collectors.toList
 import java.util.stream.Stream
 
-class TypeDBParenthoodAgent(client: TypeDBClient, context: Context) : ParenthoodAgent<TypeDBTransaction>(client, context) {
-    override fun matchNewborns(tx: TypeDBTransaction, country: Country, today: LocalDateTime): Stream<Person> {
+class TypeDBParenthoodAgent(client: TypeDBClient, context: Context) : ParenthoodAgent<TypeDBSession>(client, context) {
+
+    override fun run(session: TypeDBSession, partition: Country, random: RandomSource): List<Report> {
+        val reports: MutableList<Report> = ArrayList()
+        session.writeTransaction().use { tx ->
+            val marriageDate = context.today().minusYears(context.model.yearsBeforeParenthood.toLong())
+            val marriages = matchMarriages(tx, partition, marriageDate).sorted(Comparator.comparing { it.licence }).collect(toList())
+            val newBorns = matchNewborns(tx, partition, context.today()).sorted(Comparator.comparing { it.email }).collect(toList())
+            val parenthoods = random.randomAllocation(marriages, newBorns)
+            parenthoods.forEach { (marriage, person) ->
+                val wife = marriage.wife.email
+                val husband = marriage.husband.email
+                val child = person.email
+                val inserted = insertParenthood(tx, wife, husband, child)
+                if (context.isReporting) {
+                    requireNotNull(inserted)
+                    reports.add(Report(input = listOf(wife, husband, child), output = listOf(inserted)))
+                } else assert(inserted == null)
+            }
+            tx.commit()
+        }
+        return reports
+    }
+
+    private fun matchNewborns(tx: TypeDBTransaction, country: Country, today: LocalDateTime): Stream<Person> {
         return tx.query().match(match(
             `var`(COUNTRY).isa(COUNTRY).has(CODE, country.code),
             rel(CONTAINER, COUNTRY).rel(CONTAINED, CITY).isa(CONTAINS),
@@ -65,7 +92,7 @@ class TypeDBParenthoodAgent(client: TypeDBClient, context: Context) : Parenthood
         )).map { conceptMap: ConceptMap -> Person(email = conceptMap[EMAIL].asAttribute().asString().value) }
     }
 
-    override fun matchMarriages(tx: TypeDBTransaction, country: Country, marriageDate: LocalDateTime): Stream<Marriage> {
+    private fun matchMarriages(tx: TypeDBTransaction, country: Country, marriageDate: LocalDateTime): Stream<Marriage> {
         return tx.query().match(match(
             `var`(COUNTRY).isa(COUNTRY).has(CODE, country.code),
             rel(CONTAINER, COUNTRY).rel(CONTAINED, CITY).isa(CONTAINS),
@@ -86,7 +113,7 @@ class TypeDBParenthoodAgent(client: TypeDBClient, context: Context) : Parenthood
         }
     }
 
-    override fun insertParenthood(
+    private fun insertParenthood(
         tx: TypeDBTransaction, motherEmail: String, fatherEmail: String, childEmail: String
     ): Parenthood? {
         tx.query().insert(

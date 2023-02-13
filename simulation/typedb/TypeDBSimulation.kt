@@ -39,7 +39,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.LOCATION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.UNIVERSITY
 import com.vaticle.typedb.iam.simulation.typedb.agent.TypeDBAgentFactory
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.insert
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel

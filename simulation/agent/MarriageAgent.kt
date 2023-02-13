@@ -17,53 +17,13 @@
 package com.vaticle.typedb.iam.simulation.agent
 
 import com.vaticle.typedb.iam.simulation.common.concept.Country
-import com.vaticle.typedb.iam.simulation.common.concept.Gender
-import com.vaticle.typedb.iam.simulation.common.concept.Gender.FEMALE
-import com.vaticle.typedb.iam.simulation.common.concept.Gender.MALE
-import com.vaticle.typedb.iam.simulation.common.concept.Marriage
-import com.vaticle.typedb.iam.simulation.common.concept.Person
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.ModelParams
 import com.vaticle.typedb.simulation.Agent
-import com.vaticle.typedb.simulation.common.driver.Client
-import com.vaticle.typedb.simulation.common.driver.Session
-import com.vaticle.typedb.simulation.common.driver.Transaction
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import java.time.LocalDateTime
-import java.util.Comparator.comparing
-import java.util.stream.Collectors.toList
-import java.util.stream.Stream
+import com.vaticle.typedb.simulation.common.DBClient
 
-abstract class MarriageAgent<TX: Transaction> protected constructor(client: Client<Session<TX>>, context: Context) :
-    Agent<Country, TX, ModelParams>(client, context) {
+abstract class MarriageAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
+    Agent<Country, SESSION, ModelParams>(client, context) {
     override val agentClass = MarriageAgent::class.java
     override val partitions = context.seedData.countries
-
-    override fun run(session: Session<TX>, partition: Country, random: RandomSource): List<Report> {
-        val reports = mutableListOf<Report>()
-        session.writeTransaction().use { tx ->
-            val partnerBirthDate = context.today().minusYears(context.model.ageOfAdulthood.toLong())
-            val women = matchPartner(tx, partition, partnerBirthDate, FEMALE).sorted(comparing { it.email }).collect(toList())
-            val men = matchPartner(tx, partition, partnerBirthDate, MALE).sorted(comparing { it.email }).collect(toList())
-            random.randomPairs(women, men).forEach { (woman, man) ->
-                val licence = woman.email + man.email
-                val inserted = insertMarriage(tx, woman.email, man.email, licence, context.today())
-                if (context.isReporting) {
-                    requireNotNull(inserted)
-                    reports.add(Report(
-                        input = listOf(woman.email, man.email, licence, context.today()),
-                        output = listOf(inserted)
-                    ))
-                } else assert(inserted == null)
-            }
-            tx.commit()
-        }
-        return reports
-    }
-
-    protected abstract fun matchPartner(tx: TX, country: Country, birthDate: LocalDateTime, gender: Gender): Stream<Person>
-
-    protected abstract fun insertMarriage(
-        tx: TX, wifeEmail: String, husbandEmail: String, marriageLicence: String, marriageDate: LocalDateTime
-    ): Marriage?
 }

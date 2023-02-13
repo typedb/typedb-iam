@@ -37,14 +37,43 @@ import com.vaticle.typedb.iam.simulation.neo4j.Literals.PERSON
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.PERSON_LABEL
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.RESIDES_IN
 import com.vaticle.typedb.iam.simulation.agent.PersonAgent
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jClient
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jTransaction
+import com.vaticle.typedb.iam.simulation.common.Util.address
+import com.vaticle.typedb.iam.simulation.common.concept.Country
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.neo4j.Neo4jClient
 import org.neo4j.driver.Query
+import org.neo4j.driver.Session
+import org.neo4j.driver.Transaction
 import java.time.LocalDateTime
 
-class Neo4jPersonAgent(client: Neo4jClient, context: Context) : PersonAgent<Neo4jTransaction>(client, context) {
-    override fun insertPerson(
-        tx: Neo4jTransaction, email: String, firstName: String, lastName: String,
+class Neo4jPersonAgent(client: Neo4jClient, context: Context) : PersonAgent<Session>(client, context) {
+
+    override fun run(session: Session, partition: Country, random: RandomSource): List<Report> {
+        val reports = mutableListOf<Report>()
+        session.writeTransaction { tx ->
+            for (i in 0 until context.model.populationGrowth) {
+                val gender = if (random.nextBoolean()) Gender.MALE else Gender.FEMALE
+                val firstName = random.choose(partition.continent.commonFirstNames(gender))
+                val lastName = random.choose(partition.continent.commonLastNames)
+                val city = random.choose(partition.cities)
+                val email = "$firstName.$lastName.${city.code}.${random.nextInt()}@email.com"
+                val address = random.address(city)
+                val inserted = insertPerson(tx, email, firstName, lastName, address, gender, context.today(), city)
+                if (context.isReporting) {
+                    requireNotNull(inserted)
+                    reports.add(Report(
+                        input = listOf(email, firstName, lastName, address, gender, context.today(), city),
+                        output = listOf(inserted.first, inserted.second)
+                    ))
+                } else assert(inserted == null)
+            }
+            tx.commit()
+        }
+        return reports
+    }
+
+    private fun insertPerson(
+        tx: Transaction, email: String, firstName: String, lastName: String,
         address: String, gender: Gender, birthDate: LocalDateTime, city: City
     ): Pair<Person, City.Report>? {
         val query = "$MATCH ($C:$CITY_LABEL {$CODE: \$$CODE}) " +
@@ -66,19 +95,19 @@ class Neo4jPersonAgent(client: Neo4jClient, context: Context) : PersonAgent<Neo4
             GENDER to gender.value,
             BIRTH_DATE to birthDate
         )
-        tx.execute(Query(query, parameters))
+        tx.run(Query(query, parameters))
         return if (context.isReporting) report(tx, email) else null
     }
 
-    private fun report(tx: Neo4jTransaction, email: String): Pair<Person, City.Report> {
-        val answers = tx.execute(
+    private fun report(tx: Transaction, email: String): Pair<Person, City.Report> {
+        val answers = tx.run(
             Query(
                 "$MATCH ($PERSON:$PERSON_LABEL {$EMAIL: '$email'})-[:$BORN_IN]->($CITY:$CITY_LABEL), " +
                         "($PERSON)-[:$RESIDES_IN]->($CITY) " +
                         "$RETURN $PERSON.$EMAIL, $PERSON.$FIRST_NAME, $PERSON.$LAST_NAME, $PERSON.$ADDRESS, " +
                         "$PERSON.$GENDER, $PERSON.$BIRTH_DATE, $CITY.$CODE"
             )
-        )
+        ).list()
         assert(answers.size == 1)
         val inserted = answers[0].asMap()
         val person = Person(

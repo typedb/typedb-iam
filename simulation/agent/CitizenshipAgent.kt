@@ -19,26 +19,15 @@ package com.vaticle.typedb.iam.simulation.agent
 import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.ModelParams
-import com.vaticle.typedb.simulation.common.driver.Client
-import com.vaticle.typedb.simulation.common.driver.Session
-import com.vaticle.typedb.simulation.common.driver.Transaction
+import com.vaticle.typedb.simulation.common.DBClient
 import com.vaticle.typedb.simulation.Agent
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import java.time.LocalDateTime
 
-abstract class CitizenshipAgent<TX: Transaction> protected constructor(client: Client<Session<TX>>, context: Context) :
-    Agent<Country, TX, ModelParams>(client, context) {
+abstract class CitizenshipAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
+    Agent<Country, SESSION, ModelParams>(client, context) {
     override val agentClass = CitizenshipAgent::class.java
     override val partitions = context.seedData.countries
 
-    override fun run(session: Session<TX>, partition: Country, random: RandomSource): List<Report> {
-        if (context.isReporting) throw RuntimeException("Reports are not comparable for reasoning agents.")
-        session.reasoningTransaction().use { tx ->
-            // Pick people who can be married since this is one interesting way they can become citizens
-            matchCitizenship(tx, partition, context.today().minusYears(context.model.ageOfAdulthood.toLong()))
-        }
-        return emptyList()
+    init {
+        if (!context.isReporting) throw NotImplementedError("Reporting is not yet implemented in ${javaClass.simpleName}")
     }
-
-    protected abstract fun matchCitizenship(tx: TX, country: Country, today: LocalDateTime)
 }

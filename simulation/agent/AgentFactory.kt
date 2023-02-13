@@ -18,9 +18,9 @@ package com.vaticle.typedb.iam.simulation.agent
 
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.simulation.Agent
-import com.vaticle.typedb.simulation.common.driver.Client
+import com.vaticle.typedb.simulation.common.DBClient
 
-abstract class AgentFactory<CLIENT: Client<*>>(client: CLIENT, context: Context) : Agent.Factory() {
+abstract class AgentFactory<CLIENT: DBClient<*>>(client: CLIENT, context: Context) : Agent.Factory() {
 
     override val map: Map<Class<out Agent<*, *, *>>, () -> Agent<*, *, *>> = mapOf(
         PersonAgent::class.java to { createPersonAgent(client, context) },

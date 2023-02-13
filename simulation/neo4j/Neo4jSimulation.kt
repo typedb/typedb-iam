@@ -57,7 +57,7 @@ import com.vaticle.typedb.iam.simulation.neo4j.Literals.PURCHASE_LABEL
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.REGION_LABEL
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.UNIVERSITY_LABEL
 import com.vaticle.typedb.iam.simulation.neo4j.agent.Neo4jAgentFactory
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jClient
+import com.vaticle.typedb.simulation.neo4j.Neo4jClient
 import mu.KotlinLogging
 import org.neo4j.driver.Driver
 import org.neo4j.driver.Query

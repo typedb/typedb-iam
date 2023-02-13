@@ -16,6 +16,8 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.agent.MaritalStatusAgent
@@ -30,8 +32,9 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PERSON
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENCE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENTSHIP
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.typedb.TypeDBSessionEx.readTransaction
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.`var`
@@ -39,8 +42,17 @@ import java.time.LocalDateTime
 import java.util.stream.Collectors.toList
 
 class TypeDBMaritalStatusAgent(client: TypeDBClient, context: Context) :
-    MaritalStatusAgent<TypeDBTransaction>(client, context) {
-    override fun matchMaritalStatus(tx: TypeDBTransaction, country: Country, marriageBirthDate: LocalDateTime) {
+    MaritalStatusAgent<TypeDBSession>(client, context) {
+
+    override fun run(session: TypeDBSession, partition: Country, random: RandomSource): List<Report> {
+        session.readTransaction(infer = true).use { tx ->
+            // Pick people who are exactly old enough to be married since this determines their status
+            matchMaritalStatus(tx, partition, context.today().minusYears(context.model.ageOfAdulthood.toLong()))
+        }
+        return emptyList()
+    }
+
+    private fun matchMaritalStatus(tx: TypeDBTransaction, country: Country, marriageBirthDate: LocalDateTime) {
         tx.query().match(match(
             `var`(PERSON).isa(PERSON).has(BIRTH_DATE, marriageBirthDate),
             `var`(COUNTRY).isa(COUNTRY).has(CODE, country.code),

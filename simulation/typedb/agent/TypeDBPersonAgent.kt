@@ -16,11 +16,15 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.iam.simulation.common.concept.City
 import com.vaticle.typedb.iam.simulation.common.concept.Gender
 import com.vaticle.typedb.iam.simulation.common.concept.Person
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.agent.PersonAgent
+import com.vaticle.typedb.iam.simulation.common.Util.address
+import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ADDRESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.BIRTH_DATE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.BIRTH_PLACE
@@ -36,16 +40,42 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PLACE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENCE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENTSHIP
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.typedb.TypeDBSessionEx.writeTransaction
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.`var`
 import java.time.LocalDateTime
 import java.util.stream.Collectors.toList
 
-class TypeDBPersonAgent(client: TypeDBClient, context: Context) : PersonAgent<TypeDBTransaction>(client, context) {
-    override fun insertPerson(
+class TypeDBPersonAgent(client: TypeDBClient, context: Context) : PersonAgent<TypeDBSession>(client, context) {
+
+    override fun run(session: TypeDBSession, partition: Country, random: RandomSource): List<Report> {
+        val reports = mutableListOf<Report>()
+        session.writeTransaction().use { tx ->
+            for (i in 0 until context.model.populationGrowth) {
+                val gender = if (random.nextBoolean()) Gender.MALE else Gender.FEMALE
+                val firstName = random.choose(partition.continent.commonFirstNames(gender))
+                val lastName = random.choose(partition.continent.commonLastNames)
+                val city = random.choose(partition.cities)
+                val email = "$firstName.$lastName.${city.code}.${random.nextInt()}@email.com"
+                val address = random.address(city)
+                val inserted = insertPerson(tx, email, firstName, lastName, address, gender, context.today(), city)
+                if (context.isReporting) {
+                    requireNotNull(inserted)
+                    reports.add(Report(
+                        input = listOf(email, firstName, lastName, address, gender, context.today(), city),
+                        output = listOf(inserted.first, inserted.second)
+                    ))
+                } else assert(inserted == null)
+            }
+            tx.commit()
+        }
+        return reports
+    }
+
+    private fun insertPerson(
         tx: TypeDBTransaction, email: String, firstName: String, lastName: String,
         address: String, gender: Gender, birthDate: LocalDateTime, city: City
     ): Pair<Person, City.Report>? {

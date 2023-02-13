@@ -16,6 +16,8 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
+import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.concept.Person
 import com.vaticle.typedb.iam.simulation.common.Context
@@ -35,18 +37,41 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENCE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.RESIDENTSHIP
 import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBClient
-import com.vaticle.typedb.simulation.typedb.driver.TypeDBTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.typedb.TypeDBSessionEx.writeTransaction
+import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.eq
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
 import com.vaticle.typeql.lang.TypeQL.`var`
 import java.time.LocalDateTime
+import java.util.Comparator
 import java.util.stream.Collectors.toList
 import java.util.stream.Stream
 
-class TypeDBFriendshipAgent(client: TypeDBClient, context: Context) : FriendshipAgent<TypeDBTransaction>(client, context) {
-    override fun matchTeenagers(tx: TypeDBTransaction, country: Country, birthDate: LocalDateTime): Stream<Person> {
+class TypeDBFriendshipAgent(client: TypeDBClient, context: Context) : FriendshipAgent<TypeDBSession>(client, context) {
+
+    override fun run(session: TypeDBSession, partition: Country, random: RandomSource): List<Report> {
+        val reports = mutableListOf<Report>()
+        session.writeTransaction().use { tx ->
+            val birthDate = context.today().minusYears(context.model.ageOfFriendship.toLong())
+            val teenagers = matchTeenagers(tx, partition, birthDate).sorted(Comparator.comparing { it.email }).collect(toList())
+            random.randomPairs(teenagers, log2(context.model.populationGrowth).coerceAtMost(1)).forEach { friends ->
+                val inserted = insertFriends(tx, friends.first.email, friends.second.email)
+                if (context.isReporting) {
+                    requireNotNull(inserted)
+                    reports.add(Report(
+                        input = listOf(friends.first.email, friends.second.email),
+                        output = listOf(inserted.first, inserted.second)
+                    ))
+                } else assert(inserted == null)
+            }
+            tx.commit()
+        }
+        return reports
+    }
+
+    private fun matchTeenagers(tx: TypeDBTransaction, country: Country, birthDate: LocalDateTime): Stream<Person> {
         return tx.query().match(
             match(
                 `var`(PERSON).isa(PERSON).has(BIRTH_DATE, eq(birthDate)).has(EMAIL, `var`(EMAIL)),
@@ -57,7 +82,7 @@ class TypeDBFriendshipAgent(client: TypeDBClient, context: Context) : Friendship
         ).map { conceptMap: ConceptMap -> Person(email = conceptMap[EMAIL].asAttribute().asString().value) }
     }
 
-    override fun insertFriends(tx: TypeDBTransaction, email1: String, email2: String): Pair<Person, Person>? {
+    private fun insertFriends(tx: TypeDBTransaction, email1: String, email2: String): Pair<Person, Person>? {
         tx.query().insert(
             match(
                 `var`(X).isa(PERSON).has(EMAIL, email1),

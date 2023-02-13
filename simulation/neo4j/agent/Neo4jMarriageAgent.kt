@@ -42,27 +42,59 @@ import com.vaticle.typedb.iam.simulation.neo4j.Literals.PERSON_LABEL
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.RESIDES_IN
 import com.vaticle.typedb.iam.simulation.neo4j.Literals.WIFE_EMAIL
 import com.vaticle.typedb.iam.simulation.agent.MarriageAgent
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jClient
-import com.vaticle.typedb.simulation.neo4j.driver.Neo4jTransaction
+import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.simulation.neo4j.Neo4jClient
 import org.neo4j.driver.Query
 import org.neo4j.driver.Record
+import org.neo4j.driver.Session
+import org.neo4j.driver.Transaction
 import java.time.LocalDateTime
+import java.util.Comparator
+import java.util.stream.Collectors
 import java.util.stream.Stream
 
-class Neo4jMarriageAgent(client: Neo4jClient, context: Context) : MarriageAgent<Neo4jTransaction>(client, context) {
-    override fun matchPartner(
-        tx: Neo4jTransaction, country: Country, birthDate: LocalDateTime, gender: Gender
+class Neo4jMarriageAgent(client: Neo4jClient, context: Context) : MarriageAgent<Session>(client, context) {
+
+
+    override fun run(session: Session, partition: Country, random: RandomSource): List<Report> {
+        val reports = mutableListOf<Report>()
+        session.writeTransaction { tx ->
+            val partnerBirthDate = context.today().minusYears(context.model.ageOfAdulthood.toLong())
+            val women = matchPartner(tx, partition, partnerBirthDate,
+                Gender.FEMALE
+            ).sorted(Comparator.comparing { it.email }).collect(Collectors.toList())
+            val men = matchPartner(tx, partition, partnerBirthDate,
+                Gender.MALE
+            ).sorted(Comparator.comparing { it.email }).collect(Collectors.toList())
+            random.randomPairs(women, men).forEach { (woman, man) ->
+                val licence = woman.email + man.email
+                val inserted = insertMarriage(tx, woman.email, man.email, licence, context.today())
+                if (context.isReporting) {
+                    requireNotNull(inserted)
+                    reports.add(Report(
+                        input = listOf(woman.email, man.email, licence, context.today()),
+                        output = listOf(inserted)
+                    ))
+                } else assert(inserted == null)
+            }
+            tx.commit()
+        }
+        return reports
+    }
+
+    private fun matchPartner(
+        tx: Transaction, country: Country, birthDate: LocalDateTime, gender: Gender
     ): Stream<Person> {
         val query = "$MATCH ($PERSON:$PERSON_LABEL {$BIRTH_DATE: \$$BIRTH_DATE, $GENDER: \$$GENDER})" +
                 "-[:$RESIDES_IN]->($CITY:$CITY_LABEL)-[:$CONTAINED_IN]->($COUNTRY:$COUNTRY_LABEL {$CODE: \$$CODE}) \n" +
                 "$RETURN $PERSON.$EMAIL"
         val parameters = mapOf(CODE to country.code, BIRTH_DATE to birthDate, GENDER to gender.value)
-        return tx.execute(Query(query, parameters)).stream()
+        return tx.run(Query(query, parameters)).stream()
             .map { record: Record -> Person(email = record.asMap()["$PERSON.$EMAIL"] as String) }
     }
 
-    override fun insertMarriage(
-        tx: Neo4jTransaction, wifeEmail: String, husbandEmail: String,
+    private fun insertMarriage(
+        tx: Transaction, wifeEmail: String, husbandEmail: String,
         marriageLicence: String, marriageDate: LocalDateTime
     ): Marriage? {
         val query = "$MATCH " +
@@ -73,12 +105,12 @@ class Neo4jMarriageAgent(client: Neo4jClient, context: Context) : MarriageAgent<
             WIFE_EMAIL to wifeEmail, HUSBAND_EMAIL to husbandEmail,
             MARRIAGE_LICENCE to marriageLicence, MARRIAGE_DATE to marriageDate
         )
-        tx.execute(Query(query, parameters))
+        tx.run(Query(query, parameters))
         return if (context.isReporting) report(tx, wifeEmail, husbandEmail, marriageLicence, marriageDate) else null
     }
 
     private fun report(
-        tx: Neo4jTransaction, wifeEmail: String, husbandEmail: String,
+        tx: Transaction, wifeEmail: String, husbandEmail: String,
         marriageLicence: String, marriageDate: LocalDateTime
     ): Marriage {
         val query = "$MATCH " +
@@ -90,7 +122,7 @@ class Neo4jMarriageAgent(client: Neo4jClient, context: Context) : MarriageAgent<
             WIFE_EMAIL to wifeEmail, HUSBAND_EMAIL to husbandEmail,
             MARRIAGE_LICENCE to marriageLicence, MARRIAGE_DATE to marriageDate
         )
-        val answers = tx.execute(Query(query, parameters))
+        val answers = tx.run(Query(query, parameters)).list()
         assert(answers.size == 1)
         val inserted = answers[0].asMap()
         val person1 = Person(email = inserted["$X.$EMAIL"] as String)
