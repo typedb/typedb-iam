@@ -165,7 +165,7 @@ class Neo4jSimulation private constructor(client: Neo4jClient, context: Context)
         private val LOGGER = KotlinLogging.logger {}
 
         fun create(hostUri: String, context: Context): Neo4jSimulation {
-            return Neo4jSimulation(Neo4jClient(hostUri), context)
+            return Neo4jSimulation(Neo4jClient(hostUri), context).apply { initialise() }
         }
     }
 }
