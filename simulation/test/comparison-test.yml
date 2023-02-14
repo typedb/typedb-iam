@@ -16,16 +16,7 @@
 #
 
 agents:
-  - name: "PersonAgent"
-    isEnabled: true
-    trace: true
-  - name: "FriendshipAgent"
-    isEnabled: true
-    trace: true
-  - name: "MarriageAgent"
-    isEnabled: true
-    trace: true
-  - name: "ParenthoodAgent"
+  - name: "AddUserAgent"
     isEnabled: true
     trace: true
 
