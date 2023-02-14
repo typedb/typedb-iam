@@ -17,6 +17,8 @@
 package com.vaticle.typedb.iam.simulation.typedb
 
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
+import com.vaticle.typedb.iam.simulation.agent.AgentFactory
+import com.vaticle.typedb.iam.simulation.agent.PersonAgent
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.Util.printDuration
 import com.vaticle.typedb.iam.simulation.common.concept.City
@@ -52,6 +54,8 @@ import java.time.Instant
 class TypeDBSimulation private constructor(
     client: TypeDBClient, context: Context
 ) : com.vaticle.typedb.simulation.typedb.TypeDBSimulation<Context>(client, context, TypeDBAgentFactory(client, context)) {
+
+    override val agentPackage: String = PersonAgent::class.java.packageName
 
     override val name = "IAM"
 
@@ -132,11 +136,11 @@ class TypeDBSimulation private constructor(
         private const val Y = "y"
 
         fun core(address: String, context: Context): TypeDBSimulation {
-            return TypeDBSimulation(TypeDBClient.core(address, context.dbName), context)
+            return TypeDBSimulation(TypeDBClient.core(address, context.dbName), context).apply { init() }
         }
 
         fun cluster(address: String, context: Context): TypeDBSimulation {
-            return TypeDBSimulation(TypeDBClient.cluster(address, context.dbName), context)
+            return TypeDBSimulation(TypeDBClient.cluster(address, context.dbName), context).apply { init() }
         }
     }
 }

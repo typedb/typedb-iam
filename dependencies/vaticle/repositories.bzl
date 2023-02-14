@@ -28,5 +28,5 @@ def vaticle_typedb_simulation():
     git_repository(
         name = "vaticle_typedb_simulation",
         remote = "https://github.com/alexjpwalker/typedb-simulation",
-        commit = "2049e4d3604cdca4a4f734fcd5fa71dbd8cf6854",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_simulation
+        commit = "1ae024b6072ff7bf6135c19bc5b3c9b8b5350fcd",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_simulation
     )

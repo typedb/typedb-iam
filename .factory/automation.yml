@@ -119,7 +119,7 @@ build:
         bazel run //simulation:run -- \
           --database typedb \
           --address $FACTORY_EXPORT_PERFORMANCE_TYPEDB_CORE_URI \
-          --config /home/factory/$FACTORY_REPO/config/simulation.yml \
+          --config /home/factory/$FACTORY_REPO/simulation/config/simulation.yml \
 #          --factory $FACTORY_TRACING_URI \
 #          --org $FACTORY_OWNER \
 #          --repo $FACTORY_REPO \
@@ -170,7 +170,7 @@ build:
         bazel run //simulation:run -- \
           --database neo4j \
           --address bolt://$FACTORY_EXPORT_PERFORMANCE_NEO4J_URI \
-          --config /home/factory/$FACTORY_REPO/config/simulation.yml \
+          --config /home/factory/$FACTORY_REPO/simulation/config/simulation.yml \
 #          --factory $FACTORY_TRACING_URI \
 #          --org $FACTORY_OWNER \
 #          --repo $FACTORY_REPO \
@@ -187,7 +187,7 @@ build:
         export ARTIFACT_PASSWORD=$REPO_VATICLE_PASSWORD
         bazel run @vaticle_dependencies//distribution/artifact:create-netrc
 
-        bazel run //test:typedb-cluster-extractor-linux -- dist/typedb-cluster-all-linux
+        bazel run //simulation/test:typedb-cluster-extractor-linux -- dist/typedb-cluster-all-linux
         bazel run @vaticle_dependencies//tool/util:create-systemd-service -- typedb-cluster "\/home\/factory\/$FACTORY_REPO\/dist\/typedb-cluster-all-linux\/typedb cluster --server.address=${HOSTNAME}:1729"
 
         sudo systemctl daemon-reload
@@ -206,7 +206,7 @@ build:
        bazel run //simulation:run -- \
          --database typedb-cluster \
          --address $FACTORY_EXPORT_PERFORMANCE_TYPEDB_CLUSTER_SERVER_URI \
-         --config /home/factory/$FACTORY_REPO/config/simulation.yml \
+         --config /home/factory/$FACTORY_REPO/simulation/config/simulation.yml \
 #         --factory $FACTORY_TRACING_URI \
 #         --org $FACTORY_OWNER \
 #         --repo $FACTORY_REPO \
