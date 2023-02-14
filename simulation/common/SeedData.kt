@@ -17,33 +17,26 @@
 package com.vaticle.typedb.iam.simulation.common
 
 import com.vaticle.typedb.common.yaml.YAML
-import com.vaticle.typedb.iam.simulation.common.concept.City
-import com.vaticle.typedb.iam.simulation.common.concept.Continent
-import com.vaticle.typedb.iam.simulation.common.concept.Country
-import com.vaticle.typedb.iam.simulation.common.concept.Currency
-import com.vaticle.typedb.iam.simulation.common.concept.Global
-import com.vaticle.typedb.iam.simulation.common.concept.University
-import com.vaticle.typedb.simulation.common.Util.parse
-import com.vaticle.typedb.simulation.common.Util.readPair
-import com.vaticle.typedb.simulation.common.Util.readSingle
-import com.vaticle.typedb.simulation.common.Util.readTriple
+import com.vaticle.typedb.iam.simulation.common.concept.Company
 import mu.KotlinLogging
 import java.nio.file.Paths
 
-class SeedData(val global: Global) {
-    val continents get() = global.continents
-
-    val countries get(): List<Country> {
-        return continents.flatMap { it.countries }
-    }
-
-    val cities get(): List<City> {
-        return countries.flatMap { it.cities }
-    }
-
-    val universities get(): List<University> {
-        return countries.flatMap { it.universities }
-    }
+class SeedData() {
+    val adjectives = loadAdjectives()
+    val applicationNames = loadApplicationNames()
+    val applicationRoles = loadApplicationRoles()
+    val businessUnitNames = loadBusinessUnitNames()
+    val companyNames = loadCompanyNames()
+    val femaleNames = loadFemaleNames()
+    val fileExtensions = loadFileExtensions()
+    val lastNames = loadLastNames()
+    val maleNames = loadMaleNames()
+    val nouns = loadNouns()
+    val objectTypes = loadObjectTypes()
+    val operationSets = loadOperationSets()
+    val operations = loadOperations()
+    val ownershipTypes = loadOwnershipTypes()
+    val companies = initialiseCompanies(companyNames)
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -62,97 +55,121 @@ class SeedData(val global: Global) {
         private val OPERATIONS_FILE = Paths.get("simulation/data/operations.yml")
         private val OWNERSHIP_TYPES_FILE = Paths.get("simulation/data/ownership-types.yml")
 
-        fun initialise(): SeedData {
-            val global = Global()
-            val continents = mutableMapOf<String, Continent>()
-            val countries = mutableMapOf<String, Country>()
-            initialiseContinents(global, continents)
-            initialiseCountries(continents, countries)
-            initialiseCurrencies(countries)
-            initialiseCities(countries)
-            initialiseUniversities(countries)
-            initialiseLastNames(continents)
-            initialiseFemaleFirstNames(continents)
-            initialiseMaleFirstNames(continents)
-            initialiseAdjectives(words)
-            initialiseNouns(words)
-            prune(global)
-            return SeedData(global)
+        private fun loadAdjectives(): List<String> {
+            val yaml = YAML.load(ADJECTIVES_FILE)
+            return yaml.asList().content().map { it.asMap().content()["value"]!!.asString().value() }
         }
 
-        private fun initialiseAdjectives() {
-            val adjectives = YAML.load(ADJECTIVES_FILE)
+        private fun loadApplicationNames(): List<String> {
+            val yaml = YAML.load(APPLICATION_NAMES_FILE)
+            return yaml.asList().content().map { it.asMap().content()["value"]!!.asString().value() }
         }
 
-        private fun initialiseApplicationNames() {
-            words.adjectives += parse(ADJECTIVES_FILE).map { it.readSingle() }
+        private fun loadApplicationRoles(): List<String> {
+            val yaml = YAML.load(APPLICATION_ROLES_FILE)
+            return yaml.asList().content().map { it.asMap().content()["value"]!!.asString().value() }
         }
 
-        private fun initialiseContinents(global: Global, continents: MutableMap<String, Continent>) {
-            parse(CONTINENTS_FILE).map { it.readPair() }.forEach { (code, name) ->
-                val continent = Continent(code, name)
-                global.continents += continent
-                continents[code] = continent
-            }
+        private fun loadBusinessUnitNames(): List<String> {
+            val yaml = YAML.load(BUSINESS_UNIT_NAMES_FILE)
+            return yaml.asList().content().map { it.asMap().content()["value"]!!.asString().value() }
         }
 
-        private fun initialiseCountries(continents: Map<String, Continent>, countries: MutableMap<String, Country>) {
-            parse(COUNTRIES_FILE).map { it.readTriple() }.forEach { (code, name, continentCode) ->
-                val continent = requireNotNull(continents[continentCode])
-                val country = Country(code, name, continent)
-                continent.countries += country
-                countries[code] = country
-            }
+        private fun loadCompanyNames(): List<Map<String, Any>> {
+            val yaml = YAML.load(COMPANY_NAMES_FILE)
+
+            val companyNames = yaml.asList().content().map { mapOf<String, Any>(
+                "value" to it.asMap().content()["value"]!!.asString().value(),
+                "rank" to it.asMap().content()["rank"]!!.asInt().value()
+            ) }
+
+            return companyNames
         }
 
-        private fun initialiseCurrencies(countries: Map<String, Country>) {
-            val currencies = mutableMapOf<String, Currency>()
-            parse(CURRENCIES_FILE).map { it.readTriple() }.forEach { (code, name, countryCode) ->
-                val country = requireNotNull(countries[countryCode])
-                val currency = currencies.computeIfAbsent(code) { Currency(it, name) }
-                country.currencies += currency
-            }
+        private fun loadFemaleNames(): List<Map<String, Any>> {
+            val yaml = YAML.load(FEMALE_NAMES_FILE)
+
+            val femaleNames = yaml.asList().content().map { mapOf<String, Any>(
+                "value" to it.asMap().content()["value"]!!.asString().value(),
+                "rank" to it.asMap().content()["rank"]!!.asInt().value(),
+                "percentage" to it.asMap().content()["percentage"]!!.asFloat().value(),
+                "percentile" to it.asMap().content()["percentile"]!!.asFloat().value()
+            ) }
+
+            return femaleNames
         }
 
-        private fun initialiseCities(countries: Map<String, Country>) {
-            parse(CITIES_FILE).map { it.readTriple() }.forEach { (code, name, countryCode) ->
-                val country = requireNotNull(countries[countryCode])
-                val city = City(code, name, country)
-                country.cities += city
-            }
+        private fun loadFileExtensions(): List<String> {
+            val yaml = YAML.load(FILE_EXTENSIONS_FILE)
+            return yaml.asList().content().map { it.asMap().content()["value"]!!.asString().value() }
         }
 
-        private fun initialiseUniversities(countries: Map<String, Country>) {
-            parse(UNIVERSITIES_FILE).map { it.readPair() }.forEach { (name, countryCode) ->
-                val country = requireNotNull(countries[countryCode])
-                val university = University(name, country)
-                country.universities += university
-            }
+        private fun loadLastNames(): List<Map<String, Any>> {
+            val yaml = YAML.load(LAST_NAMES_FILE)
+
+            val lastNames = yaml.asList().content().map { mapOf<String, Any>(
+                "value" to it.asMap().content()["value"]!!.asString().value(),
+                "rank" to it.asMap().content()["rank"]!!.asInt().value(),
+                "percentage" to it.asMap().content()["percentage"]!!.asFloat().value(),
+                "percentile" to it.asMap().content()["percentile"]!!.asFloat().value()
+            ) }
+
+            return lastNames
         }
 
-        private fun initialiseLastNames(continents: Map<String, Continent>) {
-            parse(LAST_NAMES_FILE).map { it.readPair() }.forEach { (name, continentCode) ->
-                val continent = requireNotNull(continents[continentCode])
-                continent.commonLastNames += name
-            }
+        private fun loadMaleNames(): List<Map<String, Any>> {
+            val yaml = YAML.load(MALE_NAMES_FILE)
+
+            val maleNames = yaml.asList().content().map { mapOf<String, Any>(
+                "value" to it.asMap().content()["value"]!!.asString().value(),
+                "rank" to it.asMap().content()["rank"]!!.asInt().value(),
+                "percentage" to it.asMap().content()["percentage"]!!.asFloat().value(),
+                "percentile" to it.asMap().content()["percentile"]!!.asFloat().value()
+            ) }
+
+            return maleNames
         }
 
-        private fun initialiseFemaleFirstNames(continents: Map<String, Continent>) {
-            parse(FIRST_NAMES_FEMALE_FILE).map { it.readPair() }.forEach { (name, continentCode) ->
-                val continent = requireNotNull(continents[continentCode])
-                continent.commonFemaleFirstNames += name
-            }
+        private fun loadNouns(): List<String> {
+            val yaml = YAML.load(NOUNS_FILE)
+            return yaml.asList().content().map { it.asMap().content()["value"]!!.asString().value() }
         }
 
-        private fun initialiseMaleFirstNames(continents: Map<String, Continent>) {
-            parse(FIRST_NAMES_MALE_FILE).map { it.readPair() }.forEach { (name, continentCode) ->
-                val continent = requireNotNull(continents[continentCode])
-                continent.commonMaleFirstNames += name
-            }
+        private fun loadObjectTypes(): List<String> {
+            val yaml = YAML.load(OBJECT_TYPES_FILE)
+            return yaml.asList().content().map { it.asMap().content()["value"]!!.asString().value() }
         }
 
-        private fun initialiseNouns(words: Words) {
-            words.nouns += parse(NOUNS_FILE).map { it.readSingle() }
+        private fun loadOperationSets(): List<Map<String, Any>> {
+            val yaml = YAML.load(OPERATION_SETS_FILE)
+
+            val operationSets = yaml.asList().content().map { operationSet -> mapOf<String, Any>(
+                "value" to operationSet.asMap().content()["value"]!!.asString().value(),
+                "objectTypes" to operationSet.asMap().content()["objectTypes"]!!.asList().content().map { it.asString().value() },
+                "setMembers" to operationSet.asMap().content()["setMembers"]!!.asList().content().map { it.asString().value() }
+            ) }
+
+            return operationSets
+        }
+
+        private fun loadOperations(): List<Map<String, Any>> {
+            val yaml = YAML.load(OPERATIONS_FILE)
+
+            val operations = yaml.asList().content().map { operation -> mapOf<String, Any>(
+                "value" to operation.asMap().content()["value"]!!.asString().value(),
+                "objectTypes" to operation.asMap().content()["objectTypes"]!!.asList().content().map { it.asString().value() }
+            ) }
+
+            return operations
+        }
+
+        private fun loadOwnershipTypes(): List<String> {
+            val yaml = YAML.load(OWNERSHIP_TYPES_FILE)
+            return yaml.asList().content().map { it.asMap().content()["value"]!!.asString().value() }
+        }
+
+        private fun initialiseCompanies(companyNames: List<Map<String, Any>>): List<Company> {
+            return companyNames.map { Company(code = it["rank"].toString(), name = it["value"].toString()) }
         }
     }
 }
