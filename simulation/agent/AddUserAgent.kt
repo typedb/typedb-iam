@@ -16,20 +16,14 @@
  */
 package com.vaticle.typedb.iam.simulation.agent
 
-import com.vaticle.typedb.iam.simulation.common.concept.Country
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.ModelParams
+import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.simulation.Agent
 import com.vaticle.typedb.simulation.common.DBClient
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import java.time.LocalDateTime
 
-abstract class NationalityAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
-    Agent<Country, SESSION, ModelParams>(client, context) {
-    override val agentClass = NationalityAgent::class.java
-    override val partitions = context.seedData.countries
-
-    init {
-        if (!context.isReporting) throw NotImplementedError("Reporting is not yet implemented in ${this.javaClass.simpleName}")
-    }
+abstract class AddUserAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
+    Agent<Company, SESSION, ModelParams>(client, context) {
+    override val agentClass = AddUserAgent::class.java
+    override val partitions = context.seedData.companies
 }

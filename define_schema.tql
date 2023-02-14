@@ -1,0 +1,261 @@
+define
+
+subject sub entity,
+    abstract,
+    owns credential,
+    plays group-membership:group-member,
+    plays group-ownership:group-owner,
+    plays object-ownership:object-owner,
+    plays permission:permitted-subject,
+    plays change-request:requesting-subject,
+    plays change-request:requested-subject,
+    plays segregation-violation:violating-subject;
+
+user sub subject,
+    abstract;
+
+user-group sub subject,
+    abstract,
+    plays group-membership:user-group,
+    plays group-ownership:owned-group;
+
+object sub entity,
+    abstract,
+    owns object-type,
+    plays collection-membership:collection-member,
+    plays object-ownership:owned-object,
+    plays access:accessed-object,
+    plays segregation-violation:violating-object;
+
+resource sub object,
+    abstract;
+
+resource-collection sub object,
+    abstract,
+    plays collection-membership:resource-collection;
+
+action sub entity,
+    abstract,
+    owns name,
+    owns object-type,
+    plays set-membership:set-member,
+    plays access:valid-action,
+    plays segregation-policy:segregated-action;
+
+operation sub action;
+
+operation-set sub action,
+    plays set-membership:operation-set;
+
+group-membership sub relation,
+    relates user-group,
+    relates group-member;
+
+collection-membership sub relation,
+    relates resource-collection,
+    relates collection-member;
+
+set-membership sub relation,
+    relates operation-set,
+    relates set-member;
+
+group-ownership sub relation,
+    relates owned-group,
+    relates group-owner,
+    owns ownership-type;
+
+object-ownership sub relation,
+    relates owned-object,
+    relates object-owner,
+    owns ownership-type;
+
+access sub relation,
+    relates accessed-object,
+    relates valid-action,
+    plays permission:permitted-access,
+    plays change-request:requested-change;
+
+permission sub relation,
+    relates permitted-subject,
+    relates permitted-access,
+    owns review-date,
+    owns validity;
+
+change-request sub relation,
+    relates requesting-subject,
+    relates requested-subject,
+    relates requested-change;
+
+segregation-policy sub relation,
+    owns name,
+    relates segregated-action,
+    plays segregation-violation:violated-policy;
+
+segregation-violation sub relation,
+    relates violating-subject,
+    relates violating-object,
+    relates violated-policy;
+
+credential sub attribute,
+    value string;
+
+object-type sub attribute,
+    value string;
+
+name sub attribute,
+    value string;
+
+ownership-type sub attribute,
+    value string;
+
+review-date sub attribute,
+    value datetime;
+
+validity sub attribute,
+    value boolean;
+
+person sub user,
+    owns name,
+    owns email;
+
+business-unit sub user-group,
+    owns name;
+
+user-role sub user-group,
+    owns name;
+
+user-account sub user-group,
+    owns email;
+
+file sub resource,
+    owns filepath;
+
+interface sub resource,
+    owns name;
+
+record sub resource,
+    owns number;
+
+directory sub resource-collection,
+    owns filepath;
+
+application sub resource-collection,
+    owns name;
+
+database sub resource-collection,
+    owns name;
+
+table sub resource-collection,
+    owns name;
+
+email sub attribute,
+    value string;
+
+filepath sub attribute,
+    value string;
+
+number sub attribute,
+    value long;
+
+rule transitive-group-membership:
+    when {
+        (user-group: $g1, group-member: $g2) isa group-membership;
+        (user-group: $g2, group-member: $s) isa group-membership;
+    } then {
+        (user-group: $g1, group-member: $s) isa group-membership;
+    };
+
+rule transitive-collection-membership:
+    when {
+        (resource-collection: $c1, collection-member: $c2) isa collection-membership;
+        (resource-collection: $c2, collection-member: $o) isa collection-membership;
+    } then {
+        (resource-collection: $c1, collection-member: $o) isa collection-membership;
+    };
+
+rule transitive-set-membership:
+    when {
+        (operation-set: $s1, set-member: $s2) isa set-membership;
+        (operation-set: $s2, set-member: $a) isa set-membership;
+    } then {
+        (operation-set: $s1, set-member: $a) isa set-membership;
+    };
+
+rule transitive-object-access:
+    when {
+        (resource-collection: $c1, collection-member: $c2) isa collection-membership;
+        $c1 isa! $c1-type;
+        $c2 isa! $c2-type;
+        $c1-type is $c2-type;
+        (accessed-object: $c1, valid-action: $a) isa access;
+    } then {
+        (accessed-object: $c2, valid-action: $a) isa access;
+    };
+
+rule transitive-action-access:
+    when {
+        (operation-set: $s, set-member: $a) isa set-membership;
+        (accessed-object: $o, valid-action: $s) isa access;
+    } then {
+        (accessed-object: $o, valid-action: $a) isa access;
+    };
+
+rule transitive-subject-permission:
+    when {
+        (user-group: $g, group-member: $s) isa group-membership;
+        (permitted-subject: $g, permitted-access: $a) isa permission;
+    } then {
+        (permitted-subject: $s, permitted-access: $a) isa permission;
+    };
+
+rule transitive-object-permission:
+    when {
+        (resource-collection: $c, collection-member: $o) isa collection-membership;
+        $ac-c(accessed-object: $c, valid-action: $a) isa access;
+        $ac-o(accessed-object: $o, valid-action: $a) isa access;
+        (permitted-subject: $s, permitted-access: $ac-c) isa permission;
+    } then {
+        (permitted-subject: $s, permitted-access: $ac-o) isa permission;
+    };
+
+rule transitive-action-permission:
+    when {
+        (operation-set: $s, set-member: $a) isa set-membership;
+        $ac-s(accessed-object: $o, valid-action: $s) isa access;
+        $ac-a(accessed-object: $o, valid-action: $a) isa access;
+        (permitted-subject: $su, permitted-access: $ac-s) isa permission;
+    } then {
+        (permitted-subject: $su, permitted-access: $ac-a) isa permission;
+    };
+
+rule automatic-segregation-violation:
+    when {
+        $s(segregated-action: $a1, segregated-action:$a2) isa segregation-policy;
+        $ac1(accessed-object: $o, valid-action: $a1) isa access;
+        $ac2(accessed-object: $o, valid-action: $a2) isa access;
+        $p1(permitted-subject: $su, permitted-access: $ac1) isa permission;
+        $p2(permitted-subject: $su, permitted-access: $ac2) isa permission;
+    } then {
+        (violating-subject: $su, violating-object: $o, violated-policy: $s) isa segregation-violation;
+    };
+
+rule automatic-permission-invalidity:
+    when {
+        $s(segregated-action: $a1, segregated-action:$a2) isa segregation-policy;
+        $ac1(accessed-object: $o, valid-action: $a1) isa access;
+        $ac2(accessed-object: $o, valid-action: $a2) isa access;
+        $p1(permitted-subject: $su, permitted-access: $ac1) isa permission;
+        $p2(permitted-subject: $su, permitted-access: $ac2) isa permission;
+    } then {
+        $p1 has validity false;
+    };
+
+rule automatic-permission-validity:
+    when {
+        $p isa permission;
+        not {
+            $p has validity false;
+        };
+    } then {
+        $p has validity true;
+    };

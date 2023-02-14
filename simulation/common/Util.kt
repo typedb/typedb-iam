@@ -16,7 +16,6 @@
  */
 package com.vaticle.typedb.iam.simulation.common
 
-import com.vaticle.typedb.iam.simulation.common.concept.City
 import com.vaticle.typedb.iam.simulation.common.concept.Gender
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import java.time.Duration
@@ -29,11 +28,11 @@ object Util {
             .replace("(\\d[HMS])(?!$)".toRegex(), "$1 ")
             .lowercase()
     }
-
-    fun RandomSource.address(city: City): String {
-        val houseNumber = nextInt(1000)
-        val streetName = choose(city.country.continent.commonFirstNames(Gender.of(nextBoolean())))
-        val zipCode = nextInt(10000)
-        return "$houseNumber $streetName Street, ${city.name}, $zipCode ${city.country.name}"
-    }
+//
+//    fun RandomSource.address(city: City): String {
+//        val houseNumber = nextInt(1000)
+//        val streetName = choose(city.country.continent.commonFirstNames(Gender.of(nextBoolean())))
+//        val zipCode = nextInt(10000)
+//        return "$houseNumber $streetName Street, ${city.name}, $zipCode ${city.country.name}"
+//    }
 }

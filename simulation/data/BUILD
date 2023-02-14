@@ -15,38 +15,27 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
 filegroup(
     name = "data",
     srcs = [
-        "adjectives.tsv",
-        "application-names.tsv",
-        "application-roles.tsv",
-        "business-unit-names.tsv",
-        "company-names.tsv",
-        "female-names.tsv",
-        "file-extensions.tsv",
-        "last-names.tsv",
-        "male-names.tsv",
-        "nouns.tsv",
-        "object-types.tsv",
-        "operation-sets.tsv",
-        "operations.tsv",
-        "ownership-types.tsv"
+        "adjectives.yml",
+        "application-names.yml",
+        "application-roles.yml",
+        "business-unit-names.yml",
+        "company-names.yml",
+        "female-names.yml",
+        "file-extensions.yml",
+        "last-names.yml",
+        "male-names.yml",
+        "nouns.yml",
+        "object-types.yml",
+        "operation-sets.yml",
+        "operations.yml",
+        "ownership-types.yml"
     ],
     visibility = ["//visibility:public"],
-)
-
-kt_jvm_library(
-    name = "neo4j",
-    srcs = glob(["*.kt", "*/*.kt"]),
-    visibility = ["//visibility:public"],
-    deps = [
-        # External Vaticle Dependencies
-        "@vaticle_typedb_common//:common"
-    ],
 )
 
 checkstyle_test(

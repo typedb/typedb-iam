@@ -16,24 +16,20 @@
  */
 package com.vaticle.typedb.iam.simulation.common.concept
 
-import java.time.LocalDateTime
 import java.util.Objects
 
 class Person constructor(
     val email: String,
-    private val firstName: String? = null,
-    private val lastName: String? = null,
-    private val address: String? = null,
-    private val gender: Gender? = null,
-    private val birthDate: LocalDateTime? = null
+    private val name: String,
+    private val gender: Gender
 ) {
-    private val hash = Objects.hash(email, firstName, lastName, address, gender, birthDate)
+    private val hash = Objects.hash(email, name, gender)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || javaClass != other.javaClass) return false
         val that = other as Person
-        return email == that.email && firstName == that.firstName && lastName == that.lastName && address == that.address && gender == that.gender && birthDate == that.birthDate
+        return email == that.email && name == that.name && gender == that.gender
     }
 
     override fun hashCode(): Int {

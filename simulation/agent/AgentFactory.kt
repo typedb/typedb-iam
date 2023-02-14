@@ -23,26 +23,8 @@ import com.vaticle.typedb.simulation.common.DBClient
 abstract class AgentFactory<CLIENT: DBClient<*>>(client: CLIENT, context: Context) : Agent.Factory() {
 
     override val map: Map<Class<out Agent<*, *, *>>, () -> Agent<*, *, *>> = mapOf(
-        PersonAgent::class.java to { createPersonAgent(client, context) },
-        FriendshipAgent::class.java to { createFriendshipAgent(client, context) },
-        MarriageAgent::class.java to { createMarriageAgent(client, context) },
-        ParenthoodAgent::class.java to { createParenthoodAgent(client, context) },
-        MaritalStatusAgent::class.java to { createMaritalStatusAgent(client, context) },
-        GrandparenthoodAgent::class.java to { createGrandparenthoodAgent(client, context) },
-        LineageAgent::class.java to { createLineageAgent(client, context) },
-        NationalityAgent::class.java to { createNationalityAgent(client, context) },
-        CitizenshipAgent::class.java to { createCitizenshipAgent(client, context) },
-        CoupleFriendshipAgent::class.java to { createCoupleFriendshipAgent(client, context) },
+        AddUserAgent::class.java to { addUserAgent(client, context) }
     )
 
-    protected abstract fun createPersonAgent(client: CLIENT, context: Context): PersonAgent<*>
-    protected abstract fun createFriendshipAgent(client: CLIENT, context: Context): FriendshipAgent<*>
-    protected abstract fun createMarriageAgent(client: CLIENT, context: Context): MarriageAgent<*>
-    protected abstract fun createParenthoodAgent(client: CLIENT, context: Context): ParenthoodAgent<*>
-    protected abstract fun createLineageAgent(client: CLIENT, context: Context): LineageAgent<*>
-    protected abstract fun createNationalityAgent(client: CLIENT, context: Context): NationalityAgent<*>
-    protected abstract fun createCitizenshipAgent(client: CLIENT, context: Context): CitizenshipAgent<*>
-    protected abstract fun createMaritalStatusAgent(client: CLIENT, context: Context): MaritalStatusAgent<*>
-    protected abstract fun createCoupleFriendshipAgent(client: CLIENT, context: Context): CoupleFriendshipAgent<*>
-    protected abstract fun createGrandparenthoodAgent(client: CLIENT, context: Context): GrandparenthoodAgent<*>
+    protected abstract fun addUserAgent(client: CLIENT, context: Context): AddUserAgent<*>
 }
