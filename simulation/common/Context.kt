@@ -26,7 +26,7 @@ class Context private constructor(seedData: SeedData, config: Config, isTracing:
 
         fun create(config: Config, isTracing: Boolean, isReporting: Boolean): Context {
             val seedData = SeedData()
-            LOGGER.info("Total number of companies in seed: {}", seedData.companyNames.size)
+            LOGGER.info("Total number of companies in seed: {}", seedData.companies.size)
             return Context(seedData, config, isTracing, isReporting)
         }
     }
