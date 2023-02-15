@@ -16,23 +16,51 @@
  */
 package com.vaticle.typedb.iam.simulation.common.concept
 
-import java.util.Objects
+import com.vaticle.typedb.iam.simulation.common.SeedData
+import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-class Person constructor(
-    val email: String,
-    private val name: String,
-    private val gender: Gender
-) {
-    private val hash = Objects.hash(email, name, gender)
+class Person(company: Company, seedData: SeedData, randomSource: RandomSource) {
+    private val gender = initialiseGender(randomSource)
+    private val firstName = initialiseFirstName(gender, seedData, randomSource)
+    private val lastName = initialiseLastName(seedData, randomSource)
+    val name = "$firstName $lastName"
+    val email = "${firstName?.lowercase()}.${lastName?.lowercase()}@${company.domainName}.com"
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || javaClass != other.javaClass) return false
-        val that = other as Person
-        return email == that.email && name == that.name && gender == that.gender
+    private fun initialiseGender(randomSource: RandomSource): String {
+        return randomSource.choose(listOf("male", "female"))
     }
 
-    override fun hashCode(): Int {
-        return hash
+    private fun initialiseFirstName(gender:String, seedData: SeedData, randomSource: RandomSource): String? {
+        val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
+        val names = when (gender) {
+            "male" -> seedData.maleNames
+            "female" -> seedData.femaleNames
+            else -> randomSource.choose(listOf(seedData.maleNames, seedData.femaleNames))
+        }
+
+        names.forEach {
+            if ((NAME_PERCENTILE_SCALE * it["percentile"] as Float).toInt() <= percentile) {
+                return it["value"] as String
+            }
+        }
+
+        return null
+    }
+
+    private fun initialiseLastName(seedData: SeedData, randomSource: RandomSource): String? {
+        val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
+
+        seedData.lastNames.forEach {
+            if ((NAME_PERCENTILE_SCALE * it["percentile"] as Float).toInt() <= percentile) {
+                return it["value"] as String
+            }
+        }
+
+        return null
+    }
+
+    companion object {
+        const val MAX_NAME_PERCENTILE = 90
+        const val NAME_PERCENTILE_SCALE = 1000
     }
 }

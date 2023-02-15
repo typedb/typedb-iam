@@ -16,30 +16,17 @@
  */
 package com.vaticle.typedb.iam.simulation.typedb
 
+import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.AgentFactory
-import com.vaticle.typedb.iam.simulation.agent.PersonAgent
+import com.vaticle.typedb.iam.simulation.agent.User
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.Util.printDuration
-import com.vaticle.typedb.iam.simulation.common.concept.City
-import com.vaticle.typedb.iam.simulation.common.concept.Continent
-import com.vaticle.typedb.iam.simulation.common.concept.Country
-import com.vaticle.typedb.iam.simulation.common.concept.Currency
-import com.vaticle.typedb.iam.simulation.common.concept.Global
-import com.vaticle.typedb.iam.simulation.common.concept.University
-import com.vaticle.typedb.iam.simulation.typedb.Labels.CITY
-import com.vaticle.typedb.iam.simulation.typedb.Labels.CODE
-import com.vaticle.typedb.iam.simulation.typedb.Labels.CONTAINED
-import com.vaticle.typedb.iam.simulation.typedb.Labels.CONTAINER
-import com.vaticle.typedb.iam.simulation.typedb.Labels.CONTAINS
-import com.vaticle.typedb.iam.simulation.typedb.Labels.CONTINENT
-import com.vaticle.typedb.iam.simulation.typedb.Labels.COUNTRY
-import com.vaticle.typedb.iam.simulation.typedb.Labels.CURRENCY
-import com.vaticle.typedb.iam.simulation.typedb.Labels.LOCATED
-import com.vaticle.typedb.iam.simulation.typedb.Labels.LOCATES
-import com.vaticle.typedb.iam.simulation.typedb.Labels.LOCATION
+import com.vaticle.typedb.iam.simulation.common.concept.BusinessUnit
+import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.typedb.Labels.BUSINESS_UNIT
+import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
-import com.vaticle.typedb.iam.simulation.typedb.Labels.UNIVERSITY
 import com.vaticle.typedb.iam.simulation.typedb.agent.TypeDBAgentFactory
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.insert
@@ -55,85 +42,51 @@ class TypeDBSimulation private constructor(
     client: TypeDBClient, context: Context
 ) : com.vaticle.typedb.simulation.typedb.TypeDBSimulation<Context>(client, context, TypeDBAgentFactory(client, context)) {
 
-    override val agentPackage: String = PersonAgent::class.java.packageName
+    override val agentPackage: String = User::class.java.packageName
 
     override val name = "IAM"
 
-    override val schemaFile: File = Paths.get("iam-schema.tql").toFile()
+    override val schemaFile: File = Paths.get("define_schema.tql").toFile()
 
     override fun initData(nativeSession: com.vaticle.typedb.client.api.TypeDBSession) {
         LOGGER.info("TypeDB initialisation of world simulation data started ...")
         val start = Instant.now()
-        initContinents(nativeSession, context.seedData.global)
+        initCompanies(nativeSession, context.seedData.companies)
         LOGGER.info("TypeDB initialisation of world simulation data ended in: {}", printDuration(start, Instant.now()))
     }
 
-    private fun initContinents(session: com.vaticle.typedb.client.api.TypeDBSession, global: Global) {
-        global.continents.parallelStream().forEach { continent: Continent ->
-            session.transaction(WRITE).use { tx ->
-                tx.query().insert(insert(`var`().isa(CONTINENT).has(CODE, continent.code).has(NAME, continent.name)))
-                tx.commit()
+    private fun initCompanies(session: TypeDBSession, companies: List<Company>) {
+        companies.parallelStream().forEach { company: Company ->
+            session.transaction(WRITE).use { transaction ->
+                transaction.query().insert(
+                    insert(
+                        `var`().isa(COMPANY).has(NAME, company.name)
+                    )
+                )
+                transaction.commit()
             }
-            initCountries(session, continent)
         }
     }
 
-    private fun initCountries(session: com.vaticle.typedb.client.api.TypeDBSession, continent: Continent) {
-        continent.countries.parallelStream().forEach { country: Country ->
-            session.transaction(WRITE).use { tx ->
-                val countryVar = `var`(Y).isa(COUNTRY).has(CODE, country.code).has(NAME, country.name)
-                country.currencies.forEach { currency: Currency -> countryVar.has(CURRENCY, currency.code) }
-                tx.query().insert(
-                    match(
-                        `var`(X).isa(CONTINENT).has(CODE, continent.code)
-                    ).insert(
-                        countryVar, rel(CONTAINER, X).rel(CONTAINED, Y).isa(CONTAINS)
+    private fun initBusinessUnits(session: TypeDBSession, companies: List<Company>, businessUnits: List<BusinessUnit>) {
+        companies.parallelStream().forEach { company: Company ->
+            businessUnits.parallelStream().forEach { businessUnit: BusinessUnit ->
+                session.transaction(WRITE).use { transaction ->
+                    transaction.query().insert(
+                        match(
+                            `var`(C).isa(COMPANY).has(NAME, company.name)
+                        ).insert(
+                            `var`().isa(BUSINESS_UNIT).has()
+                        )
                     )
-                )
-                // TODO: Currency should be an entity we relate to by relation
-                tx.commit()
+                }
             }
-            initCities(session, country)
-            initUniversities(session, country)
-        }
-    }
-
-    private fun initCities(session: com.vaticle.typedb.client.api.TypeDBSession, country: Country) {
-        session.transaction(WRITE).use { tx ->
-            country.cities.forEach { city: City ->
-                tx.query().insert(
-                    match(
-                        `var`(X).isa(COUNTRY).has(CODE, country.code)
-                    ).insert(
-                        `var`(Y).isa(CITY).has(CODE, city.code).has(NAME, city.name),
-                        rel(CONTAINER, X).rel(CONTAINED, Y).isa(CONTAINS)
-                    )
-                )
-            }
-            tx.commit()
-        }
-    }
-
-    private fun initUniversities(session: com.vaticle.typedb.client.api.TypeDBSession, country: Country) {
-        session.transaction(WRITE).use { tx ->
-            country.universities.forEach { university: University ->
-                tx.query().insert(
-                    match(
-                        `var`(X).isa(COUNTRY).has(CODE, country.code)
-                    ).insert(
-                        `var`(Y).isa(UNIVERSITY).has(NAME, university.name),
-                        rel(LOCATION, X).rel(LOCATED, Y).isa(LOCATES)
-                    )
-                )
-            }
-            tx.commit()
         }
     }
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
-        private const val X = "x"
-        private const val Y = "y"
+        private const val C = "c"
 
         fun core(address: String, context: Context): TypeDBSimulation {
             return TypeDBSimulation(TypeDBClient.core(address, context.dbName), context).apply { init() }

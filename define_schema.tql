@@ -17,9 +17,30 @@
 
 define
 
+company sub entity,
+    owns name,
+    plays company-membership:company;
+
+company-membership sub relation,
+    relates company,
+    relates company-member;
+
+parent-company sub attribute,
+    value string;
+
+rule automatic-parent-company:
+    when {
+        (company: $c, company-member: $t) isa company-membership;
+        $c has name $c-name;
+    } then {
+        $t has parent-company $c-name;
+    };
+
 subject sub entity,
     abstract,
+    owns parent-company,
     owns credential,
+    plays company-membership:company-member,
     plays group-membership:group-member,
     plays group-ownership:group-owner,
     plays object-ownership:object-owner,
@@ -38,7 +59,9 @@ user-group sub subject,
 
 object sub entity,
     abstract,
+    owns parent-company,
     owns object-type,
+    plays company-membership:company-member,
     plays collection-membership:collection-member,
     plays object-ownership:owned-object,
     plays access:accessed-object,
@@ -53,8 +76,10 @@ resource-collection sub object,
 
 action sub entity,
     abstract,
+    owns parent-company,
     owns name,
     owns object-type,
+    plays company-membership:company-member,
     plays set-membership:set-member,
     plays access:valid-action,
     plays segregation-policy:segregated-action;
@@ -64,26 +89,35 @@ operation sub action;
 operation-set sub action,
     plays set-membership:operation-set;
 
-group-membership sub relation,
-    relates user-group,
-    relates group-member;
+membership sub relation,
+    abstract,
+    relates parent,
+    relates member;
 
-collection-membership sub relation,
-    relates resource-collection,
-    relates collection-member;
+group-membership sub membership,
+    relates user-group as parent,
+    relates group-member as member;
 
-set-membership sub relation,
-    relates operation-set,
-    relates set-member;
+collection-membership sub membership,
+    relates resource-collection as parent,
+    relates collection-member as member;
 
-group-ownership sub relation,
-    relates owned-group,
-    relates group-owner,
+set-membership sub membership,
+    relates operation-set as parent,
+    relates set-member as member;
+
+ownership sub relation,
+    relates owned,
+    relates owner;
+
+group-ownership sub ownership,
+    relates owned-group as owned,
+    relates group-owner as owner,
     owns ownership-type;
 
-object-ownership sub relation,
-    relates owned-object,
-    relates object-owner,
+object-ownership sub ownership,
+    relates owned-object as owned,
+    relates object-owner as owner,
     owns ownership-type;
 
 access sub relation,
@@ -104,8 +138,8 @@ change-request sub relation,
     relates requested-change;
 
 segregation-policy sub relation,
-    owns name,
     relates segregated-action,
+    owns name,
     plays segregation-violation:violated-policy;
 
 segregation-violation sub relation,
