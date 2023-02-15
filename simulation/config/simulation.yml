@@ -17,6 +17,15 @@
 
 agents:
   - name: "AddUserAgent"
+    action: "addUser"
+    isEnabled: true
+    trace: true
+  - name: "AddUserAgent"
+    action: "addMoreUser"
+    isEnabled: true
+    trace: true
+  - name: "NotAddUserAgent"
+    action: "notAddUser"
     isEnabled: true
     trace: true
 

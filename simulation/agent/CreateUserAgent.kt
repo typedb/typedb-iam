@@ -22,8 +22,8 @@ import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.simulation.Agent
 import com.vaticle.typedb.simulation.common.DBClient
 
-abstract class AddUserAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
+abstract class CreateUserAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
     Agent<Company, SESSION, ModelParams>(client, context) {
-    override val agentClass = AddUserAgent::class.java
+    override val agentClass = CreateUserAgent::class.java
     override val partitions = context.seedData.companies
 }

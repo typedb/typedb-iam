@@ -18,8 +18,8 @@ package com.vaticle.typedb.iam.simulation.common
 
 import mu.KotlinLogging
 
-class Context private constructor(seedData: SeedData, config: Config, isTracing: Boolean, isReporting: Boolean)
-    : com.vaticle.typedb.simulation.Context<SeedData, ModelParams>(seedData, config, isTracing, isReporting) {
+class Context private constructor(seedData: SeedData, config: Config, isTracing: Boolean, isReporting: Boolean) :
+    com.vaticle.typedb.simulation.Context<SeedData, ModelParams>(seedData, config, isTracing, isReporting) {
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
