@@ -16,8 +16,6 @@
  */
 package com.vaticle.typedb.iam.simulation.common
 
-import com.vaticle.typedb.iam.simulation.common.concept.Gender
-import com.vaticle.typedb.simulation.common.seed.RandomSource
 import java.time.Duration
 import java.time.Instant
 

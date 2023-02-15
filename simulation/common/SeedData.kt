@@ -17,6 +17,7 @@
 package com.vaticle.typedb.iam.simulation.common
 
 import com.vaticle.typedb.common.yaml.YAML
+import com.vaticle.typedb.iam.simulation.common.concept.BusinessUnit
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 import mu.KotlinLogging
 import java.nio.file.Paths
@@ -37,6 +38,7 @@ class SeedData() {
     val operations = loadOperations()
     val ownershipTypes = loadOwnershipTypes()
     val companies = initialiseCompanies(companyNames)
+    val businessUnits = initialiseBusinessUnits(businessUnitNames)
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -169,7 +171,11 @@ class SeedData() {
         }
 
         private fun initialiseCompanies(companyNames: List<Map<String, Any>>): List<Company> {
-            return companyNames.map { Company(code = it["rank"].toString(), name = it["value"].toString()) }
+            return companyNames.map { Company(it["value"].toString()) }
+        }
+
+        private fun initialiseBusinessUnits(businessUnits: List<String>): List<BusinessUnit> {
+            return businessUnits.map { BusinessUnit(it) }
         }
     }
 }
