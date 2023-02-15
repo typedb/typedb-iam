@@ -17,22 +17,22 @@
 package com.vaticle.typedb.iam.simulation.agent
 
 import com.vaticle.typedb.iam.simulation.common.Context
+import com.vaticle.typedb.iam.simulation.common.ModelParams
+import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.simulation.Agent
 import com.vaticle.typedb.simulation.common.DBClient
+import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-abstract class AgentFactory<CLIENT: DBClient<*>>(client: CLIENT, context: Context) : Agent.Factory() {
+abstract class Owner<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
+    Agent<Company, SESSION, ModelParams>(client, context) {
+    override val agentClass = Owner::class.java
+    override val partitions = context.seedData.companies
 
-    override val map: Map<Class<out Agent<*, *, *>>, () -> Agent<*, *, *>> = mapOf(
-        User::class.java to { user(client, context) },
-        Owner::class.java to { owner(client, context) },
-        Supervisor::class.java to { supervisor(client, context) },
-        PolicyManager::class.java to { policyManager(client, context) },
-        SysAdmin::class.java to { sysAdmin(client, context) }
+    override val actionHandlers = mapOf(
+        "changeGroupOwnership" to::changeGroupOwnership,
+        "changeObjectOwnership" to::changeObjectOwnership
     )
 
-    protected abstract fun user(client: CLIENT, context: Context): User<*>
-    protected abstract fun owner(client: CLIENT, context: Context): Owner<*>
-    protected abstract fun supervisor(client: CLIENT, context: Context): Supervisor<*>
-    protected abstract fun policyManager(client: CLIENT, context: Context): PolicyManager<*>
-    protected abstract fun sysAdmin(client: CLIENT, context: Context): SysAdmin<*>
+    protected abstract fun changeGroupOwnership(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
+    protected abstract fun changeObjectOwnership(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
 }

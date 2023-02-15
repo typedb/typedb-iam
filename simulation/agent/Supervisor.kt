@@ -21,9 +21,18 @@ import com.vaticle.typedb.iam.simulation.common.ModelParams
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.simulation.Agent
 import com.vaticle.typedb.simulation.common.DBClient
+import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-abstract class CreateUserAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
+abstract class Supervisor<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
     Agent<Company, SESSION, ModelParams>(client, context) {
-    override val agentClass = CreateUserAgent::class.java
+    override val agentClass = Supervisor::class.java
     override val partitions = context.seedData.companies
+
+    override val actionHandlers = mapOf(
+        "assignGroupMembership" to::assignGroupMembership,
+        "revokeGroupMembership" to::revokeGroupMembership
+    )
+
+    protected abstract fun assignGroupMembership(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
+    protected abstract fun revokeGroupMembership(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
 }
