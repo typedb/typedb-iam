@@ -19,48 +19,51 @@ package com.vaticle.typedb.iam.simulation.common.concept
 import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-class Person(company: Company, seedData: SeedData, randomSource: RandomSource) {
-    private val gender = initialiseGender(randomSource)
-    private val firstName = initialiseFirstName(gender, seedData, randomSource)
-    private val lastName = initialiseLastName(seedData, randomSource)
-    val name = "$firstName $lastName"
-    val email = "${firstName?.lowercase()}.${lastName?.lowercase()}@${company.domainName}.com"
-
-    private fun initialiseGender(randomSource: RandomSource): String {
-        return randomSource.choose(listOf("male", "female"))
-    }
-
-    private fun initialiseFirstName(gender:String, seedData: SeedData, randomSource: RandomSource): String? {
-        val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
-        val names = when (gender) {
-            "male" -> seedData.maleNames
-            "female" -> seedData.femaleNames
-            else -> randomSource.choose(listOf(seedData.maleNames, seedData.femaleNames))
-        }
-
-        names.forEach {
-            if ((NAME_PERCENTILE_SCALE * it["percentile"] as Float).toInt() <= percentile) {
-                return it["value"] as String
-            }
-        }
-
-        return null
-    }
-
-    private fun initialiseLastName(seedData: SeedData, randomSource: RandomSource): String? {
-        val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
-
-        seedData.lastNames.forEach {
-            if ((NAME_PERCENTILE_SCALE * it["percentile"] as Float).toInt() <= percentile) {
-                return it["value"] as String
-            }
-        }
-
-        return null
-    }
-
+class Person(val name: String, val email: String) {
     companion object {
-        const val MAX_NAME_PERCENTILE = 90
-        const val NAME_PERCENTILE_SCALE = 1000
+        private const val MAX_NAME_PERCENTILE = 90
+        private const val NAME_PERCENTILE_SCALE = 1000
+
+        fun initialise(company: Company, seedData: SeedData, randomSource: RandomSource): Person {
+            val gender = initialiseGender(randomSource)
+            val firstName = initialiseFirstName(gender, seedData, randomSource)
+            val lastName = initialiseLastName(seedData, randomSource)
+            val name = "$firstName $lastName"
+            val email = "${firstName?.lowercase()}.${lastName?.lowercase()}@${company.domainName}.com"
+            return Person(name, email)
+        }
+
+        private fun initialiseGender(randomSource: RandomSource): String {
+            return randomSource.choose(listOf("male", "female"))
+        }
+
+        private fun initialiseFirstName(gender:String, seedData: SeedData, randomSource: RandomSource): String? {
+            val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
+            val names = when (gender) {
+                "male" -> seedData.maleNames
+                "female" -> seedData.femaleNames
+                else -> randomSource.choose(listOf(seedData.maleNames, seedData.femaleNames))
+            }
+
+            names.forEach {
+                if ((NAME_PERCENTILE_SCALE * it["percentile"] as Float).toInt() <= percentile) {
+                    return it["value"] as String
+                }
+            }
+
+            return null
+        }
+
+        private fun initialiseLastName(seedData: SeedData, randomSource: RandomSource): String? {
+            val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
+
+            seedData.lastNames.forEach {
+                if ((NAME_PERCENTILE_SCALE * it["percentile"] as Float).toInt() <= percentile) {
+                    return it["value"] as String
+                }
+            }
+
+            return null
+        }
     }
 }

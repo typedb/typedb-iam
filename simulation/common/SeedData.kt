@@ -19,15 +19,16 @@ package com.vaticle.typedb.iam.simulation.common
 import com.vaticle.typedb.common.yaml.YAML
 import com.vaticle.typedb.iam.simulation.common.concept.BusinessUnit
 import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.common.concept.UserRole
 import mu.KotlinLogging
 import java.nio.file.Paths
 
 class SeedData() {
     val adjectives = loadAdjectives()
-    val applicationNames = loadApplicationNames()
-    val applicationRoles = loadApplicationRoles()
-    val businessUnitNames = loadBusinessUnitNames()
-    val companyNames = loadCompanyNames()
+    private val applicationNames = loadApplicationNames()
+    private val applicationRoles = loadApplicationRoles()
+    private val businessUnitNames = loadBusinessUnitNames()
+    private val companyNames = loadCompanyNames()
     val femaleNames = loadFemaleNames()
     val fileExtensions = loadFileExtensions()
     val lastNames = loadLastNames()
@@ -39,6 +40,7 @@ class SeedData() {
     val ownershipTypes = loadOwnershipTypes()
     val companies = initialiseCompanies(companyNames)
     val businessUnits = initialiseBusinessUnits(businessUnitNames)
+    val userRoles = initialiseUserRoles(applicationNames, applicationRoles)
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
@@ -176,6 +178,18 @@ class SeedData() {
 
         private fun initialiseBusinessUnits(businessUnits: List<String>): List<BusinessUnit> {
             return businessUnits.map { BusinessUnit(it) }
+        }
+
+        private fun initialiseUserRoles(applicationNames: List<String>, applicationRoles: List<String>): List<UserRole> {
+            val userRoleNames: MutableList<String> = mutableListOf()
+
+            applicationNames.forEach { applicationName ->
+                applicationRoles.forEach { applicationRole ->
+                    userRoleNames.add("$applicationName $applicationRole")
+                }
+            }
+
+            return userRoleNames.map { UserRole(it) }
         }
     }
 }
