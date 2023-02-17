@@ -17,6 +17,7 @@
 package com.vaticle.typedb.iam.simulation.typedb
 
 object Labels {
+    const val ATTRIBUTE = "attribute"
     const val COMPANY = "company"
     const val COMPANY_MEMBERSHIP = "company-membership"
     const val COMPANY_MEMBER = "company-member"
@@ -76,6 +77,6 @@ object Labels {
     const val DATABASE = "database"
     const val TABLE = "table"
     const val EMAIL = "email"
-    const val FILEPATH = "filepath"
+    const val PATH = "path"
     const val NUMBER = "number"
 }

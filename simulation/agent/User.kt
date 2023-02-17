@@ -18,29 +18,26 @@ package com.vaticle.typedb.iam.simulation.agent
 
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.ModelParams
+import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.simulation.Agent
 import com.vaticle.typedb.simulation.common.DBClient
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-abstract class User<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
-    Agent<Company, SESSION, ModelParams>(client, context) {
+abstract class User<SESSION> protected constructor(client: DBClient<SESSION>, context: Context):
+    Agent<Company, SESSION, Context>(client, context) {
     override val agentClass = User::class.java
     override val partitions = context.seedData.companies
 
     override val actionHandlers = mapOf(
-        "createResource" to::createResource,
-        "deleteResource" to::deleteResource,
-        "createResourceCollection" to::createResourceCollection,
-        "deleteResourceCollection" to::deleteResourceCollection,
+        "createObject" to::createObject,
+        "deleteObject" to::deleteObject,
         "attemptAccess" to::attemptAccess,
         "submitChangeRequest" to::submitChangeRequest
     )
 
-    protected abstract fun createResource(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
-    protected abstract fun deleteResource(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
-    protected abstract fun createResourceCollection(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
-    protected abstract fun deleteResourceCollection(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
-    protected abstract fun attemptAccess(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
-    protected abstract fun submitChangeRequest(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
+    protected abstract fun createObject(session: SESSION, company: Company, seedData: SeedData, randomSource: RandomSource): List<Report>
+    protected abstract fun deleteObject(session: SESSION, company: Company, seedData: SeedData, randomSource: RandomSource): List<Report>
+    protected abstract fun attemptAccess(session: SESSION, company: Company, seedData: SeedData, randomSource: RandomSource): List<Report>
+    protected abstract fun submitChangeRequest(session: SESSION, company: Company, seedData: SeedData, randomSource: RandomSource): List<Report>
 }

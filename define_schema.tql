@@ -36,6 +36,35 @@ rule automatic-parent-company:
         $t has parent-company $c-name;
     };
 
+rule transitive-parent-company:
+    when {
+        $r($t) isa relation;
+        $t has parent-company $c-name;
+    } then {
+        $r has parent-company $c-name;
+    };
+
+root-collection sub attribute,
+    value boolean;
+
+rule automatic-member-collection:
+    when {
+        $c isa resource-collection;
+        (collection-member: $c) isa collection-membership;
+    } then {
+        $c has root-collection false;
+    };
+
+rule automatic-root-collection:
+    when {
+        $c isa resource-collection;
+        not {
+            $c has root-collection false;
+        };
+    } then {
+        $c has root-collection true;
+    };
+
 subject sub entity,
     abstract,
     owns parent-company,
@@ -72,6 +101,7 @@ resource sub object,
 
 resource-collection sub object,
     abstract,
+    owns root-collection,
     plays collection-membership:resource-collection;
 
 action sub entity,
@@ -179,7 +209,7 @@ user-account sub user-group,
     owns email;
 
 file sub resource,
-    owns filepath;
+    owns path;
 
 interface sub resource,
     owns name;
@@ -188,7 +218,7 @@ record sub resource,
     owns number;
 
 directory sub resource-collection,
-    owns filepath;
+    owns path;
 
 application sub resource-collection,
     owns name;
@@ -202,7 +232,7 @@ table sub resource-collection,
 email sub attribute,
     value string;
 
-filepath sub attribute,
+path sub attribute,
     value string;
 
 number sub attribute,

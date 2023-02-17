@@ -16,8 +16,8 @@
 #
 
 agents:
-  - name: "AddUserAgent"
-    action: "addUser"
+  - name: "User"
+    action: "createObjects"
     isEnabled: true
     trace: true
   - name: "AddUserAgent"
