@@ -19,22 +19,18 @@ package com.vaticle.typedb.iam.simulation.common.concept
 import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-class Person(val name: String, val email: String) {
+data class Person(val name: String, val email: String) {
     companion object {
         private const val MAX_NAME_PERCENTILE = 90
         private const val NAME_PERCENTILE_SCALE = 1000
 
         fun initialise(company: Company, seedData: SeedData, randomSource: RandomSource): Person {
-            val gender = initialiseGender(randomSource)
+            val gender = randomSource.choose(listOf("male", "female"))
             val firstName = initialiseFirstName(gender, seedData, randomSource)
             val lastName = initialiseLastName(seedData, randomSource)
             val name = "$firstName $lastName"
             val email = "${firstName?.lowercase()}.${lastName?.lowercase()}@${company.domainName}.com"
             return Person(name, email)
-        }
-
-        private fun initialiseGender(randomSource: RandomSource): String {
-            return randomSource.choose(listOf("male", "female"))
         }
 
         private fun initialiseFirstName(gender:String, seedData: SeedData, randomSource: RandomSource): String? {

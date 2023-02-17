@@ -20,7 +20,7 @@ import com.vaticle.typedb.iam.simulation.agent.AgentFactory
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 
-class TypeDBAgentFactory(client: TypeDBClient, context: Context) : AgentFactory<TypeDBClient>(client, context) {
+class TypeDBAgentFactory(client: TypeDBClient, context: Context): AgentFactory<TypeDBClient>(client, context) {
 
     override fun createPersonAgent(client: TypeDBClient, context: Context) = TypeDBPersonAgent(client, context)
     override fun createFriendshipAgent(client: TypeDBClient, context: Context) = TypeDBFriendshipAgent(client, context)

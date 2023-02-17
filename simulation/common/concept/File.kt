@@ -14,16 +14,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.vaticle.typedb.iam.simulation.common
+package com.vaticle.typedb.iam.simulation.common.concept
 
-import java.time.Duration
-import java.time.Instant
+import com.vaticle.typedb.iam.simulation.common.SeedData
+import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-object Util {
-    fun printDuration(start: Instant, end: Instant): String {
-        return Duration.between(start, end).toString()
-            .substring(2)
-            .replace("(\\d[HMS])(?!$)".toRegex(), "$1 ")
-            .lowercase()
+data class File(val path: String, val directory: Directory) {
+    companion object {
+        fun initialise(directory: Directory, seedData: SeedData, randomSource: RandomSource): File {
+            val adjective = randomSource.choose(seedData.adjectives)
+            val noun = randomSource.choose(seedData.nouns)
+            val fileExtension = randomSource.choose(seedData.fileExtensions)
+            val filepath = "${directory.path}/${adjective}_${noun}.${fileExtension}"
+            return File(filepath, directory)
+        }
     }
 }
