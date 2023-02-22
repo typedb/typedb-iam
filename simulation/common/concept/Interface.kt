@@ -17,15 +17,28 @@
 package com.vaticle.typedb.iam.simulation.common.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
+import com.vaticle.typedb.iam.simulation.typedb.Labels.INTERFACE
+import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-data class Interface(val name: String, val application: Application) {
+data class Interface(val name: String) {
+    fun asObject(): Object {
+        return com.vaticle.typedb.iam.simulation.common.concept.Object(INTERFACE, NAME, name)
+    }
+
     companion object {
         fun initialise(application: Application, seedData: SeedData, randomSource: RandomSource): Interface {
             val adjective = randomSource.choose(seedData.adjectives)
             val noun = randomSource.choose(seedData.nouns)
             val name = "${application.name} ${adjective} ${noun}"
-            return Interface(name, application)
+            return Interface(name)
+        }
+
+        fun initialise(applicationName: String, seedData: SeedData, randomSource: RandomSource): Interface {
+            val adjective = randomSource.choose(seedData.adjectives)
+            val noun = randomSource.choose(seedData.nouns)
+            val name = "${applicationName} ${adjective} ${noun}"
+            return Interface(name)
         }
     }
 }

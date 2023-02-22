@@ -17,6 +17,11 @@
 package com.vaticle.typedb.iam.simulation.common
 
 import com.vaticle.typedb.common.yaml.YAML
+import com.vaticle.typedb.iam.simulation.common.Util.int
+import com.vaticle.typedb.iam.simulation.common.Util.float
+import com.vaticle.typedb.iam.simulation.common.Util.string
+import com.vaticle.typedb.iam.simulation.common.Util.map
+import com.vaticle.typedb.iam.simulation.common.Util.list
 import com.vaticle.typedb.iam.simulation.common.concept.*
 import mu.KotlinLogging
 import java.nio.file.Paths
@@ -28,6 +33,7 @@ class SeedData() {
     val companies = initialiseCompanies()
     val femaleNames = loadFemaleNames()
     val fileExtensions = loadFileExtensions()
+    val subjectTypes = initialiseSubjectTypes()
     val lastNames = loadLastNames()
     val maleNames = loadMaleNames()
     val nouns = loadNouns()
@@ -97,6 +103,10 @@ class SeedData() {
             return list(yaml).map { string(map(it)[VALUE]) }
         }
 
+        private fun initialiseSubjectTypes(): List<SubjectType> {
+            return SubjectType.values().asList()
+        }
+
         private fun loadLastNames(): List<Map<String, Any>> {
             val yaml = YAML.load(LAST_NAMES_FILE)
 
@@ -129,7 +139,7 @@ class SeedData() {
         }
 
         private fun initialiseObjectTypes(): List<ObjectType> {
-            return ObjectType.values().toList()
+            return ObjectType.values().asList()
         }
 
         private fun initialiseOperationSets(): List<OperationSet> {
@@ -172,12 +182,6 @@ class SeedData() {
             return userRoles.map { UserRole(it) }
         }
 
-        private fun int(yaml: YAML?): Int = yaml!!.asInt().value()
-        private fun float(yaml: YAML?): Float = yaml!!.asFloat().value()
-        private fun string(yaml: YAML?): String = yaml!!.asString().value()
-        private fun map(yaml: YAML?): Map<String, YAML> = yaml!!.asMap().content()
-        private fun list(yaml: YAML?): List<YAML> = yaml!!.asList().content()
-        
         private const val VALUE = "value"
         private const val RANK = "rank"
         private const val PERCENTAGE = "percentage"

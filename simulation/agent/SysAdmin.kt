@@ -35,7 +35,8 @@ abstract class SysAdmin<SESSION> protected constructor(client: DBClient<SESSION>
         "listSubjectGroupMemberships" to::listSubjectGroupMemberships,
         "listSubjectPermissions" to::listSubjectPermissions,
         "listObjectPermissionsHolders" to::listObjectPermissionHolders,
-        "reviewChangeRequests" to::reviewChangeRequests
+        "reviewChangeRequests" to::reviewChangeRequests,
+        "collectGarbage" to::collectGarbage
     )
 
     protected abstract fun addUser(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
@@ -46,4 +47,5 @@ abstract class SysAdmin<SESSION> protected constructor(client: DBClient<SESSION>
     protected abstract fun listSubjectPermissions(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
     protected abstract fun listObjectPermissionHolders(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
     protected abstract fun reviewChangeRequests(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
+    protected abstract fun collectGarbage(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
 }

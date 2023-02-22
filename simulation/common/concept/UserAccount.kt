@@ -17,9 +17,14 @@
 package com.vaticle.typedb.iam.simulation.common.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
+import com.vaticle.typedb.iam.simulation.typedb.Labels.EMAIL
+import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_ACCOUNT
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
 data class UserAccount(val email: String) {
+    fun asSubject(): Subject {
+        return Subject(USER_ACCOUNT, EMAIL, email)
+    }
     companion object {
         fun initialise(company: Company, seedData: SeedData, randomSource: RandomSource): UserAccount {
             val adjective = randomSource.choose(seedData.adjectives)
