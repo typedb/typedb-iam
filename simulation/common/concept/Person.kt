@@ -17,9 +17,15 @@
 package com.vaticle.typedb.iam.simulation.common.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
+import com.vaticle.typedb.iam.simulation.typedb.Labels.EMAIL
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PERSON
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
 data class Person(val name: String, val email: String) {
+    fun asSubject(): Subject {
+        return Subject(PERSON, EMAIL, email)
+    }
+
     companion object {
         private const val MAX_NAME_PERCENTILE = 90
         private const val NAME_PERCENTILE_SCALE = 1000

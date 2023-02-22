@@ -17,8 +17,6 @@
 package com.vaticle.typedb.iam.simulation.agent
 
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.common.ModelParams
-import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.simulation.Agent
 import com.vaticle.typedb.simulation.common.DBClient
@@ -36,8 +34,8 @@ abstract class User<SESSION> protected constructor(client: DBClient<SESSION>, co
         "submitChangeRequest" to::submitChangeRequest
     )
 
-    protected abstract fun createObject(session: SESSION, company: Company, seedData: SeedData, randomSource: RandomSource): List<Report>
-    protected abstract fun deleteObject(session: SESSION, company: Company, seedData: SeedData, randomSource: RandomSource): List<Report>
-    protected abstract fun attemptAccess(session: SESSION, company: Company, seedData: SeedData, randomSource: RandomSource): List<Report>
-    protected abstract fun submitChangeRequest(session: SESSION, company: Company, seedData: SeedData, randomSource: RandomSource): List<Report>
+    protected abstract fun createObject(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
+    protected abstract fun deleteObject(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
+    protected abstract fun attemptAccess(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
+    protected abstract fun submitChangeRequest(session: SESSION, company: Company, randomSource: RandomSource): List<Report>
 }

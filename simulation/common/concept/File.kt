@@ -17,16 +17,30 @@
 package com.vaticle.typedb.iam.simulation.common.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
+import com.vaticle.typedb.iam.simulation.typedb.Labels.FILE
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PATH
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-data class File(val path: String, val directory: Directory) {
+data class File(val path: String) {
+    fun asObject(): Object {
+        return com.vaticle.typedb.iam.simulation.common.concept.Object(FILE, PATH, path)
+    }
+
     companion object {
         fun initialise(directory: Directory, seedData: SeedData, randomSource: RandomSource): File {
             val adjective = randomSource.choose(seedData.adjectives)
             val noun = randomSource.choose(seedData.nouns)
             val fileExtension = randomSource.choose(seedData.fileExtensions)
             val filepath = "${directory.path}/${adjective}_${noun}.${fileExtension}"
-            return File(filepath, directory)
+            return File(filepath)
+        }
+
+        fun initialise(directoryName: String, seedData: SeedData, randomSource: RandomSource): File {
+            val adjective = randomSource.choose(seedData.adjectives)
+            val noun = randomSource.choose(seedData.nouns)
+            val fileExtension = randomSource.choose(seedData.fileExtensions)
+            val filepath = "${directoryName}/${adjective}_${noun}.${fileExtension}"
+            return File(filepath)
         }
     }
 }
