@@ -72,7 +72,7 @@ class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDB
                     `var`(S_MEMBER).isaX(S_MEMBER_TYPE),
                     `var`(S_MEMBER_ID).isaX(S_MEMBER_ID_TYPE)
                 )
-            ).toList().map { Subject(typeLabel(it[S_MEMBER_TYPE]), typeLabel(it[S_MEMBER_ID_TYPE]), stringValue(it[S_MEMBER_ID])) }
+            ).toList().map { Subject(it[S_MEMBER_TYPE], it[S_MEMBER_ID_TYPE], it[S_MEMBER_ID]) }
         }
 
         val member = randomSource.choose(candidateMembers)

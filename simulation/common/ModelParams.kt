@@ -20,14 +20,19 @@ import com.vaticle.typedb.common.yaml.YAML
 import com.vaticle.typedb.iam.simulation.common.Util.int
 import com.vaticle.typedb.iam.simulation.common.Util.map
 
-class ModelParams private constructor(val requestApprovalPercentage: Int) {
+class ModelParams private constructor(val requestApprovalPercentage: Int, val permissionReviewAge: Int, val permissionRenewalPercentage: Int) {
     companion object {
         private const val REQUEST_APPROVAL_PERCENTAGE = "requestApprovalPercentage"
+        private const val PERMISSION_REVIEW_AGE = "permissionReviewAge"
+        private const val PERMISSION_RENEWAL_PERCENTAGE = "permissionRenewalPercentage"
 
         fun of(yaml: YAML.Map) {
             val requestApprovalPercentage = int(map(yaml["model"])[REQUEST_APPROVAL_PERCENTAGE])
+            val permissionReviewAge = int(map(yaml["model"])[PERMISSION_REVIEW_AGE])
+            val permissionRenewalPercentage = int(map(yaml["model"])[PERMISSION_RENEWAL_PERCENTAGE])
             assert(requestApprovalPercentage in 0..100)
-            ModelParams(requestApprovalPercentage)
+            assert(permissionRenewalPercentage in 0..100)
+            ModelParams(requestApprovalPercentage, permissionReviewAge, permissionRenewalPercentage)
         }
     }
 }

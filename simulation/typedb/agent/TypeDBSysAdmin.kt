@@ -12,6 +12,7 @@ import com.vaticle.typedb.iam.simulation.common.concept.*
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION
+import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ATTRIBUTE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.CHANGE_REQUEST
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY
@@ -41,9 +42,11 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PERSON
 import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTED_CHANGE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTED_SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTING_SUBJECT
+import com.vaticle.typedb.iam.simulation.typedb.Labels.REVIEW_DATE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
+import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.agent.Queries.getRandomEntity
 import com.vaticle.typedb.simulation.common.seed.RandomSource
@@ -140,7 +143,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     `var`(S).isaX(S_TYPE),
                     `var`(S_ID).isaX(S_ID_TYPE)
                 )
-            ).toList().map { Subject(typeLabel(it[S_TYPE]), typeLabel(it[S_ID_TYPE]), stringValue(it[S_ID])) }
+            ).toList().map { Subject(it[S_TYPE], it[S_ID_TYPE], it[S_ID]) }
         }
 
         return listOf<Report>()
@@ -161,9 +164,11 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                         .has(ID, O_ID),
                     `var`(A).isa(ACTION)
                         .has(PARENT_COMPANY, company.name)
-                        .has(NAME, A_NAME),
+                        .has(ACTION_NAME, A_NAME),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                    `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION),
+                    `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
+                        .has(VALIDITY, P_VALIDITY)
+                        .has(REVIEW_DATE, P_DATE),
                     `var`(O).isaX(O_TYPE),
                     `var`(O_ID).isaX(O_ID_TYPE),
                     `var`(A).isaX(A_TYPE)
@@ -172,8 +177,8 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                 Permission(
                     subject,
                     Access(
-                        Object(typeLabel(it[O_TYPE]), typeLabel(it[O_ID_TYPE]), stringValue(it[O_ID])),
-                        Action(typeLabel(it[A_TYPE]), stringValue(it[A_NAME]))
+                        Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]),
+                        Action(it[A_TYPE], it[A_NAME])
                     )
                 )
             }
@@ -197,7 +202,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                         .has(ID, S_ID),
                     `var`(A).isa(ACTION)
                         .has(PARENT_COMPANY, company.name)
-                        .has(NAME, A_NAME),
+                        .has(ACTION_NAME, A_NAME),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION),
                     `var`(S).isaX(S_TYPE),
@@ -206,10 +211,10 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                 )
             ).toList().map {
                 Permission(
-                    Subject(typeLabel(it[S_TYPE]), typeLabel(it[S_ID_TYPE]), stringValue(it[S_ID])),
+                    Subject(it[S_TYPE], it[S_ID_TYPE], it[S_ID]),
                     Access(
                         `object`,
-                        Action(typeLabel(it[A_TYPE]), stringValue(it[A_NAME]))
+                        Action(it[A_TYPE], it[A_NAME])
                     )
                 )
             }
@@ -229,7 +234,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                         .has(ID, O_ID),
                     `var`(A).isa(ACTION)
                         .has(PARENT_COMPANY, company.name)
-                        .has(NAME, A_NAME),
+                        .has(ACTION_NAME, A_NAME),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     `var`(S_REQUESTING).isa(SUBJECT)
                         .has(PARENT_COMPANY, company.name)
@@ -248,11 +253,11 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                 )
             ).toList().map {
                 ChangeRequest(
-                    Subject(typeLabel(it[S_REQUESTING_TYPE]), typeLabel(it[S_REQUESTING_ID_TYPE]), stringValue(it[S_REQUESTING_ID])),
-                    Subject(typeLabel(it[S_REQUESTED_TYPE]), typeLabel(it[S_REQUESTED_ID_TYPE]), stringValue(it[S_REQUESTED_ID])),
+                    Subject(it[S_REQUESTING_TYPE], it[S_REQUESTING_ID_TYPE], it[S_REQUESTING_ID]),
+                    Subject(it[S_REQUESTED_TYPE], it[S_REQUESTED_ID_TYPE], it[S_REQUESTED_ID]),
                     Access(
-                        Object(typeLabel(it[O_TYPE]), typeLabel(it[O_ID_TYPE]), stringValue(it[O_ID])),
-                        Action(typeLabel(it[A_TYPE]), stringValue(it[A_NAME]))
+                        Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]),
+                        Action(it[A_TYPE], it[A_NAME])
                     )
                 )
             }
@@ -305,6 +310,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP)
                         ).insert(
                             rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
+                                .has(REVIEW_DATE, (context.iterationNumber + context.model.permissionReviewAge).toLong())
                         )
                     )
                 }
@@ -351,7 +357,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     `var`(E).isaX(E_TYPE),
                     `var`(E_ID).isaX(E_ID_TYPE)
                 )
-            ).toList().map { Entity(typeLabel(it[E_TYPE]), typeLabel(it[E_ID_TYPE]), stringValue(it[E_ID])) }
+            ).toList().map { Entity(it[E_TYPE], it[E_ID_TYPE], it[E_ID]) }
         }
 
         session.transaction(WRITE, options).use { transaction ->
@@ -462,6 +468,8 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
         private const val O_ID_TYPE = "o-id-type"
         private const val O_TYPE = "o-type"
         private const val P = "p"
+        private const val P_DATE = "p-date"
+        private const val P_VALIDITY = "p-validity"
         private const val R = "r"
         private const val S = "s"
         private const val S_ID = "s-id"

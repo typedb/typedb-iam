@@ -40,6 +40,16 @@ object Util {
         return typeConcept.asType().label.name()
     }
 
+    fun booleanValue(attributeConcept: Concept): Boolean {
+        assert(attributeConcept.isAttribute)
+        return attributeConcept.asAttribute().asBoolean().value
+    }
+
+    fun longValue(attributeConcept: Concept): Long {
+        assert(attributeConcept.isAttribute)
+        return attributeConcept.asAttribute().asLong().value
+    }
+
     fun stringValue(attributeConcept: Concept): String {
         assert(attributeConcept.isAttribute)
         return attributeConcept.asAttribute().asString().value

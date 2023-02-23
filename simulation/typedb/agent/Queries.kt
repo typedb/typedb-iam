@@ -3,11 +3,8 @@ package com.vaticle.typedb.iam.simulation.typedb.agent
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
-import com.vaticle.typedb.iam.simulation.common.Util.stringValue
-import com.vaticle.typedb.iam.simulation.common.Util.typeLabel
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.iam.simulation.common.concept.Entity
-import com.vaticle.typedb.iam.simulation.common.concept.Subject
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ID
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
 import com.vaticle.typedb.simulation.common.seed.RandomSource
@@ -19,7 +16,7 @@ object Queries {
     private val options: TypeDBOptions = TypeDBOptions().infer(true)
 
     fun getRandomEntity(session: TypeDBSession, company: Company, randomSource: RandomSource, entityType: String): Entity {
-        val candidateEntities: List<Subject>
+        val candidateEntities: List<Entity>
 
         session.transaction(READ, options).use { transaction ->
             candidateEntities = transaction.query().match(
@@ -30,11 +27,7 @@ object Queries {
                     `var`(E).isaX(E_TYPE),
                     `var`(E_ID).isaX(E_ID_TYPE)
                 )
-            ).toList().map { Subject(
-                typeLabel(it[E_TYPE]),
-                typeLabel(it[E_ID_TYPE]),
-                stringValue(it[E_ID])
-            ) }
+            ).toList().map { Entity(it[E_TYPE], it[E_ID_TYPE], it[E_ID]) }
         }
 
         return randomSource.choose(candidateEntities)
