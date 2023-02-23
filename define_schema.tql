@@ -28,20 +28,23 @@ company-membership sub relation,
 parent-company sub attribute,
     value string;
 
+#rule attribute-parent-company:
+#    when {
+#        (parent-company: $c, company-member: $t) isa company-membership;
+#        $c has name $c-name;
+#        ?name-value = $c-name
+#    } then {
+#        $t has parent-company ?name-value;
+#    };
+
 rule attribute-parent-company:
     when {
         (parent-company: $c, company-member: $t) isa company-membership;
         $c has name $c-name;
+        $pc isa parent-company;
+        $c-name = $pc;
     } then {
-        $t has parent-company $c-name;
-    };
-
-rule transitive-parent-company:
-    when {
-        $r($t) isa relation;
-        $t has parent-company $c-name;
-    } then {
-        $r has parent-company $c-name;
+        $t has $pc;
     };
 
 root-collection sub attribute,

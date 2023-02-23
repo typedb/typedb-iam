@@ -179,7 +179,9 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     Access(
                         Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]),
                         Action(it[A_TYPE], it[A_NAME])
-                    )
+                    ),
+                    it[P_VALIDITY],
+                    it[P_DATE]
                 )
             }
         }
@@ -204,7 +206,9 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                         .has(PARENT_COMPANY, company.name)
                         .has(ACTION_NAME, A_NAME),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                    `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION),
+                    `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
+                        .has(VALIDITY, P_VALIDITY)
+                        .has(REVIEW_DATE, P_DATE),
                     `var`(S).isaX(S_TYPE),
                     `var`(S_ID).isaX(S_ID_TYPE),
                     `var`(A).isaX(A_TYPE)
@@ -215,7 +219,9 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     Access(
                         `object`,
                         Action(it[A_TYPE], it[A_NAME])
-                    )
+                    ),
+                    it[P_VALIDITY],
+                    it[P_DATE]
                 )
             }
         }
