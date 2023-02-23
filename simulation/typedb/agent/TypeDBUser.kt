@@ -43,6 +43,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTING_SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ROOT_COLLECTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.TABLE
+import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
@@ -82,7 +83,7 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
                     `var`(O).isaX(O_TYPE),
                     `var`(O_ID).isaX(O_ID_TYPE)
                 )
-            ).toList().map { Object(typeLabel(it[O_TYPE]), typeLabel(it[O_ID_TYPE]), stringValue(it[O_ID])) }
+            ).toList().map { Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         val `object` = randomSource.choose(candidateObjects)
@@ -101,7 +102,7 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
                     `var`(O_MEMBER).isaX(O_MEMBER_TYPE),
                     `var`(O_MEMBER_ID).isaX(O_MEMBER_ID_TYPE)
                 )
-            ).toList().map { Object(typeLabel(it[O_MEMBER_TYPE]), typeLabel(it[O_MEMBER_ID_TYPE]), stringValue(it[O_MEMBER_ID])) }
+            ).toList().map { Object(it[O_MEMBER_TYPE], it[O_MEMBER_ID_TYPE], it[O_MEMBER_ID]) }
         }
 
         val objectsToDelete = members + listOf(`object`)
@@ -209,7 +210,7 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
                     `var`(O).isaX(O_TYPE),
                     `var`(O_ID).isaX(O_ID_TYPE)
                 )
-            ).toList().map { Object(typeLabel(it[O_TYPE]), typeLabel(it[O_ID_TYPE]), stringValue(it[O_ID])) }
+            ).toList().map { Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         val `object` = randomSource.choose(candidateObjects)
@@ -244,8 +245,9 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
                     `var`(A).isa(action.type)
                         .has(PARENT_COMPANY, company.name)
                         .has(action.idType, action.idValue),
-                    `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A),
-                    rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC)
+                    `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                    rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
+                        .has(VALIDITY, true)
                 )
             ).toList()
         }
@@ -269,7 +271,7 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
                     `var`(O).isaX(O_TYPE),
                     `var`(O_ID).isaX(O_ID_TYPE)
                 )
-            ).toList().map { Object(typeLabel(it[O_TYPE]), typeLabel(it[O_ID_TYPE]), stringValue(it[O_ID])) }
+            ).toList().map { Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         val `object` = randomSource.choose(candidateObjects)
@@ -353,7 +355,7 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
                         .has(ACTION_NAME, A_NAME),
                     `var`(A).isaX(A_TYPE)
                 )
-            ).toList().map { Action(typeLabel(it[A_TYPE]), stringValue(it[A_NAME])) }
+            ).toList().map { Action(it[A_TYPE], it[A_NAME]) }
         }
 
         session.transaction(WRITE, options).use { transaction ->
@@ -411,7 +413,7 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
                         .has(ACTION_NAME, A_NAME),
                     `var`(A).isaX(A_TYPE)
                 )
-            ).toList().map { Action(typeLabel(it[A_TYPE]), stringValue(it[A_NAME])) }
+            ).toList().map { Action(it[A_TYPE], it[A_NAME]) }
         }
 
         session.transaction(WRITE, options).use { transaction ->
