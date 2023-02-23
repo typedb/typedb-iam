@@ -5,57 +5,33 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.PolicyManager
-import com.vaticle.typedb.iam.simulation.agent.SysAdmin
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.common.Util.stringValue
-import com.vaticle.typedb.iam.simulation.common.Util.typeLabel
 import com.vaticle.typedb.iam.simulation.common.concept.*
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION_NAME
-import com.vaticle.typedb.iam.simulation.typedb.Labels.ATTRIBUTE
-import com.vaticle.typedb.iam.simulation.typedb.Labels.CHANGE_REQUEST
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY_MEMBER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY_MEMBERSHIP
-import com.vaticle.typedb.iam.simulation.typedb.Labels.EMAIL
-import com.vaticle.typedb.iam.simulation.typedb.Labels.ENTITY
-import com.vaticle.typedb.iam.simulation.typedb.Labels.FULL_NAME
-import com.vaticle.typedb.iam.simulation.typedb.Labels.GROUP_MEMBER
-import com.vaticle.typedb.iam.simulation.typedb.Labels.GROUP_MEMBERSHIP
-import com.vaticle.typedb.iam.simulation.typedb.Labels.GROUP_OWNER
-import com.vaticle.typedb.iam.simulation.typedb.Labels.GROUP_OWNERSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ID
 import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OPERATION
-import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED
-import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED_GROUP
-import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNER
-import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNERSHIP
-import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
-import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_GROUP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PERMISSION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PERMITTED_ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PERMITTED_SUBJECT
-import com.vaticle.typedb.iam.simulation.typedb.Labels.PERSON
-import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTED_CHANGE
-import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTED_SUBJECT
-import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTING_SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.REVIEW_DATE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SEGREGATED_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SEGREGATION_POLICY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
-import com.vaticle.typedb.iam.simulation.typedb.Labels.USER
-import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
+import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.agent.Queries.getRandomEntity
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
-import java.lang.IllegalArgumentException
 import kotlin.streams.toList
 
 class TypeDBPolicyManager(client: TypeDBClient, context:Context): PolicyManager<TypeDBSession>(client, context) {
@@ -77,8 +53,9 @@ class TypeDBPolicyManager(client: TypeDBClient, context:Context): PolicyManager<
                         .has(ACTION_NAME, A_NAME),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
-                        .has(REVIEW_DATE, P_REVIEW_DATE),
-                    `var`(P_REVIEW_DATE).lte(context.model.permissionReviewAge.toLong()),
+                        .has(VALIDITY, P_VALIDITY)
+                        .has(REVIEW_DATE, P_DATE),
+                    `var`(P_DATE).lte(context.model.permissionReviewAge.toLong()),
                     `var`(S).isaX(S_TYPE),
                     `var`(S_ID).isaX(S_ID_TYPE),
                     `var`(O).isaX(O_TYPE),
@@ -116,8 +93,8 @@ class TypeDBPolicyManager(client: TypeDBClient, context:Context): PolicyManager<
                         .has(ACTION_NAME, A_NAME),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
-                        .has(REVIEW_DATE, P_REVIEW_DATE),
-                    `var`(P_REVIEW_DATE).lte(context.model.permissionReviewAge.toLong()),
+                        .has(REVIEW_DATE, P_DATE),
+                    `var`(P_DATE).lte(context.model.permissionReviewAge.toLong()),
                     `var`(S).isaX(S_TYPE),
                     `var`(S_ID).isaX(S_ID_TYPE),
                     `var`(O).isaX(O_TYPE),
@@ -324,7 +301,7 @@ class TypeDBPolicyManager(client: TypeDBClient, context:Context): PolicyManager<
         private const val O_MEMBER_TYPE = "o-member-type"
         private const val O_TYPE = "o-type"
         private const val P = "p"
-        private const val P_REVIEW_DATE = "p-review-date"
+        private const val P_DATE = "p-review-date"
         private const val R = "r"
         private const val S = "s"
         private const val SP = "sp"
