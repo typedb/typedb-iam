@@ -6,10 +6,8 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.Supervisor
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.common.Util.stringValue
-import com.vaticle.typedb.iam.simulation.common.Util.typeLabel
 import com.vaticle.typedb.iam.simulation.common.concept.*
-import com.vaticle.typedb.iam.simulation.typedb.agent.Queries.getRandomEntity
+import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY_MEMBER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY_MEMBERSHIP

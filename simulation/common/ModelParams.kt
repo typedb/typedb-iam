@@ -26,13 +26,11 @@ class ModelParams private constructor(val requestApprovalPercentage: Int, val pe
         private const val PERMISSION_REVIEW_AGE = "permissionReviewAge"
         private const val PERMISSION_RENEWAL_PERCENTAGE = "permissionRenewalPercentage"
 
-        fun of(yaml: YAML.Map) {
+        fun of(yaml: YAML.Map): ModelParams {
             val requestApprovalPercentage = int(map(yaml["model"])[REQUEST_APPROVAL_PERCENTAGE])
             val permissionReviewAge = int(map(yaml["model"])[PERMISSION_REVIEW_AGE])
             val permissionRenewalPercentage = int(map(yaml["model"])[PERMISSION_RENEWAL_PERCENTAGE])
-            assert(requestApprovalPercentage in 0..100)
-            assert(permissionRenewalPercentage in 0..100)
-            ModelParams(requestApprovalPercentage, permissionReviewAge, permissionRenewalPercentage)
+            return ModelParams(requestApprovalPercentage, permissionReviewAge, permissionRenewalPercentage)
         }
     }
 }

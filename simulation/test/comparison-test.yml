@@ -15,15 +15,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-agents:
-  - name: "AddUserAgent"
-    isEnabled: true
-    trace: true
+#agents:
+#  - name: "AddUserAgent"
+#    isEnabled: true
+#    trace: true
 
 run:
   randomSeed: 1
   iterations: 5
-  databaseName: "simulation"
+  databaseName: "iam-simulation"
 
 model:
   populationGrowth: 5

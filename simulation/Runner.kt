@@ -23,6 +23,7 @@ import com.vaticle.typedb.iam.simulation.neo4j.Neo4jSimulation
 import com.vaticle.typedb.iam.simulation.typedb.TypeDBSimulation
 import com.vaticle.typedb.simulation.common.params.Database
 import com.vaticle.typedb.simulation.common.params.Options
+import java.lang.IllegalArgumentException
 
 class Runner : com.vaticle.typedb.simulation.Runner<ModelParams>() {
 
@@ -31,7 +32,7 @@ class Runner : com.vaticle.typedb.simulation.Runner<ModelParams>() {
         return when (options.database) {
             Database.TYPEDB -> TypeDBSimulation.core(options.address, context)
             Database.TYPEDB_CLUSTER -> TypeDBSimulation.cluster(options.address, context)
-            Database.NEO4J -> Neo4jSimulation.create(options.address, context)
+            Database.NEO4J -> throw IllegalArgumentException() // until Neo4jSimulation.create(options.address, context) is implemented
         }
     }
 

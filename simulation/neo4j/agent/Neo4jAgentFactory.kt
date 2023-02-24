@@ -16,44 +16,35 @@
  */
 package com.vaticle.typedb.iam.simulation.neo4j.agent
 
-import com.vaticle.typedb.iam.simulation.agent.AgentFactory
+import com.vaticle.typedb.iam.simulation.agent.*
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.simulation.neo4j.Neo4jClient
 
 class Neo4jAgentFactory(client: Neo4jClient, context: Context) : AgentFactory<Neo4jClient>(client, context) {
 
-    override fun createPersonAgent(client: Neo4jClient, context: Context) = Neo4jPersonAgent(client, context)
-    override fun createFriendshipAgent(client: Neo4jClient, context: Context) = Neo4jFriendshipAgent(client, context)
-    override fun createMarriageAgent(client: Neo4jClient, context: Context) = Neo4jMarriageAgent(client, context)
-    override fun createParenthoodAgent(client: Neo4jClient, context: Context) = Neo4jParenthoodAgent(client, context)
-
-    override fun createLineageAgent(client: Neo4jClient, context: Context): Nothing {
-        throw unsupportedReasoningAgentException("LineageAgent")
-    }
-
-    override fun createNationalityAgent(client: Neo4jClient, context: Context): Nothing {
-        throw unsupportedReasoningAgentException("NationalityAgent")
-    }
-
-    override fun createCitizenshipAgent(client: Neo4jClient, context: Context): Nothing {
-        throw unsupportedReasoningAgentException("CitizenshipAgent")
-    }
-
-    override fun createMaritalStatusAgent(client: Neo4jClient, context: Context): Nothing {
-        throw unsupportedReasoningAgentException("MaritalStatusAgent")
-    }
-
-    override fun createCoupleFriendshipAgent(client: Neo4jClient, context: Context): Nothing {
-        throw unsupportedReasoningAgentException("CoupleFriendshipAgent")
-    }
-
-    override fun createGrandparenthoodAgent(client: Neo4jClient, context: Context): Nothing {
-        throw unsupportedReasoningAgentException("GrandparenthoodAgent")
-    }
-
     companion object {
         fun unsupportedReasoningAgentException(agentName: String): UnsupportedOperationException {
             return UnsupportedOperationException("$agentName requires reasoning, which is not supported by Neo4j")
         }
+    }
+
+    override fun user(client: Neo4jClient, context: Context): User<*> {
+        TODO("Not yet implemented")
+    }
+
+    override fun owner(client: Neo4jClient, context: Context): Owner<*> {
+        TODO("Not yet implemented")
+    }
+
+    override fun supervisor(client: Neo4jClient, context: Context): Supervisor<*> {
+        TODO("Not yet implemented")
+    }
+
+    override fun policyManager(client: Neo4jClient, context: Context): PolicyManager<*> {
+        TODO("Not yet implemented")
+    }
+
+    override fun sysAdmin(client: Neo4jClient, context: Context): SysAdmin<*> {
+        TODO("Not yet implemented")
     }
 }

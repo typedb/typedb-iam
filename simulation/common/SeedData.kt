@@ -26,7 +26,7 @@ import com.vaticle.typedb.iam.simulation.common.concept.*
 import mu.KotlinLogging
 import java.nio.file.Paths
 
-class SeedData() {
+class SeedData {
     val adjectives = loadAdjectives()
     val applications = initialiseApplications()
     val businessUnits = initialiseBusinessUnits()

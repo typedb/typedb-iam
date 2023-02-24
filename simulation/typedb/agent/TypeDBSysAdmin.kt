@@ -6,8 +6,6 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.SysAdmin
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.common.Util.stringValue
-import com.vaticle.typedb.iam.simulation.common.Util.typeLabel
 import com.vaticle.typedb.iam.simulation.common.concept.*
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
@@ -32,7 +30,6 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED_GROUP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNERSHIP
-import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_GROUP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PERMISSION
@@ -45,10 +42,11 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTING_SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.REVIEW_DATE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER
+import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_ACCOUNT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
-import com.vaticle.typedb.iam.simulation.typedb.agent.Queries.getRandomEntity
+import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
@@ -121,7 +119,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
     }
 
     override fun deleteUserGroup(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val groupType = randomSource.choose(context.seedData.subjectTypes.filter { it.type == USER_GROUP })
+        val groupType = SubjectType.USER_ACCOUNT
         deleteSubject(session, company, randomSource, groupType)
         return listOf<Report>()
     }
@@ -335,6 +333,9 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     `var`(AT).isa(ATTRIBUTE),
                     not(
                         `var`().has(ATTRIBUTE, AT)
+                    ),
+                    not(
+                        `var`(AT).isa(PARENT_COMPANY)
                     )
                 ).delete(
                     `var`(AT).isa(ATTRIBUTE)

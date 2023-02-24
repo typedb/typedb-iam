@@ -16,7 +16,6 @@
  */
 package com.vaticle.typedb.iam.simulation.common
 
-import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.common.yaml.YAML
 import java.time.Duration
 import java.time.Instant
@@ -34,24 +33,4 @@ object Util {
     fun string(yaml: YAML?): String = yaml!!.asString().value()
     fun map(yaml: YAML?): Map<String, YAML> = yaml!!.asMap().content()
     fun list(yaml: YAML?): List<YAML> = yaml!!.asList().content()
-
-    fun typeLabel(typeConcept: Concept): String {
-        assert(typeConcept.isType)
-        return typeConcept.asType().label.name()
-    }
-
-    fun booleanValue(attributeConcept: Concept): Boolean {
-        assert(attributeConcept.isAttribute)
-        return attributeConcept.asAttribute().asBoolean().value
-    }
-
-    fun longValue(attributeConcept: Concept): Long {
-        assert(attributeConcept.isAttribute)
-        return attributeConcept.asAttribute().asLong().value
-    }
-
-    fun stringValue(attributeConcept: Concept): String {
-        assert(attributeConcept.isAttribute)
-        return attributeConcept.asAttribute().asString().value
-    }
 }
