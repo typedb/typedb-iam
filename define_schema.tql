@@ -140,6 +140,7 @@ set-membership sub membership,
     relates set-member as member;
 
 ownership sub relation,
+    abstract,
     relates owned,
     relates owner;
 
@@ -215,7 +216,8 @@ user-account sub user-group,
     owns email;
 
 file sub resource,
-    owns path;
+    owns path,
+    owns size-kb;
 
 interface sub resource,
     owns name;
@@ -224,7 +226,8 @@ record sub resource,
     owns number;
 
 directory sub resource-collection,
-    owns path;
+    owns path,
+    owns size-kb;
 
 application sub resource-collection,
     owns name;
@@ -253,6 +256,9 @@ number sub id,
 
 full-name sub attribute,
     value string;
+
+size-kb sub attribute,
+    value long;
 
 rule transitive-membership:
     when {

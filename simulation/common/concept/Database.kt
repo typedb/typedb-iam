@@ -7,7 +7,7 @@ import com.vaticle.typedb.simulation.common.seed.RandomSource
 
 data class Database(val name: String) {
     fun asObject(): Object {
-        return com.vaticle.typedb.iam.simulation.common.concept.Object(DATABASE, NAME, name)
+        return Object(DATABASE, NAME, name)
     }
 
     companion object {

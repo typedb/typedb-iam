@@ -70,7 +70,7 @@ object Labels {
     const val SEGREGATION_VIOLATION = "segregation-violation"
     const val VIOLATING_SUBJECT = "violating-subject"
     const val VIOLATING_OBJECT = "violating-object"
-    const val VIOLATING_POLICY = "violated-policy"
+    const val VIOLATED_POLICY = "violated-policy"
     const val CREDENTIAL = "credential"
     const val OBJECT_TYPE = "object-type"
     const val ACTION_NAME = "action-name"

@@ -23,8 +23,8 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.User
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.SeedData
-import com.vaticle.typedb.iam.simulation.common.Util.stringValue
-import com.vaticle.typedb.iam.simulation.common.Util.printDuration
+import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
+import com.vaticle.typedb.iam.simulation.typedb.Util.printDuration
 import com.vaticle.typedb.iam.simulation.common.concept.*
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION_NAME
@@ -93,7 +93,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
             session.transaction(WRITE, options).use { transaction ->
                 transaction.query().insert(
                     insert(
-                        `var`().isa(COMPANY).has(NAME, company.name)
+                        `var`().isa(COMPANY).has(NAME, company.name),
+                        `var`().eq(company.name).isa(PARENT_COMPANY)
                     )
                 )
 

@@ -6,13 +6,12 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.Owner
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.concept.*
-import com.vaticle.typedb.iam.simulation.typedb.agent.Queries.getRandomEntity
+import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY_MEMBER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY_MEMBERSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.GROUP_OWNER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.GROUP_OWNERSHIP
-import com.vaticle.typedb.iam.simulation.typedb.Labels.ID
 import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT_OWNER
@@ -25,7 +24,6 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
-import kotlin.streams.toList
 
 class TypeDBOwner(client: TypeDBClient, context:Context): Owner<TypeDBSession>(client, context) {
     private val options: TypeDBOptions = TypeDBOptions().infer(true)
