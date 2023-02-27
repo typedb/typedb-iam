@@ -1,4 +1,4 @@
-package com.vaticle.typedb.iam.simulation.common.concept
+package com.vaticle.typedb.iam.simulation.typedb.concept
 
 import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.iam.simulation.typedb.Util.booleanValue

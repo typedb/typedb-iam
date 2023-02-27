@@ -7,7 +7,7 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.concept.Concept
 import com.vaticle.typedb.iam.simulation.common.concept.Company
-import com.vaticle.typedb.iam.simulation.common.concept.Entity
+import com.vaticle.typedb.iam.simulation.typedb.concept.Entity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ID
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
 import com.vaticle.typedb.simulation.common.seed.RandomSource
@@ -18,7 +18,7 @@ import java.time.LocalDateTime
 import kotlin.streams.toList
 
 object Util {
-    private val options: TypeDBOptions = TypeDBOptions().infer(true)
+    private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     fun typeLabel(typeConcept: Concept): String {
         assert(typeConcept.isType)
@@ -98,7 +98,7 @@ object Util {
             .filter { transaction.query().explain(it.value).toList().isNotEmpty() }
         val baseFacts = conceptMap.concepts().filterNot { it.asThing().isInferred }.toSet()
 
-        if (explainables.isEmpty()) return setOf(Proof(baseFacts))
+        if (explainables.isEmpty()) return setOf(Proof(baseFacts, setOf()))
 
         val proofsOfExplainables = mutableSetOf<MutableSet<Proof>>()
 
@@ -112,7 +112,7 @@ object Util {
                 val proofsOfCondition = getProofs(transaction, condition)
 
                 proofsOfCondition.forEach { proofOfCondition ->
-                    val proofOfExplainable = proofOfCondition.unionWith(setOf(rule))
+                    val proofOfExplainable = proofOfCondition.unionWith(Proof(setOf(), setOf(rule)))
                     proofsOfExplainable += proofOfExplainable
                 }
             }
@@ -124,7 +124,7 @@ object Util {
         val proofSets = cartesianProduct(proofsOfExplainables.toList().map { it.toList() }).map { it.toSet() }.toSet()
 
         proofSets.forEach { proofSet ->
-            val proofOfConceptMap = Proof.unionOf(proofSet).unionWith(baseFacts)
+            val proofOfConceptMap = Proof.unionOf(proofSet).unionWith(Proof(baseFacts, setOf()))
             proofsOfConceptMap += proofOfConceptMap
         }
 

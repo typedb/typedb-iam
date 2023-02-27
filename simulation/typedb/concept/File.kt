@@ -14,31 +14,33 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.vaticle.typedb.iam.simulation.common.concept
+package com.vaticle.typedb.iam.simulation.typedb.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
-import com.vaticle.typedb.iam.simulation.typedb.Labels.INTERFACE
-import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
+import com.vaticle.typedb.iam.simulation.typedb.Labels.FILE
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PATH
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-data class Interface(val name: String) {
+data class File(val path: String) {
     fun asObject(): Object {
-        return com.vaticle.typedb.iam.simulation.common.concept.Object(INTERFACE, NAME, name)
+        return Object(FILE, PATH, path)
     }
 
     companion object {
-        fun initialise(application: Application, seedData: SeedData, randomSource: RandomSource): Interface {
+        fun initialise(directory: Directory, seedData: SeedData, randomSource: RandomSource): File {
             val adjective = randomSource.choose(seedData.adjectives)
             val noun = randomSource.choose(seedData.nouns)
-            val name = "${application.name} ${adjective} ${noun}"
-            return Interface(name)
+            val fileExtension = randomSource.choose(seedData.fileExtensions)
+            val filepath = "${directory.path}/${adjective}_${noun}.${fileExtension}"
+            return File(filepath)
         }
 
-        fun initialise(applicationName: String, seedData: SeedData, randomSource: RandomSource): Interface {
+        fun initialise(directoryName: String, seedData: SeedData, randomSource: RandomSource): File {
             val adjective = randomSource.choose(seedData.adjectives)
             val noun = randomSource.choose(seedData.nouns)
-            val name = "${applicationName} ${adjective} ${noun}"
-            return Interface(name)
+            val fileExtension = randomSource.choose(seedData.fileExtensions)
+            val filepath = "${directoryName}/${adjective}_${noun}.${fileExtension}"
+            return File(filepath)
         }
     }
 }

@@ -14,23 +14,31 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.vaticle.typedb.iam.simulation.common.concept
+package com.vaticle.typedb.iam.simulation.typedb.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
-import com.vaticle.typedb.iam.simulation.typedb.Labels.EMAIL
-import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_ACCOUNT
+import com.vaticle.typedb.iam.simulation.typedb.Labels.INTERFACE
+import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-data class UserAccount(val email: String) {
-    fun asSubject(): Subject {
-        return Subject(USER_ACCOUNT, EMAIL, email)
+data class Interface(val name: String) {
+    fun asObject(): Object {
+        return Object(INTERFACE, NAME, name)
     }
+
     companion object {
-        fun initialise(company: Company, seedData: SeedData, randomSource: RandomSource): UserAccount {
+        fun initialise(application: Application, seedData: SeedData, randomSource: RandomSource): Interface {
             val adjective = randomSource.choose(seedData.adjectives)
             val noun = randomSource.choose(seedData.nouns)
-            val email = "${adjective}.${noun}@${company.domainName}.com"
-            return UserAccount(email)
+            val name = "${application.name} ${adjective} ${noun}"
+            return Interface(name)
+        }
+
+        fun initialise(applicationName: String, seedData: SeedData, randomSource: RandomSource): Interface {
+            val adjective = randomSource.choose(seedData.adjectives)
+            val noun = randomSource.choose(seedData.nouns)
+            val name = "${applicationName} ${adjective} ${noun}"
+            return Interface(name)
         }
     }
 }
