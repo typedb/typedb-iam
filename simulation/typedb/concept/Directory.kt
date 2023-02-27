@@ -1,4 +1,4 @@
-package com.vaticle.typedb.iam.simulation.common.concept
+package com.vaticle.typedb.iam.simulation.typedb.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.iam.simulation.typedb.Labels.DIRECTORY

@@ -18,128 +18,128 @@
 agents:
   - name: "SysAdmin"
     action: "addUser"
-    runCount: 50
+    runsPerIteration: 50
     trace: true
 
   - name: "SysAdmin"
     action: "createUserGroup"
-    runCount: 5
+    runsPerIteration: 5
     trace: true
 
   - name: "Supervisor"
     action: "assignGroupMembership"
-    runCount: 20
+    runsPerIteration: 20
     trace: true
 
   - name: "PolicyManager"
     action: "listSegregationPolicies"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
   - name: "PolicyManager"
     action: "revokeSegregationPolicy"
-    runCount: 3
+    runsPerIteration: 3
     trace: true
 
   - name: "PolicyManager"
     action: "assignSegregationPolicy"
-    runCount: 3
+    runsPerIteration: 3
     trace: true
 
 
 
   - name: "SysAdmin"
     action: "reviewChangeRequests"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
   - name: "PolicyManager"
     action: "listPermissionsPendingReview"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
   - name: "PolicyManager"
     action: "reviewPermissions"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
   - name: "PolicyManager"
     action: "listSegregationViolations"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
   - name: "PolicyManager"
     action: "reviewSegregationViolations"
-    runCount: 0
+    runsPerIteration: 0
     trace: true
 
 
 
   - name: "User"
     action: "attemptAccess"
-    runCount: 2000
+    runsPerIteration: 2000
     trace: true
 
   - name: "User"
     action: "submitChangeRequest"
-    runCount: 100
+    runsPerIteration: 100
     trace: true
 
   - name: "User"
     action: "createObject"
-    runCount: 200
+    runsPerIteration: 200
     trace: true
 
   - name: "Owner"
     action: "changeGroupOwnership"
-    runCount: 10
+    runsPerIteration: 10
     trace: true
 
   - name: "Owner"
     action: "changeObjectOwnership"
-    runCount: 100
+    runsPerIteration: 100
     trace: true
 
   - name: "User"
     action: "deleteObject"
-    runCount: 50
+    runsPerIteration: 50
     trace: true
 
   - name: "SysAdmin"
     action: "listSubjectGroupMemberships"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
   - name: "SysAdmin"
     action: "listSubjectPermissions"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
   - name: "SysAdmin"
     action: "listObjectPermissionHolders"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
 
 
   - name: "Supervisor"
     action: "revokeGroupMembership"
-    runCount: 10
+    runsPerIteration: 10
     trace: true
 
   - name: "SysAdmin"
     action: "removeUser"
-    runCount: 20
+    runsPerIteration: 20
     trace: true
 
   - name: "SysAdmin"
     action: "deleteUserGroup"
-    runCount: 2
+    runsPerIteration: 2
     trace: true
 
   - name: "SysAdmin"
     action: "collectGarbage"
-    runCount: 1
+    runsPerIteration: 1
     trace: true
 
 

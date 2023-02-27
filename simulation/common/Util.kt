@@ -29,7 +29,7 @@ object Util {
     }
 
     fun int(yaml: YAML?): Int = yaml!!.asInt().value()
-    fun float(yaml: YAML?): Float = yaml!!.asFloat().value()
+    fun double(yaml: YAML?): Double = yaml!!.asDouble().value()
     fun string(yaml: YAML?): String = yaml!!.asString().value()
     fun map(yaml: YAML?): Map<String, YAML> = yaml!!.asMap().content()
     fun list(yaml: YAML?): List<YAML> = yaml!!.asList().content()

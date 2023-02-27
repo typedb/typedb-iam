@@ -8,7 +8,6 @@ import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.agent.User
 import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
-import com.vaticle.typedb.iam.simulation.common.concept.*
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
@@ -41,6 +40,16 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.ROOT_COLLECTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
+import com.vaticle.typedb.iam.simulation.typedb.concept.Action
+import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.typedb.concept.Database
+import com.vaticle.typedb.iam.simulation.typedb.concept.Directory
+import com.vaticle.typedb.iam.simulation.typedb.concept.File
+import com.vaticle.typedb.iam.simulation.typedb.concept.Interface
+import com.vaticle.typedb.iam.simulation.typedb.concept.Object
+import com.vaticle.typedb.iam.simulation.typedb.concept.ObjectType
+import com.vaticle.typedb.iam.simulation.typedb.concept.Record
+import com.vaticle.typedb.iam.simulation.typedb.concept.Table
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
@@ -48,10 +57,10 @@ import java.lang.IllegalArgumentException
 import kotlin.streams.toList
 
 class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(client, context) {
-    private val options: TypeDBOptions = TypeDBOptions().infer(true)
+    private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val objectType = randomSource.choose(context.seedData.objectTypes.filter { it.generable })
+        val objectType = randomSource.choose(ObjectType.values().asList().filter { it.generable })
 
         when (objectType) {
             ObjectType.FILE -> createObject(session, company, randomSource, objectType)
@@ -469,10 +478,7 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
         private const val P = "p"
         private const val R = "r"
         private const val S = "s"
-        private const val S_ID = "s-id"
-        private const val S_ID_TYPE = "s-id-type"
         private const val S_REQUESTED = "s-requested"
         private const val S_REQUESTING = "s-requesting"
-        private const val S_TYPE = "s-type"
     }
 }

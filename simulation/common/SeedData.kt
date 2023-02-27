@@ -18,11 +18,16 @@ package com.vaticle.typedb.iam.simulation.common
 
 import com.vaticle.typedb.common.yaml.YAML
 import com.vaticle.typedb.iam.simulation.common.Util.int
-import com.vaticle.typedb.iam.simulation.common.Util.float
+import com.vaticle.typedb.iam.simulation.common.Util.double
 import com.vaticle.typedb.iam.simulation.common.Util.string
 import com.vaticle.typedb.iam.simulation.common.Util.map
 import com.vaticle.typedb.iam.simulation.common.Util.list
-import com.vaticle.typedb.iam.simulation.common.concept.*
+import com.vaticle.typedb.iam.simulation.common.concept.Application
+import com.vaticle.typedb.iam.simulation.common.concept.BusinessUnit
+import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.common.concept.Operation
+import com.vaticle.typedb.iam.simulation.common.concept.OperationSet
+import com.vaticle.typedb.iam.simulation.common.concept.UserRole
 import mu.KotlinLogging
 import java.nio.file.Paths
 
@@ -33,11 +38,9 @@ class SeedData {
     val companies = initialiseCompanies()
     val femaleNames = loadFemaleNames()
     val fileExtensions = loadFileExtensions()
-    val subjectTypes = initialiseSubjectTypes()
     val lastNames = loadLastNames()
     val maleNames = loadMaleNames()
     val nouns = loadNouns()
-    val objectTypes = initialiseObjectTypes()
     val operationSets = initialiseOperationSets()
     val operations = initialiseOperations()
     val ownershipTypes = loadOwnershipTypes()
@@ -91,8 +94,8 @@ class SeedData {
             val femaleNames = list(yaml).map { mapOf(
                 VALUE to string(map(it)[VALUE]),
                 RANK to int(map(it)[RANK]),
-                PERCENTAGE to float(map(it)[PERCENTAGE]),
-                PERCENTILE to float(map(it)[PERCENTILE])
+                PERCENTAGE to double(map(it)[PERCENTAGE]),
+                PERCENTILE to double(map(it)[PERCENTILE])
             ) }
 
             return femaleNames
@@ -103,18 +106,14 @@ class SeedData {
             return list(yaml).map { string(map(it)[VALUE]) }
         }
 
-        private fun initialiseSubjectTypes(): List<SubjectType> {
-            return SubjectType.values().asList()
-        }
-
         private fun loadLastNames(): List<Map<String, Any>> {
             val yaml = YAML.load(LAST_NAMES_FILE)
 
             val lastNames = list(yaml).map { mapOf(
                 VALUE to string(map(it)[VALUE]),
                 RANK to int(map(it)[RANK]),
-                PERCENTAGE to float(map(it)[PERCENTAGE]),
-                PERCENTILE to float(map(it)[PERCENTILE])
+                PERCENTAGE to double(map(it)[PERCENTAGE]),
+                PERCENTILE to double(map(it)[PERCENTILE])
             ) }
 
             return lastNames
@@ -126,8 +125,8 @@ class SeedData {
             val maleNames = list(yaml).map { mapOf(
                 VALUE to string(map(it)[VALUE]),
                 RANK to int(map(it)[RANK]),
-                PERCENTAGE to float(map(it)[PERCENTAGE]),
-                PERCENTILE to float(map(it)[PERCENTILE])
+                PERCENTAGE to double(map(it)[PERCENTAGE]),
+                PERCENTILE to double(map(it)[PERCENTILE])
             ) }
 
             return maleNames
@@ -136,10 +135,6 @@ class SeedData {
         private fun loadNouns(): List<String> {
             val yaml = YAML.load(NOUNS_FILE)
             return list(yaml).map { string(map(it)[VALUE]) }
-        }
-
-        private fun initialiseObjectTypes(): List<ObjectType> {
-            return ObjectType.values().asList()
         }
 
         private fun initialiseOperationSets(): List<OperationSet> {

@@ -6,7 +6,6 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.Supervisor
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.common.concept.*
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY_MEMBER
@@ -19,13 +18,15 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_GROUP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
+import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.typedb.concept.Subject
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
 import kotlin.streams.toList
 
 class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDBSession>(client, context) {
-    private val options: TypeDBOptions = TypeDBOptions().infer(true)
+    private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun assignGroupMembership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val group = getRandomEntity(session, company, randomSource, USER_GROUP).asSubject()
@@ -102,12 +103,9 @@ class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDB
         private const val C = "c"
         private const val ME = "me"
         private const val S = "s"
-        private const val S_ID = "s-id"
-        private const val S_ID_TYPE = "s-id-type"
         private const val S_MEMBER = "s-member"
         private const val S_MEMBER_ID = "s-member-id"
         private const val S_MEMBER_TYPE = "s-member-type"
         private const val S_MEMBER_ID_TYPE = "s-member-id-type"
-        private const val S_TYPE = "s-type"
     }
 }

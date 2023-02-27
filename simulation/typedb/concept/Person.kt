@@ -14,12 +14,18 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package com.vaticle.typedb.iam.simulation.common.concept
+package com.vaticle.typedb.iam.simulation.typedb.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
+import com.vaticle.typedb.iam.simulation.typedb.Labels.EMAIL
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PERSON
 import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.iam.simulation.common.concept.Company
 
 data class Person(val name: String, val email: String) {
+    fun asSubject(): Subject {
+        return Subject(PERSON, EMAIL, email)
+    }
 
     companion object {
         private const val MAX_NAME_PERCENTILE = 90

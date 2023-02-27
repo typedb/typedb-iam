@@ -6,7 +6,6 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.SysAdmin
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.common.concept.*
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION
@@ -42,11 +41,12 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.REQUESTING_SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.REVIEW_DATE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER
-import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_ACCOUNT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
+import com.vaticle.typedb.iam.simulation.typedb.concept.*
+import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
@@ -54,7 +54,7 @@ import java.lang.IllegalArgumentException
 import kotlin.streams.toList
 
 class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSession>(client, context) {
-    private val options: TypeDBOptions = TypeDBOptions().infer(true)
+    private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun addUser(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val user = Person.initialise(company, context.seedData, randomSource)
@@ -79,13 +79,13 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
     }
 
     override fun removeUser(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val userType = randomSource.choose(context.seedData.subjectTypes.filter { it.type == USER })
+        val userType = randomSource.choose(SubjectType.values().asList().filter { it.type == USER })
         deleteSubject(session, company, randomSource, userType)
         return listOf<Report>()
     }
 
     override fun createUserGroup(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val groupType = randomSource.choose(context.seedData.subjectTypes.filter { it.type == USER_GROUP && it.generable })
+        val groupType = randomSource.choose(SubjectType.values().asList().filter { it.type == USER_GROUP && it.generable })
 
         val group = when (groupType) {
             SubjectType.PERSON -> throw IllegalArgumentException()
@@ -141,7 +141,13 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     `var`(S).isaX(S_TYPE),
                     `var`(S_ID).isaX(S_ID_TYPE)
                 )
-            ).toList().map { Subject(it[S_TYPE], it[S_ID_TYPE], it[S_ID]) }
+            ).toList().map {
+                Subject(
+                    it[S_TYPE],
+                    it[S_ID_TYPE],
+                    it[S_ID]
+                )
+            }
         }
 
         return listOf<Report>()

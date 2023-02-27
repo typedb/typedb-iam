@@ -5,7 +5,6 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.Owner
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.common.concept.*
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY_MEMBER
@@ -21,12 +20,13 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
+import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
 
 class TypeDBOwner(client: TypeDBClient, context:Context): Owner<TypeDBSession>(client, context) {
-    private val options: TypeDBOptions = TypeDBOptions().infer(true)
+    private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun changeGroupOwnership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val group = getRandomEntity(session, company, randomSource, USER_GROUP).asSubject()
@@ -109,14 +109,8 @@ class TypeDBOwner(client: TypeDBClient, context:Context): Owner<TypeDBSession>(c
     companion object {
         private const val C = "c"
         private const val O = "o"
-        private const val O_ID = "o-id"
-        private const val O_ID_TYPE = "o-id-type"
         private const val O_OWNER = "o-owner"
-        private const val O_TYPE = "o-type"
         private const val S = "s"
-        private const val S_ID = "s-id"
-        private const val S_ID_TYPE = "s-id-type"
         private const val S_OWNER = "s-owner"
-        private const val S_TYPE = "s-type"
     }
 }

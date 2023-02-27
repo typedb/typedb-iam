@@ -24,8 +24,7 @@ import com.vaticle.typedb.iam.simulation.agent.User
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
-import com.vaticle.typedb.iam.simulation.typedb.Util.printDuration
-import com.vaticle.typedb.iam.simulation.common.concept.*
+import com.vaticle.typedb.iam.simulation.common.Util.printDuration
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.APPLICATION
@@ -54,6 +53,13 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.SET_MEMBER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SET_MEMBERSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_ROLE
 import com.vaticle.typedb.iam.simulation.typedb.agent.TypeDBAgentFactory
+import com.vaticle.typedb.iam.simulation.common.concept.Application
+import com.vaticle.typedb.iam.simulation.common.concept.BusinessUnit
+import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.common.concept.Operation
+import com.vaticle.typedb.iam.simulation.common.concept.OperationSet
+import com.vaticle.typedb.iam.simulation.common.concept.Person
+import com.vaticle.typedb.iam.simulation.common.concept.UserRole
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.insert
@@ -72,7 +78,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     override val agentPackage: String = User::class.java.packageName
     override val name = "IAM"
     override val schemaFile: File = Paths.get("define_schema.tql").toFile()
-    private val options: TypeDBOptions = TypeDBOptions().infer(true)
+    private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun initData(nativeSession: TypeDBSession, randomSource: RandomSource) {
         LOGGER.info("TypeDB initialisation of world simulation data started ...")
