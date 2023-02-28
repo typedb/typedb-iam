@@ -336,7 +336,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                         ).insert(
                             `var`(S).isa(OPERATION_SET)
                                 .has(ACTION_NAME, operationSet.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP)
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP)
                         )
                     )
 

@@ -150,7 +150,8 @@ traceSampling:
 
 run:
   randomSeed: 1
-  iterations: 100
+  iterations: 0
+  partitions: 1
   databaseName: "iam-simulation"
 
 model:
