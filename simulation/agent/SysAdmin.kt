@@ -17,7 +17,7 @@
 package com.vaticle.typedb.iam.simulation.agent
 
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.common.`object`.Company
 import com.vaticle.typedb.simulation.Agent
 import com.vaticle.typedb.simulation.common.DBClient
 import com.vaticle.typedb.simulation.common.seed.RandomSource

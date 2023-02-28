@@ -25,13 +25,8 @@ def vaticle_dependencies():
     )
 
 def vaticle_typedb_simulation():
-    native.local_repository(
+    git_repository(
         name = "vaticle_typedb_simulation",
-        path = "../typedb-simulation",
+        remote = "https://github.com/vaticle/typedb-simulation",
+        commit = "82a22300bb2379d8daa26f7266ec8e855388804c",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_simulation
     )
-
-#    git_repository(
-#        name = "vaticle_typedb_simulation",
-#        remote = "https://github.com/alexjpwalker/typedb-simulation",
-#        commit = "e832673a8286f8a6dd950d82f57de37c6cb4551b",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_simulation
-#    )
