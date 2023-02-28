@@ -17,233 +17,334 @@
 
 define
 
-email sub attribute, value string;
-person-name sub attribute, abstract, value string;
-first-name sub person-name;
-last-name sub person-name;
-birth-date sub attribute, value datetime;
-gender sub attribute, value string;
-address sub attribute, value string;
-marital-status sub attribute, value string;
-code sub attribute, value string;
-name sub attribute, value string;
-company-number sub attribute, value string;
-incorporation-date sub attribute, value datetime;
-currency sub attribute, value string;
-marriage-licence sub attribute, value string;
-marriage-date sub attribute, value datetime;
-start-date sub attribute, value datetime;
-end-date sub attribute, value datetime;
-id sub attribute, value long;
-price sub attribute, value double;
-
-person sub entity,
-    owns email @key,
-    owns first-name,
-    owns last-name,
-    owns birth-date,
-    owns gender,
-    owns address,
-    owns marital-status,
-    plays birth-place:child,
-    plays residentship:resident,
-    plays nationality:national,
-    plays citizenship:citizen,
-    plays marriage:husband,
-    plays marriage:wife,
-    plays parenthood:parent,
-    plays parenthood:child,
-    plays grandparenthood:grandparent,
-    plays grandparenthood:grandchild,
-    plays lineage:ancestor,
-    plays lineage:descendent,
-    plays friendship:friend,
-    plays employment:employee,
-    plays study:student,
-    plays purchase:buyer,
-    plays purchase:seller;
-
-organisation sub entity,
+company sub entity,
     owns name,
-    owns address,
-    plays locates:located;
+    plays company-membership:parent-company;
 
-company sub organisation,
-    owns company-number @key,
-    owns incorporation-date,
-    plays employment:employer,
-    plays purchase:buyer,
-    plays purchase:seller;
+company-membership sub relation,
+    relates parent-company,
+    relates company-member;
 
-school sub organisation,
-    plays study:school;
+parent-company-name sub attribute,
+    value string;
 
-primary-school sub school;
-secondary-school sub school;
-university sub school;
+#rule attribute-parent-company:
+#    when {
+#        (parent-company: $c, company-member: $t) isa company-membership;
+#        $c has name $c-name;
+#        ?name-value = $c-name
+#    } then {
+#        $t has parent-company ?name-value;
+#    };
 
-region sub entity, abstract,
-    owns code @key,
-    owns name,
-    plays birth-place:place,
-    plays locates:location,
-    plays residentship:residence,
-    plays contains:container,
-    plays contains:contained;
+rule attribute-parent-company:
+    when {
+        (parent-company: $c, company-member: $t) isa company-membership;
+        $c has name $c-name;
+        $pc isa parent-company-name;
+        $c-name = $pc;
+    } then {
+        $t has $pc;
+    };
 
-continent sub region;
-country sub region,
-    owns currency,
-    plays nationality:nation,
-    plays citizenship:country;
-city sub region;
+root-collection sub attribute,
+    value boolean;
 
-product sub entity,
-    owns id @key,
-    owns name,
-    plays purchase:product;
+rule automatic-member-collection:
+    when {
+        $c isa resource-collection;
+        (collection-member: $c) isa collection-membership;
+    } then {
+        $c has root-collection false;
+    };
 
-birth-place sub relation,
-    relates place,
-    relates child;
+rule automatic-root-collection:
+    when {
+        $c isa resource-collection;
+        not {
+            $c has root-collection false;
+        };
+    } then {
+        $c has root-collection true;
+    };
 
-locates sub relation,
-    relates location,
-    relates located;
+subject sub entity,
+    abstract,
+    owns parent-company-name,
+    owns credential,
+    plays company-membership:company-member,
+    plays group-membership:group-member,
+    plays group-ownership:group-owner,
+    plays object-ownership:object-owner,
+    plays permission:permitted-subject,
+    plays change-request:requesting-subject,
+    plays change-request:requested-subject,
+    plays segregation-violation:violating-subject;
 
-residentship sub locates,
-    relates residence as location,
-    relates resident as located;
+user sub subject,
+    abstract;
 
-marriage sub relation,
-    owns marriage-licence @key,
-    owns marriage-date,
-    plays locates:located,
-    relates husband,
-    relates wife;
+user-group sub subject,
+    abstract,
+    plays group-membership:parent-group,
+    plays group-ownership:owned-group;
 
-nationality sub relation,
-    relates nation,
-    relates national;
+object sub entity,
+    abstract,
+    owns parent-company-name,
+    owns object-type,
+    plays company-membership:company-member,
+    plays collection-membership:collection-member,
+    plays object-ownership:owned-object,
+    plays access:accessed-object,
+    plays segregation-violation:violating-object;
 
-citizenship sub relation,
-    relates country,
-    relates citizen;
+resource sub object,
+    abstract;
 
-parenthood sub relation,
+resource-collection sub object,
+    abstract,
+    owns root-collection,
+    plays collection-membership:parent-collection;
+
+action sub entity,
+    abstract,
+    owns parent-company-name,
+    owns action-name,
+    owns object-type,
+    plays company-membership:company-member,
+    plays set-membership:set-member,
+    plays access:valid-action,
+    plays segregation-policy:segregated-action;
+
+operation sub action;
+
+operation-set sub action,
+    plays set-membership:parent-set;
+
+membership sub relation,
+    abstract,
     relates parent,
-    relates child;
+    relates member;
 
-grandparenthood sub relation,
-    relates grandparent,
-    relates grandchild;
+group-membership sub membership,
+    relates parent-group as parent,
+    relates group-member as member;
 
-lineage sub relation,
-    relates ancestor,
-    relates descendent;
+collection-membership sub membership,
+    relates parent-collection as parent,
+    relates collection-member as member;
 
-friendship sub relation,
-    relates friend;
+set-membership sub membership,
+    relates parent-set as parent,
+    relates set-member as member;
 
-employment sub relation,
-    plays locates:located,
-    relates employer,
-    relates employee;
+ownership sub relation,
+    abstract,
+    relates owned,
+    relates owner;
 
-study sub relation,
-    owns start-date,
-    owns end-date,
-    relates school,
-    relates student;
+group-ownership sub ownership,
+    relates owned-group as owned,
+    relates group-owner as owner,
+    owns ownership-type;
 
-purchase sub relation,
-    owns id @key,
-    owns price,
-    owns currency,
-    relates buyer,
-    relates seller,
-    relates product;
+object-ownership sub ownership,
+    relates owned-object as owned,
+    relates object-owner as owner,
+    owns ownership-type;
 
-contains sub relation,
-    relates container,
-    relates contained;
+access sub relation,
+    relates accessed-object,
+    relates valid-action,
+    plays permission:permitted-access,
+    plays change-request:requested-change;
 
-rule parenthood-is-lineage:
-when {
-    (parent:$p, child:$c) isa parenthood;
-} then {
-    (ancestor:$p, descendent:$c) isa lineage;
-};
+permission sub relation,
+    relates permitted-subject,
+    relates permitted-access,
+    owns review-date,
+    owns validity;
 
-rule lineage-is-transitive:
-when {
-    (ancestor:$a, descendent:$b) isa lineage;
-    (ancestor:$b, descendent:$c) isa lineage;
-} then {
-    (ancestor:$a, descendent:$c) isa lineage;
-};
+change-request sub relation,
+    relates requesting-subject,
+    relates requested-subject,
+    relates requested-change;
 
-rule parent-of-parent-is-grandparent:
-when {
-  (parent:$p, child:$gc) isa parenthood;
-  (parent:$gp, child:$p) isa parenthood;
-} then {
-  (grandchild: $gc, grandparent: $gp) isa grandparenthood;
-};
+segregation-policy sub relation,
+    relates segregated-action,
+    owns policy-name,
+    plays segregation-violation:violated-policy;
 
-rule birthplace-determines-nationality:
-when {
-    $city isa city;
-    $country isa country;
-    (container:$country, contained:$city) isa contains;
-    $person isa person;
-    (place:$city, child:$person) isa birth-place;
-} then {
-    (national:$person, nation:$country) isa nationality;
-};
+segregation-violation sub relation,
+    relates violating-subject,
+    relates violating-object,
+    relates violated-policy;
 
-rule children-of-nationals-are-nationals:
-when {
-    (parent:$p, child:$c) isa parenthood;
-    (national:$p, nation:$country) isa nationality;
-} then {
-    (national:$p, nation:$country) isa nationality;
-};
+credential sub attribute,
+    value string;
 
-rule nationals-are-citizens:
-when {
-    (national:$person, nation:$country) isa nationality;
-} then {
-    (citizen:$person, country:$country) isa citizenship;
-};
+object-type sub attribute,
+    value string;
 
-rule married-partners-of-nationals-are-citizens:
-when {
-    ($p1, $p2) isa marriage;
-    (national:$p1, nation:$country) isa nationality;
-} then {
-    (citizen:$p2, country:$country) isa citizenship;
-};
+action-name sub attribute,
+    value string;
 
-rule marital-status-single:
-when {
-    $p isa person;
-    not { ($p) isa marriage; };
-} then {
-    $p has marital-status "single";
-};
+ownership-type sub attribute,
+    value string;
 
-rule marital-status-married:
-when {
-    $p isa person;
-    ($p) isa marriage;
-} then {
-    $p has marital-status "married";
-};
+review-date sub attribute,
+    value datetime;
 
-rule married-couples-are-friends:
-when {
-    ($p1, $p2) isa marriage;
-} then {
-    (friend:$p1, friend:$p2) isa friendship;
-};
+validity sub attribute,
+    value boolean;
+
+policy-name sub attribute,
+    value string;
+
+person sub user,
+    owns full-name,
+    owns email;
+
+business-unit sub user-group,
+    owns name;
+
+user-role sub user-group,
+    owns name;
+
+user-account sub user-group,
+    owns email;
+
+file sub resource,
+    owns path,
+    owns size-kb;
+
+interface sub resource,
+    owns name;
+
+record sub resource,
+    owns number;
+
+directory sub resource-collection,
+    owns path,
+    owns size-kb;
+
+application sub resource-collection,
+    owns name;
+
+database sub resource-collection,
+    owns name;
+
+table sub resource-collection,
+    owns name;
+
+id sub attribute,
+    abstract,
+    value string;
+
+email sub id,
+    value string;
+
+name sub id,
+    value string;
+
+path sub id,
+    value string;
+
+number sub id,
+    value string;
+
+full-name sub attribute,
+    value string;
+
+size-kb sub attribute,
+    value long;
+
+rule transitive-membership:
+    when {
+        ($parent-role: $e1, $member-role: $e2) isa! $membership-type;
+        ($parent-role: $e2, $member-role: $e3) isa! $membership-type;
+        $membership-type sub membership;
+        $membership-type relates $parent-role, relates $member-role;
+    } then {
+        ($parent-role: $e1, $member-role: $e3) isa $membership-type;
+    };
+
+rule transitive-object-access:
+    when {
+        (parent-collection: $c1, collection-member: $c2) isa collection-membership;
+        $c1 isa! $c1-type;
+        $c2 isa! $c2-type;
+        $c1-type is $c2-type;
+        (accessed-object: $c1, valid-action: $a) isa access;
+    } then {
+        (accessed-object: $c2, valid-action: $a) isa access;
+    };
+
+rule transitive-action-access:
+    when {
+        (parent-set: $s, set-member: $a) isa set-membership;
+        (accessed-object: $o, valid-action: $s) isa access;
+    } then {
+        (accessed-object: $o, valid-action: $a) isa access;
+    };
+
+rule transitive-subject-permission:
+    when {
+        (parent-group: $g, group-member: $s) isa group-membership;
+        (permitted-subject: $g, permitted-access: $a) isa permission;
+    } then {
+        (permitted-subject: $s, permitted-access: $a) isa permission;
+    };
+
+rule transitive-object-permission:
+    when {
+        (parent-collection: $c, collection-member: $o) isa collection-membership;
+        $ac-c(accessed-object: $c, valid-action: $a) isa access;
+        $ac-o(accessed-object: $o, valid-action: $a) isa access;
+        (permitted-subject: $s, permitted-access: $ac-c) isa permission;
+    } then {
+        (permitted-subject: $s, permitted-access: $ac-o) isa permission;
+    };
+
+rule transitive-action-permission:
+    when {
+        (parent-set: $s, set-member: $a) isa set-membership;
+        $ac-s(accessed-object: $o, valid-action: $s) isa access;
+        $ac-a(accessed-object: $o, valid-action: $a) isa access;
+        (permitted-subject: $su, permitted-access: $ac-s) isa permission;
+    } then {
+        (permitted-subject: $su, permitted-access: $ac-a) isa permission;
+    };
+
+rule automatic-segregation-violation:
+    when {
+        $s(segregated-action: $a1, segregated-action: $a2) isa segregation-policy;
+        $ac1(accessed-object: $o, valid-action: $a1) isa access;
+        $ac2(accessed-object: $o, valid-action: $a2) isa access;
+        $p1(permitted-subject: $su, permitted-access: $ac1) isa permission;
+        $p2(permitted-subject: $su, permitted-access: $ac2) isa permission;
+    } then {
+        (violating-subject: $su, violating-object: $o, violated-policy: $s) isa segregation-violation;
+    };
+
+rule automatic-permission-invalidity:
+    when {
+        $s(segregated-action: $a1, segregated-action: $a2) isa segregation-policy;
+        $ac1(accessed-object: $o, valid-action: $a1) isa access;
+        $ac2(accessed-object: $o, valid-action: $a2) isa access;
+        $p1(permitted-subject: $su, permitted-access: $ac1) isa permission;
+        $p2(permitted-subject: $su, permitted-access: $ac2) isa permission;
+    } then {
+        $p1 has validity false;
+    };
+
+rule automatic-permission-validity:
+    when {
+        $p isa permission;
+        not {
+            $p has validity false;
+        };
+    } then {
+        $p has validity true;
+    };

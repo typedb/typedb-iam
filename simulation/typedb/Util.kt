@@ -6,10 +6,10 @@ import com.vaticle.typedb.client.api.TypeDBTransaction
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.client.api.concept.Concept
-import com.vaticle.typedb.iam.simulation.common.concept.Company
-import com.vaticle.typedb.iam.simulation.typedb.concept.Entity
+import com.vaticle.typedb.iam.simulation.common.`object`.Company
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBEntity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ID
-import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typeql.lang.TypeQL.*
 import java.lang.IllegalArgumentException
@@ -75,19 +75,19 @@ object Util {
         throw IllegalArgumentException()
     }
 
-    fun getRandomEntity(session: TypeDBSession, company: Company, randomSource: RandomSource, entityType: String): Entity {
-        val candidateEntities: List<Entity>
+    fun getRandomEntity(session: TypeDBSession, company: Company, randomSource: RandomSource, entityType: String): TypeDBEntity {
+        val candidateEntities: List<TypeDBEntity>
 
         session.transaction(READ, options).use { transaction ->
             candidateEntities = transaction.query().match(
                 match(
                     `var`(E).isa(entityType)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(ID, E_ID),
                     `var`(E).isaX(E_TYPE),
                     `var`(E_ID).isaX(E_ID_TYPE)
                 )
-            ).toList().map { Entity(it[E_TYPE], it[E_ID_TYPE], it[E_ID]) }
+            ).toList().map { TypeDBEntity(it[E_TYPE], it[E_ID_TYPE], it[E_ID]) }
         }
 
         return randomSource.choose(candidateEntities)

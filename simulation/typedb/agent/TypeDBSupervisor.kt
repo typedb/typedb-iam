@@ -18,8 +18,9 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_GROUP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
-import com.vaticle.typedb.iam.simulation.common.concept.Company
-import com.vaticle.typedb.iam.simulation.typedb.concept.Subject
+import com.vaticle.typedb.iam.simulation.common.`object`.Company
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBSubject
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
@@ -56,22 +57,22 @@ class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDB
 
     override fun revokeGroupMembership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val group = getRandomEntity(session, company, randomSource, USER_GROUP).asSubject()
-        val candidateMembers: List<Subject>
+        val candidateMembers: List<TypeDBSubject>
 
         session.transaction(READ, options).use { transaction ->
             candidateMembers = transaction.query().match(
                 match(
                     `var`(S).isa(group.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(group.idType, group.idValue),
                     `var`(S_MEMBER).isa(SUBJECT)
-                        .has(PARENT_COMPANY, company.name)
-                        .has(ID, S_MEMBER_ID),
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(ID, `var`(S_MEMBER_ID)),
                     rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP),
-                    `var`(S_MEMBER).isaX(S_MEMBER_TYPE),
-                    `var`(S_MEMBER_ID).isaX(S_MEMBER_ID_TYPE)
+                    `var`(S_MEMBER).isaX(`var`(S_MEMBER_TYPE)),
+                    `var`(S_MEMBER_ID).isaX(`var`(S_MEMBER_ID_TYPE))
                 )
-            ).toList().map { Subject(it[S_MEMBER_TYPE], it[S_MEMBER_ID_TYPE], it[S_MEMBER_ID]) }
+            ).toList().map { TypeDBSubject(it[S_MEMBER_TYPE], it[S_MEMBER_ID_TYPE], it[S_MEMBER_ID]) }
         }
 
         val member = randomSource.choose(candidateMembers)

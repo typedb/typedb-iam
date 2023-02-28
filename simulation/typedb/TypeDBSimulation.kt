@@ -53,13 +53,14 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.SET_MEMBER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SET_MEMBERSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_ROLE
 import com.vaticle.typedb.iam.simulation.typedb.agent.TypeDBAgentFactory
-import com.vaticle.typedb.iam.simulation.common.concept.Application
-import com.vaticle.typedb.iam.simulation.common.concept.BusinessUnit
-import com.vaticle.typedb.iam.simulation.common.concept.Company
-import com.vaticle.typedb.iam.simulation.common.concept.Operation
-import com.vaticle.typedb.iam.simulation.common.concept.OperationSet
-import com.vaticle.typedb.iam.simulation.common.concept.Person
-import com.vaticle.typedb.iam.simulation.common.concept.UserRole
+import com.vaticle.typedb.iam.simulation.common.`object`.Application
+import com.vaticle.typedb.iam.simulation.common.`object`.BusinessUnit
+import com.vaticle.typedb.iam.simulation.common.`object`.Company
+import com.vaticle.typedb.iam.simulation.common.`object`.Operation
+import com.vaticle.typedb.iam.simulation.common.`object`.OperationSet
+import com.vaticle.typedb.iam.simulation.common.`object`.Person
+import com.vaticle.typedb.iam.simulation.common.`object`.UserRole
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.insert
@@ -77,7 +78,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
 
     override val agentPackage: String = User::class.java.packageName
     override val name = "IAM"
-    override val schemaFile: File = Paths.get("define_schema.tql").toFile()
+    // TODO: Update this filepath
+    override val schemaFile: File = Paths.get("/Users/jameswhiteside/repos/typedb-iam/iam-schema.tql").toFile()
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun initData(nativeSession: TypeDBSession, randomSource: RandomSource) {
@@ -100,7 +102,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 transaction.query().insert(
                     insert(
                         `var`().isa(COMPANY).has(NAME, company.name),
-                        `var`().eq(company.name).isa(PARENT_COMPANY)
+                        `var`().eq(company.name).isa(PARENT_COMPANY_NAME)
                     )
                 )
 
@@ -140,9 +142,9 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 persons = transaction.query().match(
                     match(
                         `var`(P).isa(PERSON)
-                            .has(FULL_NAME, P_NAME)
-                            .has(EMAIL, P_EMAIL)
-                            .has(PARENT_COMPANY, company.name)
+                            .has(FULL_NAME, `var`(P_NAME))
+                            .has(EMAIL, `var`(P_EMAIL))
+                            .has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }
@@ -179,9 +181,9 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 persons = transaction.query().match(
                     match(
                         `var`(P).isa(PERSON)
-                            .has(FULL_NAME, P_NAME)
-                            .has(EMAIL, P_EMAIL)
-                            .has(PARENT_COMPANY, company.name)
+                            .has(FULL_NAME, `var`(P_NAME))
+                            .has(EMAIL, `var`(P_EMAIL))
+                            .has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }
@@ -218,9 +220,9 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 persons = transaction.query().match(
                     match(
                         `var`(P).isa(PERSON)
-                            .has(FULL_NAME, P_NAME)
-                            .has(EMAIL, P_EMAIL)
-                            .has(PARENT_COMPANY, company.name)
+                            .has(FULL_NAME, `var`(P_NAME))
+                            .has(EMAIL, `var`(P_EMAIL))
+                            .has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }
@@ -257,9 +259,9 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 persons = transaction.query().match(
                     match(
                         `var`(P).isa(PERSON)
-                            .has(FULL_NAME, P_NAME)
-                            .has(EMAIL, P_EMAIL)
-                            .has(PARENT_COMPANY, company.name)
+                            .has(FULL_NAME, `var`(P_NAME))
+                            .has(EMAIL, `var`(P_EMAIL))
+                            .has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }

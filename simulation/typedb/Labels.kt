@@ -23,6 +23,7 @@ object Labels {
     const val COMPANY = "company"
     const val COMPANY_MEMBERSHIP = "company-membership"
     const val PARENT_COMPANY = "parent-company"
+    const val PARENT_COMPANY_NAME = "parent-company-name"
     const val COMPANY_MEMBER = "company-member"
     const val ROOT_COLLECTION = "root-collection"
     const val SUBJECT = "subject"

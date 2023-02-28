@@ -40,16 +40,17 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.ROOT_COLLECTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
-import com.vaticle.typedb.iam.simulation.typedb.concept.Action
-import com.vaticle.typedb.iam.simulation.common.concept.Company
-import com.vaticle.typedb.iam.simulation.typedb.concept.Database
-import com.vaticle.typedb.iam.simulation.typedb.concept.Directory
-import com.vaticle.typedb.iam.simulation.typedb.concept.File
-import com.vaticle.typedb.iam.simulation.typedb.concept.Interface
-import com.vaticle.typedb.iam.simulation.typedb.concept.Object
-import com.vaticle.typedb.iam.simulation.typedb.concept.ObjectType
-import com.vaticle.typedb.iam.simulation.typedb.concept.Record
-import com.vaticle.typedb.iam.simulation.typedb.concept.Table
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBAction
+import com.vaticle.typedb.iam.simulation.common.`object`.Company
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBDatabase
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBDirectory
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBFile
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBInterface
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBObject
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBObjectType
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBRecord
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBTable
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
@@ -60,54 +61,54 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val objectType = randomSource.choose(ObjectType.values().asList().filter { it.generable })
+        val objectType = randomSource.choose(TypeDBObjectType.values().asList().filter { it.generable })
 
         when (objectType) {
-            ObjectType.FILE -> createObject(session, company, randomSource, objectType)
-            ObjectType.DIRECTORY -> createObject(session, company, randomSource, objectType)
-            ObjectType.INTERFACE -> createObject(session, company, randomSource, objectType)
-            ObjectType.APPLICATION -> throw IllegalArgumentException() // Applications are only created on database initialisation.
-            ObjectType.RECORD -> createObject(session, company, randomSource, objectType)
-            ObjectType.TABLE -> createObject(session, company, randomSource, objectType)
-            ObjectType.DATABASE -> createDatabase(session, company, randomSource) // Databases have no parent collections so must be handled uniquely.
+            TypeDBObjectType.FILE -> createObject(session, company, randomSource, objectType)
+            TypeDBObjectType.DIRECTORY -> createObject(session, company, randomSource, objectType)
+            TypeDBObjectType.INTERFACE -> createObject(session, company, randomSource, objectType)
+            TypeDBObjectType.APPLICATION -> throw IllegalArgumentException() // Applications are only created on database initialisation.
+            TypeDBObjectType.RECORD -> createObject(session, company, randomSource, objectType)
+            TypeDBObjectType.TABLE -> createObject(session, company, randomSource, objectType)
+            TypeDBObjectType.DATABASE -> createDatabase(session, company, randomSource) // Databases have no parent collections so must be handled uniquely.
         }
 
         return listOf<Report>()
     }
 
     override fun deleteObject(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val candidateObjects: List<Object>
+        val candidateObjects: List<TypeDBObject>
 
         session.transaction(READ, options).use { transaction ->
             candidateObjects = transaction.query().match(
                 match(
                     `var`(O).isa(OBJECT)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(ROOT_COLLECTION, false)
-                        .has(ID, O_ID),
+                        .has(ID, `var`(O_ID)),
                     `var`(O).isaX(O_TYPE),
                     `var`(O_ID).isaX(O_ID_TYPE)
                 )
-            ).toList().map { Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
+            ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         val `object` = randomSource.choose(candidateObjects)
-        val members: List<Object>
+        val members: List<TypeDBObject>
 
         session.transaction(READ, options).use { transaction ->
             members = transaction.query().match(
                 match(
                     `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(`object`.idType, `object`.idValue),
                     `var`(O_MEMBER).isa(OBJECT)
-                        .has(PARENT_COMPANY, company.name)
-                        .has(ID, O_MEMBER_ID),
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(ID, `var`(O_MEMBER_ID)),
                     rel(PARENT_COLLECTION, O).rel(COLLECTION_MEMBER, O_MEMBER).isa(COLLECTION_MEMBERSHIP),
                     `var`(O_MEMBER).isaX(O_MEMBER_TYPE),
                     `var`(O_MEMBER_ID).isaX(O_MEMBER_ID_TYPE)
                 )
-            ).toList().map { Object(it[O_MEMBER_TYPE], it[O_MEMBER_ID_TYPE], it[O_MEMBER_ID]) }
+            ).toList().map { TypeDBObject(it[O_MEMBER_TYPE], it[O_MEMBER_ID_TYPE], it[O_MEMBER_ID]) }
         }
 
         val objectsToDelete = members + listOf(`object`)
@@ -203,36 +204,36 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
 
     override fun attemptAccess(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val subject = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
-        val candidateObjects: List<Object>
+        val candidateObjects: List<TypeDBObject>
 
         session.transaction(READ, options).use { transaction ->
             candidateObjects = transaction.query().match(
                 match(
                     `var`(O).isa(OBJECT)
-                        .has(PARENT_COMPANY, company.name)
-                        .has(ID, O_ID),
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(ID, `var`(O_ID)),
                     rel(ACCESSED_OBJECT, O).isa(ACCESS),
                     `var`(O).isaX(O_TYPE),
                     `var`(O_ID).isaX(O_ID_TYPE)
                 )
-            ).toList().map { Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
+            ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         val `object` = randomSource.choose(candidateObjects)
-        val candidateOperations: List<Action>
+        val candidateOperations: List<TypeDBAction>
 
         session.transaction(READ, options).use { transaction ->
             candidateOperations = transaction.query().match(
                 match(
                     `var`(A).isa(OPERATION)
-                        .has(PARENT_COMPANY, company.name)
-                        .has(ACTION_NAME, A_NAME),
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(ACTION_NAME, `var`(A_NAME)),
                     `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(`object`.idType, `object`.idValue),
                     rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS)
                 )
-            ).toList().map { Action(OPERATION, stringValue(it[A_NAME])) }
+            ).toList().map { TypeDBAction(OPERATION, stringValue(it[A_NAME])) }
         }
 
         val action = randomSource.choose(candidateOperations)
@@ -242,13 +243,13 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
             matches = transaction.query().match(
                 match(
                     `var`(S).isa(subject.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(subject.idType, subject.idValue),
                     `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(`object`.idType, `object`.idValue),
                     `var`(A).isa(action.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(action.idType, action.idValue),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
@@ -264,36 +265,36 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
     override fun submitChangeRequest(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val requestingSubject = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
         val requestedSubject = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
-        val candidateObjects: List<Object>
+        val candidateObjects: List<TypeDBObject>
 
         session.transaction(READ, options).use { transaction ->
             candidateObjects = transaction.query().match(
                 match(
                     `var`(O).isa(OBJECT)
-                        .has(PARENT_COMPANY, company.name)
-                        .has(ID, O_ID),
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(ID, `var`(O_ID)),
                     rel(ACCESSED_OBJECT, O).isa(ACCESS),
                     `var`(O).isaX(O_TYPE),
                     `var`(O_ID).isaX(O_ID_TYPE)
                 )
-            ).toList().map { Object(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
+            ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         val `object` = randomSource.choose(candidateObjects)
-        val candidateOperations: List<Action>
+        val candidateOperations: List<TypeDBAction>
 
         session.transaction(READ, options).use { transaction ->
             candidateOperations = transaction.query().match(
                 match(
                     `var`(A).isa(OPERATION)
-                        .has(PARENT_COMPANY, company.name)
-                        .has(ACTION_NAME, A_NAME),
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(ACTION_NAME, `var`(A_NAME)),
                     `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(`object`.idType, `object`.idValue),
                     rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS)
                 )
-            ).toList().map { Action(OPERATION, stringValue(it[A_NAME])) }
+            ).toList().map { TypeDBAction(OPERATION, stringValue(it[A_NAME])) }
         }
 
         val action = randomSource.choose(candidateOperations)
@@ -302,16 +303,16 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
             transaction.query().insert(
                 match(
                     `var`(S_REQUESTING).isa(requestingSubject.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(requestingSubject.idType, requestingSubject.idValue),
                     `var`(S_REQUESTED).isa(requestedSubject.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(requestedSubject.idType, requestedSubject.idValue),
                     `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(`object`.idType, `object`.idValue),
                     `var`(A).isa(action.type)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(action.idType, action.idValue),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A)
                 ).insert(
@@ -325,42 +326,42 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
         return listOf<Report>()
     }
 
-    private fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource, objectType: ObjectType) {
+    private fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource, objectType: TypeDBObjectType) {
         val parentType = when (objectType) {
-            ObjectType.FILE -> ObjectType.DIRECTORY
-            ObjectType.DIRECTORY -> ObjectType.DIRECTORY
-            ObjectType.INTERFACE -> ObjectType.APPLICATION
-            ObjectType.APPLICATION -> throw IllegalArgumentException()
-            ObjectType.RECORD -> ObjectType.TABLE
-            ObjectType.TABLE -> ObjectType.DATABASE
-            ObjectType.DATABASE -> throw IllegalArgumentException()
+            TypeDBObjectType.FILE -> TypeDBObjectType.DIRECTORY
+            TypeDBObjectType.DIRECTORY -> TypeDBObjectType.DIRECTORY
+            TypeDBObjectType.INTERFACE -> TypeDBObjectType.APPLICATION
+            TypeDBObjectType.APPLICATION -> throw IllegalArgumentException()
+            TypeDBObjectType.RECORD -> TypeDBObjectType.TABLE
+            TypeDBObjectType.TABLE -> TypeDBObjectType.DATABASE
+            TypeDBObjectType.DATABASE -> throw IllegalArgumentException()
         }
 
         val parent = getRandomEntity(session, company, randomSource, parentType.label).asObject()
 
         val `object` = when (objectType) {
-            ObjectType.FILE -> File.initialise(parent.idValue, context.seedData, randomSource).asObject()
-            ObjectType.DIRECTORY -> Directory.initialise(parent.idValue, context.seedData, randomSource).asObject()
-            ObjectType.INTERFACE -> Interface.initialise(parent.idValue, context.seedData, randomSource).asObject()
-            ObjectType.APPLICATION -> throw IllegalArgumentException()
-            ObjectType.RECORD -> Record.initialise(randomSource).asObject()
-            ObjectType.TABLE -> Table.initialise(parent.idValue, context.seedData, randomSource).asObject()
-            ObjectType.DATABASE -> throw IllegalArgumentException()
+            TypeDBObjectType.FILE -> TypeDBFile.initialise(parent.idValue, context.seedData, randomSource).asObject()
+            TypeDBObjectType.DIRECTORY -> TypeDBDirectory.initialise(parent.idValue, context.seedData, randomSource).asObject()
+            TypeDBObjectType.INTERFACE -> TypeDBInterface.initialise(parent.idValue, context.seedData, randomSource).asObject()
+            TypeDBObjectType.APPLICATION -> throw IllegalArgumentException()
+            TypeDBObjectType.RECORD -> TypeDBRecord.initialise(randomSource).asObject()
+            TypeDBObjectType.TABLE -> TypeDBTable.initialise(parent.idValue, context.seedData, randomSource).asObject()
+            TypeDBObjectType.DATABASE -> throw IllegalArgumentException()
         }
 
         val owner = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
-        val validActions: List<Action>
+        val validActions: List<TypeDBAction>
 
         session.transaction(READ, options).use { transaction ->
             validActions = transaction.query().match(
                 match(
                     `var`(A).isa(ACTION)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(OBJECT_TYPE, `object`.type)
-                        .has(ACTION_NAME, A_NAME),
+                        .has(ACTION_NAME, `var`(A_NAME)),
                     `var`(A).isaX(A_TYPE)
                 )
-            ).toList().map { Action(it[A_TYPE], it[A_NAME]) }
+            ).toList().map { TypeDBAction(it[A_TYPE], it[A_NAME]) }
         }
 
         session.transaction(WRITE, options).use { transaction ->
@@ -405,20 +406,20 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
     }
 
     private fun createDatabase(session: TypeDBSession, company: Company, randomSource: RandomSource) {
-        val database = Database.initialise(context.seedData, randomSource)
+        val database = TypeDBDatabase.initialise(context.seedData, randomSource)
         val owner = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
-        val validActions: List<Action>
+        val validActions: List<TypeDBAction>
 
         session.transaction(READ, options).use { transaction ->
             validActions = transaction.query().match(
                 match(
                     `var`(A).isa(ACTION)
-                        .has(PARENT_COMPANY, company.name)
+                        .has(PARENT_COMPANY_NAME, company.name)
                         .has(OBJECT_TYPE, DATABASE)
-                        .has(ACTION_NAME, A_NAME),
+                        .has(ACTION_NAME, `var`(A_NAME)),
                     `var`(A).isaX(A_TYPE)
                 )
-            ).toList().map { Action(it[A_TYPE], it[A_NAME]) }
+            ).toList().map { TypeDBAction(it[A_TYPE], it[A_NAME]) }
         }
 
         session.transaction(WRITE, options).use { transaction ->
