@@ -6,6 +6,7 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.SysAdmin
 import com.vaticle.typedb.iam.simulation.common.Context
+import com.vaticle.typedb.iam.simulation.common.Util.iterationDate
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION
@@ -321,7 +322,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP)
                         ).insert(
                             rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
-                                .has(REVIEW_DATE, (context.iterationNumber + context.model.permissionReviewAge).toLong())
+                                .has(REVIEW_DATE, iterationDate(context.iterationNumber + context.model.permissionReviewAge))
                         )
                     )
                 }
