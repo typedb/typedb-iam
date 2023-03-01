@@ -19,6 +19,7 @@ package com.vaticle.typedb.iam.simulation.common
 import com.vaticle.typedb.common.yaml.YAML
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
 
 object Util {
     fun printDuration(start: Instant, end: Instant): String {
@@ -33,4 +34,8 @@ object Util {
     fun string(yaml: YAML?): String = yaml!!.asString().value()
     fun map(yaml: YAML?): Map<String, YAML> = yaml!!.asMap().content()
     fun list(yaml: YAML?): List<YAML> = yaml!!.asList().content()
+
+    fun iterationDate(iterationNumber: Int): LocalDateTime {
+        return LocalDateTime.of(2000, 1, 1, 0, 0).plusDays(iterationNumber.toLong())
+    }
 }
