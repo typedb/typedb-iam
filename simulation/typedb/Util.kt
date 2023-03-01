@@ -81,11 +81,12 @@ object Util {
         session.transaction(READ, options).use { transaction ->
             candidateEntities = transaction.query().match(
                 match(
-                    `var`(E).isa(entityType)
+                    `var`(E).isaX(`var`(E_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, E_ID),
-                    `var`(E).isaX(E_TYPE),
-                    `var`(E_ID).isaX(E_ID_TYPE)
+                        .has(`var`(E_ID)),
+                    `var`(E_ID).isaX(`var`(E_ID_TYPE)),
+                    `var`(E_TYPE).sub(entityType),
+                    `var`(E_ID_TYPE).sub(ID)
                 )
             ).toList().map { TypeDBEntity(it[E_TYPE], it[E_ID_TYPE], it[E_ID]) }
         }
