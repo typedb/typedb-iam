@@ -49,7 +49,7 @@ data class TypeDBPerson(val name: String, val email: String) {
             }
 
             names.forEach {
-                if ((NAME_PERCENTILE_SCALE * it["percentile"] as Float).toInt() <= percentile) {
+                if ((NAME_PERCENTILE_SCALE * it["percentile"] as Double).toInt() <= percentile) {
                     return it["value"] as String
                 }
             }
@@ -61,7 +61,7 @@ data class TypeDBPerson(val name: String, val email: String) {
             val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
 
             seedData.lastNames.forEach {
-                if ((NAME_PERCENTILE_SCALE * it["percentile"] as Float).toInt() <= percentile) {
+                if ((NAME_PERCENTILE_SCALE * it["percentile"] as Double).toInt() <= percentile) {
                     return it["value"] as String
                 }
             }

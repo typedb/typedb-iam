@@ -187,7 +187,7 @@ credential sub attribute,
 object-type sub attribute,
     value string;
 
-action-name sub attribute,
+action-name sub id,
     value string;
 
 ownership-type sub attribute,

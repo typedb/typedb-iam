@@ -50,13 +50,15 @@ class TypeDBPolicyManager(client: TypeDBClient, context:Context): PolicyManager<
         session.transaction(READ, options).use { transaction ->
             permissions = transaction.query().match(
                 match(
-                    `var`(S).isa(SUBJECT)
+                    `var`(S).isaX(`var`(S_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(S_ID)),
-                    `var`(O).isa(OBJECT)
+                        .has(`var`(S_ID)),
+                    `var`(S_ID).isaX(`var`(S_ID_TYPE)),
+                    `var`(O).isaX(`var`(O_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(O_ID)),
-                    `var`(A).isa(ACTION)
+                        .has(`var`(O_ID)),
+                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
+                    `var`(A).isaX(`var`(A_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(ACTION_NAME, `var`(A_NAME)),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
@@ -64,11 +66,11 @@ class TypeDBPolicyManager(client: TypeDBClient, context:Context): PolicyManager<
                         .has(VALIDITY, `var`(P_VALIDITY))
                         .has(REVIEW_DATE, `var`(P_DATE)),
                     `var`(P_DATE).lte(context.model.permissionReviewAge.toLong()),
-                    `var`(S).isaX(`var`(S_TYPE)),
-                    `var`(S_ID).isaX(`var`(S_ID_TYPE)),
-                    `var`(O).isaX(`var`(O_TYPE)),
-                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
-                    `var`(A).isaX(`var`(A_TYPE))
+                    `var`(S_TYPE).sub(SUBJECT),
+                    `var`(S_ID_TYPE).sub(ID),
+                    `var`(O_TYPE).sub(OBJECT),
+                    `var`(O_ID_TYPE).sub(ID),
+                    `var`(A_TYPE).sub(ACTION)
                 )
             ).toList().map {
                 TypeDBPermission(
@@ -210,20 +212,20 @@ class TypeDBPolicyManager(client: TypeDBClient, context:Context): PolicyManager<
         session.transaction(READ, options).use { transaction ->
             segregationPolicies = transaction.query().match(
                 match(
-                    `var`(A1).isa(ACTION)
+                    `var`(A1).isaX(`var`(A1_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(NAME, `var`(A1_NAME)),
-                    `var`(A2).isa(ACTION)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(NAME, `var`(A2_NAME)),
-                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
-                    `var`(A1).isaX(`var`(A1_TYPE)),
+                        .has(ACTION_NAME, `var`(A1_NAME)),
                     `var`(A2).isaX(`var`(A2_TYPE))
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(ACTION_NAME, `var`(A2_NAME)),
+                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
+                    `var`(A1_TYPE).sub(ACTION),
+                    `var`(A2_TYPE).sub(ACTION)
                 )
             ).toList().map {
                 TypeDBSegregationPolicy(
                     TypeDBAction(it[A1_TYPE], it[A1_NAME]),
-                    TypeDBAction(it[A1_TYPE], it[A1_NAME])
+                    TypeDBAction(it[A2_TYPE], it[A2_NAME])
                 )
             }
         }
@@ -237,24 +239,25 @@ class TypeDBPolicyManager(client: TypeDBClient, context:Context): PolicyManager<
         session.transaction(READ, options).use { transaction ->
             segregationPolicies = transaction.query().match(
                 match(
-                    `var`(A1).isa(ACTION)
+                    `var`(A1).isaX(`var`(A1_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(NAME, `var`(A1_NAME)),
-                    `var`(A2).isa(ACTION)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(NAME, `var`(A2_NAME)),
-                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
-                    `var`(A1).isaX(`var`(A1_TYPE)),
+                        .has(ACTION_NAME, `var`(A1_NAME)),
                     `var`(A2).isaX(`var`(A2_TYPE))
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(ACTION_NAME, `var`(A2_NAME)),
+                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
+                    `var`(A1_TYPE).sub(ACTION),
+                    `var`(A2_TYPE).sub(ACTION)
                 )
             ).toList().map {
                 TypeDBSegregationPolicy(
                     TypeDBAction(it[A1_TYPE], it[A1_NAME]),
-                    TypeDBAction(it[A1_TYPE], it[A1_NAME])
+                    TypeDBAction(it[A2_TYPE], it[A2_NAME])
                 )
             }
         }
 
+        if (segregationPolicies.isEmpty()) return listOf<Report>()
         val segregationPolicy = randomSource.choose(segregationPolicies)
         val action1 = segregationPolicy.action1
         val action2 = segregationPolicy.action2

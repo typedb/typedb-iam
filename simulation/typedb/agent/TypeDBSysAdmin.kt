@@ -241,27 +241,30 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
         session.transaction(READ, options).use { transaction ->
             requests = transaction.query().match(
                 match(
-                    `var`(O).isa(OBJECT)
+                    `var`(O).isaX(`var`(O_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(O_ID)),
-                    `var`(A).isa(ACTION)
+                        .has(`var`(O_ID)),
+                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
+                    `var`(A).isa(`var`(A_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(ACTION_NAME, `var`(A_NAME)),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                    `var`(S_REQUESTING).isa(SUBJECT)
+                    `var`(S_REQUESTING).isaX(`var`(S_REQUESTING_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(S_REQUESTING_ID)),
-                    `var`(S_REQUESTED).isa(SUBJECT)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(S_REQUESTED_ID)),
-                    rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
-                    `var`(O).isaX(`var`(O_TYPE)),
-                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
-                    `var`(A).isaX(`var`(A_TYPE)),
-                    `var`(S_REQUESTING).isaX(`var`(S_REQUESTING_TYPE)),
+                        .has(`var`(S_REQUESTING_ID)),
                     `var`(S_REQUESTING_ID).isaX(`var`(S_REQUESTING_ID_TYPE)),
-                    `var`(S_REQUESTED).isaX(`var`(S_REQUESTED_TYPE)),
-                    `var`(S_REQUESTED_ID).isaX(`var`(S_REQUESTED_ID_TYPE))
+                    `var`(S_REQUESTED).isaX(`var`(S_REQUESTED_TYPE))
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(`var`(S_REQUESTED_ID)),
+                    `var`(S_REQUESTED_ID).isaX(`var`(S_REQUESTED_ID_TYPE)),
+                    rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                    `var`(O_TYPE).sub(OBJECT),
+                    `var`(O_ID_TYPE).sub(ID),
+                    `var`(A_TYPE).sub(ACTION),
+                    `var`(S_REQUESTING_TYPE).sub(SUBJECT),
+                    `var`(S_REQUESTING_ID_TYPE).sub(ID),
+                    `var`(S_REQUESTED_TYPE).sub(SUBJECT),
+                    `var`(S_REQUESTED_ID_TYPE).sub(ID)
                 )
             ).toList().map {
                 TypeDBChangeRequest(
