@@ -197,9 +197,9 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
                         `var`(ME).isa(COMPANY_MEMBERSHIP)
                     )
                 )
-
-                transaction.commit()
             }
+
+            transaction.commit()
         }
 
         return listOf<Report>()
