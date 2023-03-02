@@ -30,11 +30,25 @@ data class Person(val name: String, val email: String) {
             val firstName = initialiseFirstName(gender, seedData, randomSource)
             val lastName = initialiseLastName(seedData, randomSource)
             val name = "$firstName $lastName"
-            val email = "${firstName?.lowercase()}.${lastName?.lowercase()}@${company.domainName}.com"
+            val email = "${firstName.lowercase()}.${lastName.lowercase()}@${company.domainName}.com"
             return Person(name, email)
         }
 
-        private fun initialiseFirstName(gender:String, seedData: SeedData, randomSource: RandomSource): String? {
+        private fun initialiseFirstName(gender:String, seedData: SeedData, randomSource: RandomSource): String {
+            val names = when (gender) {
+                "male" -> seedData.maleNames
+                "female" -> seedData.femaleNames
+                else -> randomSource.choose(listOf(seedData.maleNames, seedData.femaleNames))
+            }
+
+            return randomSource.choose(names)["value"] as String
+        }
+
+        private fun initialiseLastName(seedData: SeedData, randomSource: RandomSource): String {
+            return randomSource.choose(seedData.lastNames)["value"] as String
+        }
+
+        private fun initialiseFirstNameByPercentile(gender:String, seedData: SeedData, randomSource: RandomSource): String? {
             val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
             val names = when (gender) {
                 "male" -> seedData.maleNames
@@ -51,7 +65,7 @@ data class Person(val name: String, val email: String) {
             return null
         }
 
-        private fun initialiseLastName(seedData: SeedData, randomSource: RandomSource): String? {
+        private fun initialiseLastNameByPercentile(seedData: SeedData, randomSource: RandomSource): String? {
             val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
 
             seedData.lastNames.forEach {
