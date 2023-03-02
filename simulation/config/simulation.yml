@@ -48,20 +48,20 @@ agents:
 
 
 
-#  - name: "SysAdmin"
-#    action: "reviewChangeRequests"
-#    runsPerIteration: 1
-#    trace: true
+  - name: "SysAdmin"
+    action: "reviewChangeRequests"
+    runsPerIteration: 1
+    trace: true
 
-#  - name: "PolicyManager"
-#    action: "listPermissionsPendingReview"
-#    runsPerIteration: 1
-#    trace: true
+  - name: "PolicyManager"
+    action: "listPermissionsPendingReview"
+    runsPerIteration: 1
+    trace: true
 
-#  - name: "PolicyManager"
-#    action: "reviewPermissions"
-#    runsPerIteration: 1
-#    trace: true
+  - name: "PolicyManager"
+    action: "reviewPermissions"
+    runsPerIteration: 1
+    trace: true
 
   - name: "PolicyManager"
     action: "listSegregationViolations"
@@ -75,10 +75,10 @@ agents:
 
 
 
-#  - name: "User"
-#    action: "attemptAccess"
-#    runsPerIteration: 2000
-#    trace: true
+  - name: "User"
+    action: "attemptAccess"
+    runsPerIteration: 2000
+    trace: true
 
   - name: "User"
     action: "submitChangeRequest"
@@ -100,25 +100,25 @@ agents:
     runsPerIteration: 100
     trace: true
 
-#  - name: "User"
-#    action: "deleteObject"
-#    runsPerIteration: 50
-#    trace: true
+  - name: "User"
+    action: "deleteObject"
+    runsPerIteration: 50
+    trace: true
 
   - name: "SysAdmin"
     action: "listSubjectGroupMemberships"
     runsPerIteration: 1
     trace: true
 
-#  - name: "SysAdmin"
-#    action: "listSubjectPermissions"
-#    runsPerIteration: 1
-#    trace: true
+  - name: "SysAdmin"
+    action: "listSubjectPermissions"
+    runsPerIteration: 1
+    trace: true
 
-#  - name: "SysAdmin"
-#    action: "listObjectPermissionHolders"
-#    runsPerIteration: 1
-#    trace: true
+  - name: "SysAdmin"
+    action: "listObjectPermissionHolders"
+    runsPerIteration: 1
+    trace: true
 
 
 
