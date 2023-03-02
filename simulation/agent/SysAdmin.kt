@@ -34,7 +34,7 @@ abstract class SysAdmin<SESSION> protected constructor(client: DBClient<SESSION>
         "deleteUserGroup" to::deleteUserGroup,
         "listSubjectGroupMemberships" to::listSubjectGroupMemberships,
         "listSubjectPermissions" to::listSubjectPermissions,
-        "listObjectPermissionsHolders" to::listObjectPermissionHolders,
+        "listObjectPermissionHolders" to::listObjectPermissionHolders,
         "reviewChangeRequests" to::reviewChangeRequests,
         "collectGarbage" to::collectGarbage
     )

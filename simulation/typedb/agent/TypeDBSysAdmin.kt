@@ -48,6 +48,10 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.concept.*
 import com.vaticle.typedb.iam.simulation.common.`object`.Company
+import com.vaticle.typedb.iam.simulation.common.`object`.Person
+import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT_OWNER
+import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT_OWNERSHIP
+import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
@@ -59,7 +63,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun addUser(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val user = TypeDBPerson.initialise(company, context.seedData, randomSource)
+        val user = Person.initialise(company, context.seedData, randomSource)
 
         session.transaction(WRITE).use { transaction ->
             transaction.query().insert(
@@ -96,7 +100,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
             TypeDBSubjectType.USER_ACCOUNT -> TypeDBUserAccount.initialise(company, context.seedData, randomSource).asSubject()
         }
 
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
         session.transaction(WRITE, options).use { transaction ->
             transaction.query().insert(
@@ -127,7 +131,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
     }
 
     override fun listSubjectGroupMemberships(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val subject = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
+        val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
         val groups: List<TypeDBSubject>
 
         session.transaction(READ, options).use { transaction ->
@@ -136,12 +140,13 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     `var`(S_MEMBER).isa(subject.type)
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(subject.idType, subject.idValue),
-                    `var`(S).isa(USER_GROUP)
+                    `var`(S).isaX(`var`(S_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(S_ID)),
+                        .has(`var`(S_ID)),
+                    `var`(S_ID).isaX(`var`(S_ID_TYPE)),
                     rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP),
-                    `var`(S).isaX(`var`(S_TYPE)),
-                    `var`(S_ID).isaX(`var`(S_ID_TYPE))
+                    `var`(S_TYPE).sub(USER_GROUP),
+                    `var`(S_ID_TYPE).sub(ID)
                 )
             ).toList().map {
                 TypeDBSubject(
@@ -156,7 +161,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
     }
 
     override fun listSubjectPermissions(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val subject = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
+        val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
         val permissions: List<TypeDBPermission>
 
         session.transaction(READ, options).use { transaction ->
@@ -165,19 +170,20 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     `var`(S).isa(subject.type)
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(subject.idType, subject.idValue),
-                    `var`(O).isa(OBJECT)
+                    `var`(O).isaX(`var`(O_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(O_ID)),
-                    `var`(A).isa(ACTION)
+                        .has(`var`(O_ID)),
+                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
+                    `var`(A).isaX(`var`(A_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(ACTION_NAME, `var`(A_NAME)),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
                         .has(VALIDITY, `var`(P_VALIDITY))
                         .has(REVIEW_DATE, `var`(P_DATE)),
-                    `var`(O).isaX(`var`(O_TYPE)),
-                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
-                    `var`(A).isaX(`var`(A_TYPE))
+                    `var`(O_TYPE).sub(OBJECT),
+                    `var`(O_ID_TYPE).sub(ID),
+                    `var`(A_TYPE).sub(ACTION)
                 )
             ).toList().map {
                 TypeDBPermission(
@@ -196,7 +202,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
     }
 
     override fun listObjectPermissionHolders(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val `object` = getRandomEntity(session, company, randomSource, OBJECT).asObject()
+        val `object` = getRandomEntity(session, company, randomSource, OBJECT)?.asObject() ?: return listOf<Report>()
         val permissions: List<TypeDBPermission>
 
         session.transaction(READ, options).use { transaction ->
@@ -205,19 +211,20 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     `var`(O).isa(`object`.type)
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(`object`.idType, `object`.idValue),
-                    `var`(S).isa(SUBJECT)
+                    `var`(S).isaX(`var`(S_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(S_ID)),
-                    `var`(A).isa(ACTION)
+                        .has(`var`(S_ID)),
+                    `var`(S_ID).isaX(`var`(S_ID_TYPE)),
+                    `var`(A).isaX(`var`(A_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(ACTION_NAME, `var`(A_NAME)),
                     `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     `var`(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
                         .has(VALIDITY, `var`(P_VALIDITY))
                         .has(REVIEW_DATE, `var`(P_DATE)),
-                    `var`(S).isaX(`var`(S_TYPE)),
-                    `var`(S_ID).isaX(`var`(S_ID_TYPE)),
-                    `var`(A).isaX(`var`(A_TYPE))
+                    `var`(S_TYPE).sub(SUBJECT),
+                    `var`(S_ID_TYPE).sub(ID),
+                    `var`(A_TYPE).sub(ACTION)
                 )
             ).toList().map {
                 TypeDBPermission(
@@ -346,7 +353,7 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                         `var`().has(ATTRIBUTE, `var`(AT))
                     ),
                     not(
-                        `var`(AT).isa(PARENT_COMPANY)
+                        `var`(AT).isa(PARENT_COMPANY_NAME)
                     )
                 ).delete(
                     `var`(AT).isa(ATTRIBUTE)
@@ -358,56 +365,109 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
     }
 
     private fun deleteSubject(session: TypeDBSession, company: Company, randomSource: RandomSource, subjectType: TypeDBSubjectType) {
-        val subject = getRandomEntity(session, company, randomSource, subjectType.label).asSubject()
-        val newOwner = getRandomEntity(session, company, randomSource, subjectType.label).asSubject()
-        val ownedEntities: List<TypeDBEntity>
+        val subject = getRandomEntity(session, company, randomSource, subjectType.label)?.asSubject() ?: return
+        val newOwner = getRandomEntity(session, company, randomSource, subjectType.label)?.asSubject() ?: return
+        val ownedGroups: List<TypeDBSubject>
 
         session.transaction(READ, options).use { transaction ->
-            ownedEntities = transaction.query().match(
+            ownedGroups = transaction.query().match(
                 match(
-                    `var`(E).isa(ENTITY)
+                    `var`(S).isaX(`var`(S_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(E_ID)),
+                        .has(`var`(S_ID)),
+                    `var`(S_ID).isaX(`var`(S_ID_TYPE)),
+                    `var`(S_OWNER).isa(subject.type)
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(subject.idType, subject.idValue),
+                    rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP),
+                    `var`(S_TYPE).sub(USER_GROUP),
+                    `var`(S_ID_TYPE).sub(ID)
+                )
+            ).toList().map { TypeDBSubject(it[S_TYPE], it[S_ID_TYPE], it[S_ID]) }
+        }
+
+        val ownedObjects: List<TypeDBObject>
+
+        session.transaction(READ, options).use { transaction ->
+            ownedObjects = transaction.query().match(
+                match(
+                    `var`(O).isaX(`var`(O_TYPE))
+                        .has(PARENT_COMPANY_NAME, company.name)
+                        .has(`var`(O_ID)),
+                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
                     `var`(S).isa(subject.type)
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(subject.idType, subject.idValue),
-                    rel(OWNED, E).rel(OWNER, S).isa(OWNERSHIP),
-                    `var`(E).isaX(`var`(E_TYPE)),
-                    `var`(E_ID).isaX(`var`(E_ID_TYPE))
+                    rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
+                    `var`(O_TYPE).sub(OBJECT),
+                    `var`(O_ID_TYPE).sub(ID)
                 )
-            ).toList().map { TypeDBEntity(it[E_TYPE], it[E_ID_TYPE], it[E_ID]) }
+            ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         session.transaction(WRITE, options).use { transaction ->
-            ownedEntities.parallelStream().forEach { entity ->
+            ownedGroups.parallelStream().forEach { group ->
                 transaction.query().delete(
                     match(
-                        `var`(E).isa(entity.type)
-                            .has(entity.idType, entity.idValue),
-                        `var`(S).isa(subject.type)
+                        `var`(S).isa(group.type)
+                            .has(group.idType, group.idValue),
+                        `var`(S_OWNER).isa(subject.type)
                             .has(subject.idType, subject.idValue),
                         `var`(C).isa(COMPANY)
                             .has(NAME, company.name),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, E).isa(COMPANY_MEMBERSHIP),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                        `var`(OW).rel(OWNED, E).rel(OWNER, S).isa(OWNERSHIP)
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_OWNER).isa(COMPANY_MEMBERSHIP),
+                        `var`(OW).rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP)
                     ).delete(
-                        `var`(OW).isa(OWNERSHIP)
+                        `var`(OW).isa(GROUP_OWNERSHIP)
                     )
                 )
 
                 transaction.query().insert(
                     match(
-                        `var`(E).isa(entity.type)
-                            .has(entity.idType, entity.idValue),
+                        `var`(S).isa(group.type)
+                            .has(group.idType, group.idValue),
+                        `var`(S_OWNER).isa(newOwner.type)
+                            .has(newOwner.idType, newOwner.idValue),
+                        `var`(C).isa(COMPANY)
+                            .has(NAME, company.name),
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_OWNER).isa(COMPANY_MEMBERSHIP)
+                    ).insert(
+                        rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP)
+                    )
+                )
+            }
+
+            ownedObjects.parallelStream().forEach { `object` ->
+                transaction.query().delete(
+                    match(
+                        `var`(O).isa(`object`.type)
+                            .has(`object`.idType, `object`.idValue),
+                        `var`(S).isa(subject.type)
+                            .has(subject.idType, subject.idValue),
+                        `var`(C).isa(COMPANY)
+                            .has(NAME, company.name),
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                        `var`(OW).rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP)
+                    ).delete(
+                        `var`(OW).isa(OBJECT_OWNERSHIP)
+                    )
+                )
+
+                transaction.query().insert(
+                    match(
+                        `var`(O).isa(`object`.type)
+                            .has(`object`.idType, `object`.idValue),
                         `var`(S).isa(newOwner.type)
                             .has(newOwner.idType, newOwner.idValue),
                         `var`(C).isa(COMPANY)
                             .has(NAME, company.name),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, E).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP)
                     ).insert(
-                        rel(OWNED, E).rel(OWNER, S).isa(OWNERSHIP)
+                        rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP)
                     )
                 )
             }
@@ -475,10 +535,6 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
         private const val A_NAME = "a-name"
         private const val A_TYPE = "a-type"
         private const val C = "c"
-        private const val E = "e"
-        private const val E_ID = "e-id"
-        private const val E_ID_TYPE = "e-id-type"
-        private const val E_TYPE = "e-type"
         private const val ME = "me"
         private const val O = "o"
         private const val OW = "ow"
