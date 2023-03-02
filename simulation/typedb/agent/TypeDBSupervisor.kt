@@ -30,8 +30,8 @@ class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDB
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun assignGroupMembership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val group = getRandomEntity(session, company, randomSource, USER_GROUP).asSubject()
-        val member = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
+        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
+        val member = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
         session.transaction(WRITE, options).use { transaction ->
             transaction.query().insert(
@@ -56,7 +56,7 @@ class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDB
     }
 
     override fun revokeGroupMembership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val group = getRandomEntity(session, company, randomSource, USER_GROUP).asSubject()
+        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
         val candidateMembers: List<TypeDBSubject>
 
         session.transaction(READ, options).use { transaction ->
@@ -65,16 +65,18 @@ class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDB
                     `var`(S).isa(group.type)
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(group.idType, group.idValue),
-                    `var`(S_MEMBER).isa(SUBJECT)
+                    `var`(S_MEMBER).isaX(`var`(S_MEMBER_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ID, `var`(S_MEMBER_ID)),
+                        .has(`var`(S_MEMBER_ID)),
+                    `var`(S_MEMBER_ID).isaX(`var`(S_MEMBER_ID_TYPE)),
                     rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP),
-                    `var`(S_MEMBER).isaX(`var`(S_MEMBER_TYPE)),
-                    `var`(S_MEMBER_ID).isaX(`var`(S_MEMBER_ID_TYPE))
+                    `var`(S_MEMBER_TYPE).sub(SUBJECT),
+                    `var`(S_MEMBER_ID_TYPE).sub(ID)
                 )
             ).toList().map { TypeDBSubject(it[S_MEMBER_TYPE], it[S_MEMBER_ID_TYPE], it[S_MEMBER_ID]) }
         }
 
+        if (candidateMembers.isEmpty()) return listOf<Report>()
         val member = randomSource.choose(candidateMembers)
 
         session.transaction(WRITE, options).use { transaction ->

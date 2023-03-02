@@ -75,7 +75,7 @@ object Util {
         throw IllegalArgumentException()
     }
 
-    fun getRandomEntity(session: TypeDBSession, company: Company, randomSource: RandomSource, entityType: String): TypeDBEntity {
+    fun getRandomEntity(session: TypeDBSession, company: Company, randomSource: RandomSource, entityType: String): TypeDBEntity? {
         val candidateEntities: List<TypeDBEntity>
 
         session.transaction(READ, options).use { transaction ->
@@ -91,6 +91,7 @@ object Util {
             ).toList().map { TypeDBEntity(it[E_TYPE], it[E_ID_TYPE], it[E_ID]) }
         }
 
+        if (candidateEntities.isEmpty()) return null
         return randomSource.choose(candidateEntities)
     }
 
@@ -215,32 +216,9 @@ object Util {
         }
     }
 
-    private const val A = "a"
-    private const val AC = "ac"
-    private const val A_NAME = "a-name"
-    private const val A_TYPE = "a-type"
-    private const val C = "c"
     private const val E = "e"
     private const val E_ID = "e-id"
     private const val E_ID_TYPE = "e-id-type"
     private const val E_TYPE = "e-type"
-    private const val ME = "me"
-    private const val O = "o"
-    private const val OW = "ow"
-    private const val O_ID = "o-id"
-    private const val O_ID_TYPE = "o-id-type"
-    private const val O_MEMBER = "o-member"
-    private const val O_MEMBER_ID = "o-member-id"
-    private const val O_MEMBER_ID_TYPE = "o-member-id-type"
-    private const val O_MEMBER_TYPE = "o-member-type"
-    private const val O_TYPE = "o-type"
-    private const val P = "p"
-    private const val R = "r"
-    private const val S = "s"
-    private const val S_ID = "s-id"
-    private const val S_ID_TYPE = "s-id-type"
-    private const val S_OWNER = "s-owner"
-    private const val S_REQUESTED = "s-requested"
-    private const val S_REQUESTING = "s-requesting"
-    private const val S_TYPE = "s-type"
+
 }

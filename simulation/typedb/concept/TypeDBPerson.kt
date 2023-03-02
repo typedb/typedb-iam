@@ -26,47 +26,4 @@ data class TypeDBPerson(val name: String, val email: String) {
     fun asSubject(): TypeDBSubject {
         return TypeDBSubject(PERSON, EMAIL, email)
     }
-
-    companion object {
-        private const val MAX_NAME_PERCENTILE = 90
-        private const val NAME_PERCENTILE_SCALE = 1000
-
-        fun initialise(company: Company, seedData: SeedData, randomSource: RandomSource): TypeDBPerson {
-            val gender = randomSource.choose(listOf("male", "female"))
-            val firstName = initialiseFirstName(gender, seedData, randomSource)
-            val lastName = initialiseLastName(seedData, randomSource)
-            val name = "$firstName $lastName"
-            val email = "${firstName?.lowercase()}.${lastName?.lowercase()}@${company.domainName}.com"
-            return TypeDBPerson(name, email)
-        }
-
-        private fun initialiseFirstName(gender:String, seedData: SeedData, randomSource: RandomSource): String? {
-            val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
-            val names = when (gender) {
-                "male" -> seedData.maleNames
-                "female" -> seedData.femaleNames
-                else -> randomSource.choose(listOf(seedData.maleNames, seedData.femaleNames))
-            }
-
-            names.forEach {
-                if ((NAME_PERCENTILE_SCALE * it["percentile"] as Double).toInt() <= percentile) {
-                    return it["value"] as String
-                }
-            }
-
-            return null
-        }
-
-        private fun initialiseLastName(seedData: SeedData, randomSource: RandomSource): String? {
-            val percentile = randomSource.nextInt(NAME_PERCENTILE_SCALE * MAX_NAME_PERCENTILE)
-
-            seedData.lastNames.forEach {
-                if ((NAME_PERCENTILE_SCALE * it["percentile"] as Double).toInt() <= percentile) {
-                    return it["value"] as String
-                }
-            }
-
-            return null
-        }
-    }
 }

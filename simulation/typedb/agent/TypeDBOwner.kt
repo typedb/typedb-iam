@@ -29,8 +29,8 @@ class TypeDBOwner(client: TypeDBClient, context:Context): Owner<TypeDBSession>(c
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun changeGroupOwnership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val group = getRandomEntity(session, company, randomSource, USER_GROUP).asSubject()
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
+        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
         session.transaction(WRITE, options).use { transaction ->
             transaction.query().delete(
@@ -40,9 +40,9 @@ class TypeDBOwner(client: TypeDBClient, context:Context): Owner<TypeDBSession>(c
                     `var`(C).isa(COMPANY)
                         .has(NAME, company.name),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                    rel(OWNED_GROUP, S).isa(GROUP_OWNERSHIP)
+                    `var`(OW).rel(OWNED_GROUP, S).isa(GROUP_OWNERSHIP)
                 ).delete(
-                    rel(OWNED_GROUP, S).isa(GROUP_OWNERSHIP)
+                    `var`(OW).isa(GROUP_OWNERSHIP)
                 )
             )
 
@@ -68,8 +68,8 @@ class TypeDBOwner(client: TypeDBClient, context:Context): Owner<TypeDBSession>(c
     }
 
     override fun changeObjectOwnership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val `object` = getRandomEntity(session, company, randomSource, OBJECT).asObject()
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT).asSubject()
+        val `object` = getRandomEntity(session, company, randomSource, OBJECT)?.asObject() ?: return listOf<Report>()
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
         session.transaction(WRITE, options).use { transaction ->
             transaction.query().delete(
@@ -79,9 +79,9 @@ class TypeDBOwner(client: TypeDBClient, context:Context): Owner<TypeDBSession>(c
                     `var`(C).isa(COMPANY)
                         .has(NAME, company.name),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                    rel(OWNED_OBJECT, O).isa(OBJECT_OWNERSHIP)
+                    `var`(OW).rel(OWNED_OBJECT, O).isa(OBJECT_OWNERSHIP)
                 ).delete(
-                    rel(OWNED_OBJECT, O).isa(OBJECT_OWNERSHIP)
+                    `var`(OW).isa(OBJECT_OWNERSHIP)
                 )
             )
 
@@ -109,6 +109,7 @@ class TypeDBOwner(client: TypeDBClient, context:Context): Owner<TypeDBSession>(c
     companion object {
         private const val C = "c"
         private const val O = "o"
+        private const val OW = "ow"
         private const val O_OWNER = "o-owner"
         private const val S = "s"
         private const val S_OWNER = "s-owner"
