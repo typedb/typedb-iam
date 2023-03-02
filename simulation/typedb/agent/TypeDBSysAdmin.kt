@@ -359,6 +359,8 @@ class TypeDBSysAdmin(client: TypeDBClient, context:Context): SysAdmin<TypeDBSess
                     `var`(AT).isa(ATTRIBUTE)
                 )
             )
+
+            transaction.commit()
         }
 
         return listOf<Report>()
