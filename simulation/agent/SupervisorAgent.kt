@@ -22,9 +22,9 @@ import com.vaticle.typedb.simulation.Agent
 import com.vaticle.typedb.simulation.common.DBClient
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-abstract class Supervisor<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
+abstract class SupervisorAgent<SESSION> protected constructor(client: DBClient<SESSION>, context: Context) :
     Agent<Company, SESSION, Context>(client, context) {
-    override val agentClass = Supervisor::class.java
+    override val agentClass = SupervisorAgent::class.java
     override val partitions = context.seedData.companies
 
     override val actionHandlers = mapOf(

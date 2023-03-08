@@ -1,0 +1,163 @@
+#
+# Copyright (C) 2022 Vaticle
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+agents:
+
+#  Startup stuff
+
+  - name: "SysAdmin"
+    action: "addUser"
+    runsPerIteration: 50
+    trace: true
+
+  - name: "SysAdmin"
+    action: "createUserGroup"
+    runsPerIteration: 5
+    trace: true
+
+  - name: "Supervisor"
+    action: "assignGroupMembership"
+    runsPerIteration: 20
+    trace: true
+
+  - name: "PolicyManager"
+    action: "listSegregationPolicies"
+    runsPerIteration: 1
+    trace: true
+
+  - name: "PolicyManager"
+    action: "revokeSegregationPolicy"
+    runsPerIteration: 3
+    trace: true
+
+  - name: "PolicyManager"
+    action: "assignSegregationPolicy"
+    runsPerIteration: 3
+    trace: true
+
+
+
+  - name: "SysAdmin"
+    action: "reviewChangeRequests"
+    runsPerIteration: 1
+    trace: true
+
+  - name: "PolicyManager"
+    action: "listPermissionsPendingReview"
+    runsPerIteration: 1
+    trace: true
+
+  - name: "PolicyManager"
+    action: "reviewPermissions"
+    runsPerIteration: 1
+    trace: true
+
+  - name: "PolicyManager"
+    action: "listSegregationViolations"
+    runsPerIteration: 1
+    trace: true
+
+  - name: "PolicyManager"
+    action: "reviewSegregationViolations"
+    runsPerIteration: 0
+    trace: true
+
+
+
+  - name: "User"
+    action: "attemptAccess"
+    runsPerIteration: 2000
+    trace: true
+
+  - name: "User"
+    action: "submitChangeRequest"
+    runsPerIteration: 100
+    trace: true
+
+  - name: "User"
+    action: "createObject"
+    runsPerIteration: 200
+    trace: true
+
+  - name: "Owner"
+    action: "changeGroupOwnership"
+    runsPerIteration: 10
+    trace: true
+
+  - name: "Owner"
+    action: "changeObjectOwnership"
+    runsPerIteration: 100
+    trace: true
+
+  - name: "User"
+    action: "deleteObject"
+    runsPerIteration: 50
+    trace: true
+
+  - name: "SysAdmin"
+    action: "listSubjectGroupMemberships"
+    runsPerIteration: 1
+    trace: true
+
+  - name: "SysAdmin"
+    action: "listSubjectPermissions"
+    runsPerIteration: 1
+    trace: true
+
+  - name: "SysAdmin"
+    action: "listObjectPermissionHolders"
+    runsPerIteration: 1
+    trace: true
+
+
+
+  - name: "Supervisor"
+    action: "revokeGroupMembership"
+    runsPerIteration: 10
+    trace: true
+
+  - name: "SysAdmin"
+    action: "removeUser"
+    runsPerIteration: 20
+    trace: true
+
+  - name: "SysAdmin"
+    action: "deleteUserGroup"
+    runsPerIteration: 2
+    trace: true
+
+  - name: "SysAdmin"
+    action: "collectGarbage"
+    runsPerIteration: 1
+    trace: true
+
+
+traceSampling:
+  # Options: `"every"` for every K traces; `"log"` for logarithm with base N
+  function: "every"
+  arg: 10
+
+run:
+  randomSeed: 1
+  iterations: 1
+  partitions: 1
+  databaseName: "iam-simulation"
+
+model:
+  requestApprovalPercentage: 80
+  permissionReviewAge: 5
+  permissionRenewalPercentage: 80

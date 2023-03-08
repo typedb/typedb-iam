@@ -21,9 +21,9 @@ import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 
 class TypeDBAgentFactory(client: TypeDBClient, context: Context): AgentFactory<TypeDBClient>(client, context) {
-    override fun user(client: TypeDBClient, context: Context) = TypeDBUser(client, context)
-    override fun owner(client: TypeDBClient, context: Context) = TypeDBOwner(client, context)
-    override fun supervisor(client: TypeDBClient, context: Context) = TypeDBSupervisor(client, context)
-    override fun policyManager(client: TypeDBClient, context: Context) = TypeDBPolicyManager(client, context)
-    override fun sysAdmin(client: TypeDBClient, context: Context) = TypeDBSysAdmin(client, context)
+    override fun user(client: TypeDBClient, context: Context) = TypeDBUserAgent(client, context)
+    override fun owner(client: TypeDBClient, context: Context) = TypeDBOwnerAgent(client, context)
+    override fun supervisor(client: TypeDBClient, context: Context) = TypeDBSupervisorAgent(client, context)
+    override fun policyManager(client: TypeDBClient, context: Context) = TypeDBPolicyManagerAgent(client, context)
+    override fun sysAdmin(client: TypeDBClient, context: Context) = TypeDBSysAdminAgent(client, context)
 }

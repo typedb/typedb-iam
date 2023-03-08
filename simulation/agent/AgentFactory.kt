@@ -23,16 +23,16 @@ import com.vaticle.typedb.simulation.common.DBClient
 abstract class AgentFactory<CLIENT: DBClient<*>>(client: CLIENT, context: Context): Agent.Factory() {
 
     override val map: Map<Class<out Agent<*, *, *>>, () -> Agent<*, *, *>> = mapOf(
-        User::class.java to { user(client, context) },
-        Owner::class.java to { owner(client, context) },
-        Supervisor::class.java to { supervisor(client, context) },
-        PolicyManager::class.java to { policyManager(client, context) },
-        SysAdmin::class.java to { sysAdmin(client, context) }
+        UserAgent::class.java to { user(client, context) },
+        OwnerAgent::class.java to { owner(client, context) },
+        SupervisorAgent::class.java to { supervisor(client, context) },
+        PolicyManagerAgent::class.java to { policyManager(client, context) },
+        SysAdminAgent::class.java to { sysAdmin(client, context) }
     )
 
-    protected abstract fun user(client: CLIENT, context: Context): User<*>
-    protected abstract fun owner(client: CLIENT, context: Context): Owner<*>
-    protected abstract fun supervisor(client: CLIENT, context: Context): Supervisor<*>
-    protected abstract fun policyManager(client: CLIENT, context: Context): PolicyManager<*>
-    protected abstract fun sysAdmin(client: CLIENT, context: Context): SysAdmin<*>
+    protected abstract fun user(client: CLIENT, context: Context): UserAgent<*>
+    protected abstract fun owner(client: CLIENT, context: Context): OwnerAgent<*>
+    protected abstract fun supervisor(client: CLIENT, context: Context): SupervisorAgent<*>
+    protected abstract fun policyManager(client: CLIENT, context: Context): PolicyManagerAgent<*>
+    protected abstract fun sysAdmin(client: CLIENT, context: Context): SysAdminAgent<*>
 }

@@ -4,7 +4,7 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
-import com.vaticle.typedb.iam.simulation.agent.Supervisor
+import com.vaticle.typedb.iam.simulation.agent.SupervisorAgent
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.COMPANY
@@ -20,36 +20,34 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
+import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBSubject
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
 import kotlin.streams.toList
 
-class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDBSession>(client, context) {
+class TypeDBSupervisorAgent(client: TypeDBClient, context:Context): SupervisorAgent<TypeDBSession>(client, context) {
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun assignGroupMembership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
         val member = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
-        session.transaction(WRITE, options).use { transaction ->
-            transaction.query().insert(
+        session.transaction(WRITE, options).use { tx ->
+            tx.query().insert(
                 match(
-                    `var`(S).isa(group.type)
-                        .has(group.idType, group.idValue),
-                    `var`(S_MEMBER).isa(member.type)
-                        .has(member.idType, member.idValue),
-                    `var`(C).isa(COMPANY)
-                        .has(NAME, company.name),
+                    cvar(S).isa(group.type).has(group.idType, group.idValue),
+                    cvar(S_MEMBER).isa(member.type).has(member.idType, member.idValue),
+                    cvar(C).isa(COMPANY).has(NAME, company.name),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_MEMBER).isa(COMPANY_MEMBERSHIP)
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_MEMBER).isa(COMPANY_MEMBERSHIP),
                 ).insert(
-                    rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP)
+                    rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP),
                 )
             )
 
-            transaction.commit()
+            tx.commit()
         }
 
         return listOf<Report>()
@@ -59,19 +57,15 @@ class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDB
         val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
         val candidateMembers: List<TypeDBSubject>
 
-        session.transaction(READ, options).use { transaction ->
-            candidateMembers = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            candidateMembers = tx.query().match(
                 match(
-                    `var`(S).isa(group.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(group.idType, group.idValue),
-                    `var`(S_MEMBER).isaX(`var`(S_MEMBER_TYPE))
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`var`(S_MEMBER_ID)),
-                    `var`(S_MEMBER_ID).isaX(`var`(S_MEMBER_ID_TYPE)),
+                    cvar(S).isa(group.type).has(PARENT_COMPANY_NAME, company.name).has(group.idType, group.idValue),
+                    cvar(S_MEMBER).isaX(cvar(S_MEMBER_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(S_MEMBER_ID)),
+                    cvar(S_MEMBER_ID).isaX(cvar(S_MEMBER_ID_TYPE)),
+                    cvar(S_MEMBER_TYPE).sub(SUBJECT),
+                    cvar(S_MEMBER_ID_TYPE).sub(ID),
                     rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP),
-                    `var`(S_MEMBER_TYPE).sub(SUBJECT),
-                    `var`(S_MEMBER_ID_TYPE).sub(ID)
                 )
             ).toList().map { TypeDBSubject(it[S_MEMBER_TYPE], it[S_MEMBER_ID_TYPE], it[S_MEMBER_ID]) }
         }
@@ -79,24 +73,21 @@ class TypeDBSupervisor(client: TypeDBClient, context:Context): Supervisor<TypeDB
         if (candidateMembers.isEmpty()) return listOf<Report>()
         val member = randomSource.choose(candidateMembers)
 
-        session.transaction(WRITE, options).use { transaction ->
-            transaction.query().delete(
+        session.transaction(WRITE, options).use { tx ->
+            tx.query().delete(
                 match(
-                    `var`(S).isa(group.type)
-                        .has(group.idType, group.idValue),
-                    `var`(S_MEMBER).isa(member.type)
-                        .has(member.idType, member.idValue),
-                    `var`(C).isa(COMPANY)
-                        .has(NAME, company.name),
+                    cvar(S).isa(group.type).has(group.idType, group.idValue),
+                    cvar(S_MEMBER).isa(member.type).has(member.idType, member.idValue),
+                    cvar(C).isa(COMPANY).has(NAME, company.name),
+                    cvar(ME).rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_MEMBER).isa(COMPANY_MEMBERSHIP),
-                    `var`(ME).rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP)
                 ).delete(
-                    `var`(ME).isa(GROUP_MEMBERSHIP)
+                    cvar(ME).isa(GROUP_MEMBERSHIP),
                 )
             )
 
-            transaction.commit()
+            tx.commit()
         }
 
         return listOf<Report>()
