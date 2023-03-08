@@ -6,7 +6,7 @@ import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.client.api.answer.ConceptMap
 import com.vaticle.typedb.iam.simulation.common.Context
-import com.vaticle.typedb.iam.simulation.agent.User
+import com.vaticle.typedb.iam.simulation.agent.UserAgent
 import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
@@ -43,6 +43,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBAction
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
+import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBDatabase
 import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBDirectory
 import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBFile
@@ -57,7 +58,7 @@ import com.vaticle.typeql.lang.TypeQL.*
 import java.lang.IllegalArgumentException
 import kotlin.streams.toList
 
-class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(client, context) {
+class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSession>(client, context) {
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -79,127 +80,111 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
     override fun deleteObject(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val candidateObjects: List<TypeDBObject>
 
-        session.transaction(READ, options).use { transaction ->
-            candidateObjects = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            candidateObjects = tx.query().match(
                 match(
-                    `var`(O).isaX(`var`(O_TYPE))
+                    cvar(O).isaX(cvar(O_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(ROOT_COLLECTION, false)
-                        .has(`var`(O_ID)),
-                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
-                    `var`(O_TYPE).sub(OBJECT),
-                    `var`(O_ID_TYPE).sub(ID)
+                        .has(cvar(O_ID)),
+                    cvar(O_ID).isaX(cvar(O_ID_TYPE)),
+                    cvar(O_TYPE).sub(OBJECT),
+                    cvar(O_ID_TYPE).sub(ID),
                 )
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         if (candidateObjects.isEmpty()) return listOf<Report>()
-        val `object` = randomSource.choose(candidateObjects)
+        val obj = randomSource.choose(candidateObjects)
         val members: List<TypeDBObject>
 
-        session.transaction(READ, options).use { transaction ->
-            members = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            members = tx.query().match(
                 match(
-                    `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`object`.idType, `object`.idValue),
-                    `var`(O_MEMBER).isaX(`var`(O_MEMBER_TYPE))
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`var`(O_MEMBER_ID)),
-                    `var`(O_MEMBER_ID).isaX(`var`(O_MEMBER_ID_TYPE)),
+                    cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
+                    cvar(O_MEMBER).isaX(cvar(O_MEMBER_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(O_MEMBER_ID)),
+                    cvar(O_MEMBER_ID).isaX(cvar(O_MEMBER_ID_TYPE)),
+                    cvar(O_MEMBER_TYPE).sub(OBJECT),
+                    cvar(O_MEMBER_ID_TYPE).sub(ID),
                     rel(PARENT_COLLECTION, O).rel(COLLECTION_MEMBER, O_MEMBER).isa(COLLECTION_MEMBERSHIP),
-                    `var`(O_MEMBER_TYPE).sub(OBJECT),
-                    `var`(O_MEMBER_ID_TYPE).sub(ID)
                 )
             ).toList().map { TypeDBObject(it[O_MEMBER_TYPE], it[O_MEMBER_ID_TYPE], it[O_MEMBER_ID]) }
         }
 
-        val objectsToDelete = members + listOf(`object`)
+        val objectsToDelete = members + listOf(obj)
 
-        session.transaction(WRITE, options).use { transaction ->
-            objectsToDelete.parallelStream().forEach { `object` ->
-                transaction.query().delete(
+        session.transaction(WRITE, options).use { tx ->
+            objectsToDelete.parallelStream().forEach { obj ->
+                tx.query().delete(
                     match(
-                        `var`(O).isa(`object`.type)
-                            .has(`object`.idType, `object`.idValue),
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
+                        cvar(A).rel(ACCESSED_OBJECT, O).isa(ACCESS),
+                        cvar(P).rel(PERMITTED_ACCESS, A).isa(PERMISSION),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        `var`(A).rel(ACCESSED_OBJECT, O).isa(ACCESS),
-                        `var`(P).rel(PERMITTED_ACCESS, A).isa(PERMISSION)
                     ).delete(
-                        `var`(P).isa(PERMISSION)
+                        cvar(P).isa(PERMISSION)
                     )
                 )
 
-                transaction.query().delete(
+                tx.query().delete(
                     match(
-                        `var`(O).isa(`object`.type)
-                            .has(`object`.idType, `object`.idValue),
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
+                        cvar(A).rel(ACCESSED_OBJECT, O).isa(ACCESS),
+                        cvar(R).rel(REQUESTED_CHANGE, A).isa(CHANGE_REQUEST),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        `var`(A).rel(ACCESSED_OBJECT, O).isa(ACCESS),
-                        `var`(R).rel(REQUESTED_CHANGE, A).isa(CHANGE_REQUEST)
                     ).delete(
-                        `var`(R).isa(CHANGE_REQUEST)
+                        cvar(R).isa(CHANGE_REQUEST),
                     )
                 )
 
-                transaction.query().delete(
+                tx.query().delete(
                     match(
-                        `var`(O).isa(`object`.type)
-                            .has(`object`.idType, `object`.idValue),
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
+                        cvar(A).rel(ACCESSED_OBJECT, O).isa(ACCESS),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        `var`(A).rel(ACCESSED_OBJECT, O).isa(ACCESS)
                     ).delete(
-                        `var`(A).isa(ACCESS)
+                        cvar(A).isa(ACCESS),
                     )
                 )
 
-                transaction.query().delete(
+                tx.query().delete(
                     match(
-                        `var`(O).isa(`object`.type)
-                            .has(`object`.idType, `object`.idValue),
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
+                        cvar(OW).rel(OWNED_OBJECT, O).isa(OBJECT_OWNERSHIP),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        `var`(OW).rel(OWNED_OBJECT, O).isa(OBJECT_OWNERSHIP)
                     ).delete(
-                        `var`(OW).isa(OBJECT_OWNERSHIP)
+                        cvar(OW).isa(OBJECT_OWNERSHIP),
                     )
                 )
 
-                transaction.query().delete(
+                tx.query().delete(
                     match(
-                        `var`(O).isa(`object`.type)
-                            .has(`object`.idType, `object`.idValue),
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
+                        cvar(ME).rel(O).isa(COLLECTION_MEMBERSHIP),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        `var`(ME).rel(O).isa(COLLECTION_MEMBERSHIP)
                     ).delete(
-                        `var`(ME).isa(COLLECTION_MEMBERSHIP)
+                        cvar(ME).isa(COLLECTION_MEMBERSHIP),
                     )
                 )
 
-                transaction.query().delete(
+                tx.query().delete(
                     match(
-                        `var`(O).isa(`object`.type)
-                            .has(`object`.idType, `object`.idValue),
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
-                        `var`(ME).rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP)
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
+                        cvar(ME).rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                     ).delete(
-                        `var`(O).isa(`object`.type),
-                        `var`(ME).isa(COMPANY_MEMBERSHIP)
+                        cvar(O).isa(obj.type),
+                        cvar(ME).isa(COMPANY_MEMBERSHIP),
                     )
                 )
             }
 
-            transaction.commit()
+            tx.commit()
         }
 
         return listOf<Report>()
@@ -209,34 +194,28 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
         val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
         val candidateObjects: List<TypeDBObject>
 
-        session.transaction(READ, options).use { transaction ->
-            candidateObjects = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            candidateObjects = tx.query().match(
                 match(
-                    `var`(O).isaX(`var`(O_TYPE))
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`var`(O_ID)),
-                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
+                    cvar(O).isaX(cvar(O_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(O_ID)),
+                    cvar(O_ID).isaX(cvar(O_ID_TYPE)),
+                    cvar(O_TYPE).sub(OBJECT),
+                    cvar(O_ID_TYPE).sub(ID),
                     rel(ACCESSED_OBJECT, O).isa(ACCESS),
-                    `var`(O_TYPE).sub(OBJECT),
-                    `var`(O_ID_TYPE).sub(ID)
                 )
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         if (candidateObjects.isEmpty()) return listOf<Report>()
-        val `object` = randomSource.choose(candidateObjects)
+        val obj = randomSource.choose(candidateObjects)
         val candidateOperations: List<TypeDBAction>
 
-        session.transaction(READ, options).use { transaction ->
-            candidateOperations = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            candidateOperations = tx.query().match(
                 match(
-                    `var`(A).isa(OPERATION)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ACTION_NAME, `var`(A_NAME)),
-                    `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`object`.idType, `object`.idValue),
-                    rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS)
+                    cvar(A).isa(OPERATION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
+                    cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
+                    rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                 )
             ).toList().map { TypeDBAction(OPERATION, stringValue(it[A_NAME])) }
         }
@@ -244,21 +223,14 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
         val action = randomSource.choose(candidateOperations)
         val matches: List<ConceptMap>
 
-        session.transaction(READ, options).use { transaction ->
-            matches = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            matches = tx.query().match(
                 match(
-                    `var`(S).isa(subject.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(subject.idType, subject.idValue),
-                    `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`object`.idType, `object`.idValue),
-                    `var`(A).isa(action.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(action.idType, action.idValue),
-                    `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                    rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
-                        .has(VALIDITY, true)
+                    cvar(S).isa(subject.type).has(PARENT_COMPANY_NAME, company.name).has(subject.idType, subject.idValue),
+                    cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
+                    cvar(A).isa(action.type).has(PARENT_COMPANY_NAME, company.name).has(action.idType, action.idValue),
+                    cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                    rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION).has(VALIDITY, true)
                 )
             ).toList()
         }
@@ -272,62 +244,52 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
         val requestedSubject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
         val candidateObjects: List<TypeDBObject>
 
-        session.transaction(READ, options).use { transaction ->
-            candidateObjects = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            candidateObjects = tx.query().match(
                 match(
-                    `var`(O).isaX(`var`(O_TYPE))
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`var`(O_ID)),
-                    `var`(O_ID).isaX(`var`(O_ID_TYPE)),
+                    cvar(O).isaX(cvar(O_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(O_ID)),
+                    cvar(O_ID).isaX(cvar(O_ID_TYPE)),
+                    cvar(O_TYPE).sub(OBJECT),
+                    cvar(O_ID_TYPE).sub(ID),
                     rel(ACCESSED_OBJECT, O).isa(ACCESS),
-                    `var`(O_TYPE).sub(OBJECT),
-                    `var`(O_ID_TYPE).sub(ID)
                 )
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
         if (candidateObjects.isEmpty()) return listOf<Report>()
-        val `object` = randomSource.choose(candidateObjects)
+        val obj = randomSource.choose(candidateObjects)
         val candidateOperations: List<TypeDBAction>
 
-        session.transaction(READ, options).use { transaction ->
-            candidateOperations = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            candidateOperations = tx.query().match(
                 match(
-                    `var`(A).isa(OPERATION)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ACTION_NAME, `var`(A_NAME)),
-                    `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`object`.idType, `object`.idValue),
-                    rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS)
+                    cvar(A).isa(OPERATION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
+                    cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
+                    rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                 )
             ).toList().map { TypeDBAction(OPERATION, stringValue(it[A_NAME])) }
         }
 
         val action = randomSource.choose(candidateOperations)
 
-        session.transaction(WRITE, options).use { transaction ->
-            transaction.query().insert(
+        session.transaction(WRITE, options).use { tx ->
+            tx.query().insert(
                 match(
-                    `var`(S_REQUESTING).isa(requestingSubject.type)
+                    cvar(S_REQUESTING).isa(requestingSubject.type)
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(requestingSubject.idType, requestingSubject.idValue),
-                    `var`(S_REQUESTED).isa(requestedSubject.type)
+                    cvar(S_REQUESTED).isa(requestedSubject.type)
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(requestedSubject.idType, requestedSubject.idValue),
-                    `var`(O).isa(`object`.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`object`.idType, `object`.idValue),
-                    `var`(A).isa(action.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(action.idType, action.idValue),
-                    `var`(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A)
+                    cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
+                    cvar(A).isa(action.type).has(PARENT_COMPANY_NAME, company.name).has(action.idType, action.idValue),
+                    cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A),
                 ).insert(
                     rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST)
                 )
             )
 
-            transaction.commit()
+            tx.commit()
         }
 
         return listOf<Report>()
@@ -346,7 +308,7 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
 
         val parent = getRandomEntity(session, company, randomSource, parentType.label)?.asObject() ?: return
 
-        val `object` = when (objectType) {
+        val obj = when (objectType) {
             TypeDBObjectType.FILE -> TypeDBFile.initialise(parent.idValue, context.seedData, randomSource).asObject()
             TypeDBObjectType.DIRECTORY -> TypeDBDirectory.initialise(parent.idValue, context.seedData, randomSource).asObject()
             TypeDBObjectType.INTERFACE -> TypeDBInterface.initialise(parent.idValue, context.seedData, randomSource).asObject()
@@ -359,56 +321,49 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
         val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return
         val validActions: List<TypeDBAction>
 
-        session.transaction(READ, options).use { transaction ->
-            validActions = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            validActions = tx.query().match(
                 match(
-                    `var`(A).isaX(`var`(A_TYPE))
+                    cvar(A).isaX(cvar(A_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(OBJECT_TYPE, `object`.type)
-                        .has(ACTION_NAME, `var`(A_NAME)),
-                    `var`(A_TYPE).sub(ACTION)
+                        .has(OBJECT_TYPE, obj.type)
+                        .has(ACTION_NAME, cvar(A_NAME)),
+                    cvar(A_TYPE).sub(ACTION)
                 )
             ).toList().map { TypeDBAction(it[A_TYPE], it[A_NAME]) }
         }
 
-        session.transaction(WRITE, options).use { transaction ->
-            transaction.query().insert(
+        session.transaction(WRITE, options).use { tx ->
+            tx.query().insert(
                 match(
-                    `var`(C).isa(COMPANY)
-                        .has(NAME, company.name),
-                    `var`(CO).isa(parent.type)
-                        .has(parent.idType, parent.idValue),
-                    `var`(S).isa(owner.type)
-                        .has(owner.idType, owner.idValue),
+                    cvar(C).isa(COMPANY).has(NAME, company.name),
+                    cvar(CO).isa(parent.type).has(parent.idType, parent.idValue),
+                    cvar(S).isa(owner.type).has(owner.idType, owner.idValue),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, CO).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP)
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                 ).insert(
-                    `var`(O).isa(`object`.type)
-                        .has(`object`.idType, `object`.idValue),
+                    cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                     rel(PARENT_COLLECTION, CO).rel(COLLECTION_MEMBER, O).isa(COLLECTION_MEMBERSHIP),
-                    rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP)
+                    rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
                 )
             )
 
             validActions.parallelStream().forEach { action ->
-                transaction.query().insert(
+                tx.query().insert(
                     match(
-                        `var`(O).isa(`object`.type)
-                            .has(`object`.idType, `object`.idValue),
-                        `var`(A).isa(action.type)
-                            .has(action.idType, action.idValue),
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                        cvar(A).isa(action.type).has(action.idType, action.idValue),
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP)
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
                     ).insert(
-                        rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS)
+                        rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     )
                 )
             }
 
-            transaction.commit()
+            tx.commit()
         }
     }
 
@@ -417,52 +372,46 @@ class TypeDBUser(client: TypeDBClient, context:Context): User<TypeDBSession>(cli
         val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return
         val validActions: List<TypeDBAction>
 
-        session.transaction(READ, options).use { transaction ->
-            validActions = transaction.query().match(
+        session.transaction(READ, options).use { tx ->
+            validActions = tx.query().match(
                 match(
-                    `var`(A).isaX(`var`(A_TYPE))
+                    cvar(A).isaX(cvar(A_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
                         .has(OBJECT_TYPE, DATABASE)
-                        .has(ACTION_NAME, `var`(A_NAME)),
-                    `var`(A_TYPE).sub(ACTION)
+                        .has(ACTION_NAME, cvar(A_NAME)),
+                    cvar(A_TYPE).sub(ACTION)
                 )
             ).toList().map { TypeDBAction(it[A_TYPE], it[A_NAME]) }
         }
 
-        session.transaction(WRITE, options).use { transaction ->
-            transaction.query().insert(
+        session.transaction(WRITE, options).use { tx ->
+            tx.query().insert(
                 match(
-                    `var`(C).isa(COMPANY)
-                        .has(NAME, company.name),
-                    `var`(S).isa(owner.type)
-                        .has(owner.idType, owner.idValue),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP)
+                    cvar(C).isa(COMPANY).has(NAME, company.name),
+                    cvar(S).isa(owner.type).has(owner.idType, owner.idValue),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                 ).insert(
-                    `var`(O).isa(DATABASE)
-                        .has(NAME, database.name),
+                    cvar(O).isa(DATABASE).has(NAME, database.name),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                    rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP)
+                    rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
                 )
             )
 
             validActions.parallelStream().forEach { action ->
-                transaction.query().insert(
+                tx.query().insert(
                     match(
-                        `var`(O).isa(DATABASE)
-                            .has(NAME, database.name),
-                        `var`(A).isa(action.type)
-                            .has(action.idType, action.idValue),
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
+                        cvar(O).isa(DATABASE).has(NAME, database.name),
+                        cvar(A).isa(action.type).has(action.idType, action.idValue),
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP)
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
                     ).insert(
-                        rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS)
+                        rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
                     )
                 )
             }
 
-            transaction.commit()
+            tx.commit()
         }
     }
 

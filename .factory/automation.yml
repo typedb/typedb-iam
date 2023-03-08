@@ -361,7 +361,7 @@ build:
 #       bazel run //:benchmark -- \
 #         --database typedb-cluster \
 #         --address $FACTORY_EXPORT_PERFORMANCE_TYPEDB_CLUSTER_SERVER_URI \
-#         --config /home/factory/$FACTORY_REPO/config/simulation.yml \
+#         --config /home/factory/$FACTORY_REPO/config/data-generation.yml \
 #         --factory $FACTORY_TRACING_URI \
 #         --org $FACTORY_OWNER \
 #         --repo $FACTORY_REPO \

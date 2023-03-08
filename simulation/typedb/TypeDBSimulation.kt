@@ -20,7 +20,7 @@ import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
-import com.vaticle.typedb.iam.simulation.agent.User
+import com.vaticle.typedb.iam.simulation.agent.UserAgent
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
@@ -61,12 +61,12 @@ import com.vaticle.typedb.iam.simulation.common.concept.OperationSet
 import com.vaticle.typedb.iam.simulation.common.concept.Person
 import com.vaticle.typedb.iam.simulation.common.concept.UserRole
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
+import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.insert
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
-import com.vaticle.typeql.lang.TypeQL.`var`
 import mu.KotlinLogging
 import java.io.File
 import java.nio.file.Paths
@@ -76,7 +76,7 @@ import kotlin.streams.toList
 class TypeDBSimulation private constructor(client: TypeDBClient, context: Context):
     com.vaticle.typedb.simulation.typedb.TypeDBSimulation<Context>(client, context, TypeDBAgentFactory(client, context)) {
 
-    override val agentPackage: String = User::class.java.packageName
+    override val agentPackage: String = UserAgent::class.java.packageName
     override val name = "IAM"
     // TODO: Update this filepath
     override val schemaFile: File = Paths.get("/Users/jameswhiteside/repos/typedb-iam/iam-schema.tql").toFile()
@@ -98,15 +98,15 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
 
     private fun initCompanies(session: TypeDBSession, companies: List<Company>) {
         companies.parallelStream().forEach { company: Company ->
-            session.transaction(WRITE, options).use { transaction ->
-                transaction.query().insert(
+            session.transaction(WRITE, options).use { tx ->
+                tx.query().insert(
                     insert(
-                        `var`().isa(COMPANY).has(NAME, company.name),
-                        `var`().eq(company.name).isa(PARENT_COMPANY_NAME)
+                        cvar().isa(COMPANY).has(NAME, company.name),
+                        cvar().eq(company.name).isa(PARENT_COMPANY_NAME),
                     )
                 )
 
-                transaction.commit()
+                tx.commit()
             }
         }
     }
@@ -115,20 +115,17 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         companies.parallelStream().forEach { company: Company ->
             repeat(100) {
                 val person = Person.initialise(company, seedData, randomSource)
-                session.transaction(WRITE, options).use { transaction ->
-                    transaction.query().insert(
+                session.transaction(WRITE, options).use { tx ->
+                    tx.query().insert(
                         match(
-                            `var`(C).isa(COMPANY)
-                                .has(NAME, company.name)
+                            cvar(C).isa(COMPANY).has(NAME, company.name),
                         ).insert(
-                            `var`(P).isa(PERSON)
-                                .has(FULL_NAME, person.name)
-                                .has(EMAIL, person.email),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, P).isa(COMPANY_MEMBERSHIP)
+                            cvar(P).isa(PERSON).has(FULL_NAME, person.name).has(EMAIL, person.email),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, P).isa(COMPANY_MEMBERSHIP),
                         )
                     )
 
-                    transaction.commit()
+                    tx.commit()
                 }
             }
         }
@@ -138,13 +135,13 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         companies.parallelStream().forEach { company: Company ->
             val persons: List<Person>
 
-            session.transaction(READ, options).use { transaction ->
-                persons = transaction.query().match(
+            session.transaction(READ, options).use { tx ->
+                persons = tx.query().match(
                     match(
-                        `var`(P).isa(PERSON)
-                            .has(FULL_NAME, `var`(P_NAME))
-                            .has(EMAIL, `var`(P_EMAIL))
-                            .has(PARENT_COMPANY_NAME, company.name)
+                        cvar(P).isa(PERSON)
+                            .has(FULL_NAME, cvar(P_NAME))
+                            .has(EMAIL, cvar(P_EMAIL))
+                            .has(PARENT_COMPANY_NAME, company.name),
                     )
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }
@@ -152,22 +149,19 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
             businessUnits.parallelStream().forEach { businessUnit: BusinessUnit ->
                 val person = randomSource.choose(persons)
 
-                session.transaction(WRITE, options).use { transaction ->
-                    transaction.query().insert(
+                session.transaction(WRITE, options).use { tx ->
+                    tx.query().insert(
                         match(
-                            `var`(C).isa(COMPANY)
-                                .has(NAME, company.name),
-                            `var`(P).isa(PERSON)
-                                .has(EMAIL, person.email)
+                            cvar(C).isa(COMPANY).has(NAME, company.name),
+                            cvar(P).isa(PERSON).has(EMAIL, person.email),
                         ).insert(
-                            `var`(B).isa(BUSINESS_UNIT)
-                                .has(NAME, businessUnit.name),
+                            cvar(B).isa(BUSINESS_UNIT).has(NAME, businessUnit.name),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, B).isa(COMPANY_MEMBERSHIP),
-                            rel(OWNED_GROUP, B).rel(GROUP_OWNER, P).isa(GROUP_OWNERSHIP)
+                            rel(OWNED_GROUP, B).rel(GROUP_OWNER, P).isa(GROUP_OWNERSHIP),
                         )
                     )
 
-                    transaction.commit()
+                    tx.commit()
                 }
             }
         }
@@ -177,13 +171,13 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         companies.parallelStream().forEach { company: Company ->
             val persons: List<Person>
 
-            session.transaction(READ, options).use { transaction ->
-                persons = transaction.query().match(
+            session.transaction(READ, options).use { tx ->
+                persons = tx.query().match(
                     match(
-                        `var`(P).isa(PERSON)
-                            .has(FULL_NAME, `var`(P_NAME))
-                            .has(EMAIL, `var`(P_EMAIL))
-                            .has(PARENT_COMPANY_NAME, company.name)
+                        cvar(P).isa(PERSON)
+                            .has(FULL_NAME, cvar(P_NAME))
+                            .has(EMAIL, cvar(P_EMAIL))
+                            .has(PARENT_COMPANY_NAME, company.name),
                     )
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }
@@ -191,22 +185,19 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
             userRoles.parallelStream().forEach { userRole: UserRole ->
                 val person = randomSource.choose(persons)
 
-                session.transaction(WRITE, options).use { transaction ->
-                    transaction.query().insert(
+                session.transaction(WRITE, options).use { tx ->
+                    tx.query().insert(
                         match(
-                            `var`(C).isa(COMPANY)
-                                .has(NAME, company.name),
-                            `var`(P).isa(PERSON)
-                                .has(EMAIL, person.email)
+                            cvar(C).isa(COMPANY).has(NAME, company.name),
+                            cvar(P).isa(PERSON).has(EMAIL, person.email),
                         ).insert(
-                            `var`(R).isa(USER_ROLE)
-                                .has(NAME, userRole.name),
+                            cvar(R).isa(USER_ROLE).has(NAME, userRole.name),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, R).isa(COMPANY_MEMBERSHIP),
-                            rel(OWNED_GROUP, R).rel(GROUP_OWNER, P).isa(GROUP_OWNERSHIP)
+                            rel(OWNED_GROUP, R).rel(GROUP_OWNER, P).isa(GROUP_OWNERSHIP),
                         )
                     )
 
-                    transaction.commit()
+                    tx.commit()
                 }
             }
         }
@@ -216,12 +207,12 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         companies.parallelStream().forEach { company: Company ->
             val persons: List<Person>
 
-            session.transaction(READ, options).use { transaction ->
-                persons = transaction.query().match(
+            session.transaction(READ, options).use { tx ->
+                persons = tx.query().match(
                     match(
-                        `var`(P).isa(PERSON)
-                            .has(FULL_NAME, `var`(P_NAME))
-                            .has(EMAIL, `var`(P_EMAIL))
+                        cvar(P).isa(PERSON)
+                            .has(FULL_NAME, cvar(P_NAME))
+                            .has(EMAIL, cvar(P_EMAIL))
                             .has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
@@ -230,22 +221,19 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
             applications.parallelStream().forEach { application: Application ->
                 val person = randomSource.choose(persons)
 
-                session.transaction(WRITE, options).use { transaction ->
-                    transaction.query().insert(
+                session.transaction(WRITE, options).use { tx ->
+                    tx.query().insert(
                         match(
-                            `var`(C).isa(COMPANY)
-                                .has(NAME, company.name),
-                            `var`(P).isa(PERSON)
-                                .has(EMAIL, person.email)
+                            cvar(C).isa(COMPANY).has(NAME, company.name),
+                            cvar(P).isa(PERSON).has(EMAIL, person.email),
                         ).insert(
-                            `var`(A).isa(APPLICATION)
-                                .has(NAME, application.name),
+                            cvar(A).isa(APPLICATION).has(NAME, application.name),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
-                            rel(OWNED_OBJECT, A).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP)
+                            rel(OWNED_OBJECT, A).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
                         )
                     )
 
-                    transaction.commit()
+                    tx.commit()
                 }
             }
         }
@@ -255,12 +243,12 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         companies.parallelStream().forEach { company: Company ->
             val persons: List<Person>
 
-            session.transaction(READ, options).use { transaction ->
-                persons = transaction.query().match(
+            session.transaction(READ, options).use { tx ->
+                persons = tx.query().match(
                     match(
-                        `var`(P).isa(PERSON)
-                            .has(FULL_NAME, `var`(P_NAME))
-                            .has(EMAIL, `var`(P_EMAIL))
+                        cvar(P).isa(PERSON)
+                            .has(FULL_NAME, cvar(P_NAME))
+                            .has(EMAIL, cvar(P_EMAIL))
                             .has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
@@ -268,22 +256,19 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
 
             val person = randomSource.choose(persons)
 
-            session.transaction(WRITE, options).use { transaction ->
-                transaction.query().insert(
+            session.transaction(WRITE, options).use { tx ->
+                tx.query().insert(
                     match(
-                        `var`(C).isa(COMPANY)
-                            .has(NAME, company.name),
-                        `var`(P).isa(PERSON)
-                            .has(EMAIL, person.email)
+                        cvar(C).isa(COMPANY).has(NAME, company.name),
+                        cvar(P).isa(PERSON).has(EMAIL, person.email),
                     ).insert(
-                        `var`(D).isa(DIRECTORY)
-                            .has(PATH, ROOT),
+                        cvar(D).isa(DIRECTORY).has(PATH, ROOT),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D).isa(COMPANY_MEMBERSHIP),
-                        rel(OWNED_OBJECT, D).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP)
+                        rel(OWNED_OBJECT, D).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
                     )
                 )
 
-                transaction.commit()
+                tx.commit()
             }
         }
     }
@@ -291,35 +276,32 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     private fun initOperations(session: TypeDBSession, companies: List<Company>, operations: List<Operation>) {
         companies.parallelStream().forEach { company: Company ->
             operations.parallelStream().forEach { operation: Operation ->
-                session.transaction(WRITE, options).use { transaction ->
-                    transaction.query().insert(
+                session.transaction(WRITE, options).use { tx ->
+                    tx.query().insert(
                         match(
-                            `var`(C).isa(COMPANY)
-                                .has(NAME, company.name)
+                            cvar(C).isa(COMPANY).has(NAME, company.name),
                         ).insert(
-                            `var`(O).isa(OPERATION)
-                                .has(ACTION_NAME, operation.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP)
+                            cvar(O).isa(OPERATION).has(ACTION_NAME, operation.name),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                         )
                     )
 
-                    transaction.commit()
+                    tx.commit()
                 }
             }
         }
         operations.parallelStream().forEach { operation: Operation ->
             operation.objectTypes.parallelStream().forEach { objectType: String ->
-                session.transaction(WRITE, options).use { transaction ->
-                    transaction.query().insert(
+                session.transaction(WRITE, options).use { tx ->
+                    tx.query().insert(
                         match(
-                            `var`(O).isa(OPERATION)
-                                .has(ACTION_NAME, operation.name)
+                            cvar(O).isa(OPERATION).has(ACTION_NAME, operation.name),
                         ).insert(
-                            `var`(O).has(OBJECT_TYPE, objectType)
+                            cvar(O).has(OBJECT_TYPE, objectType),
                         )
                     )
 
-                    transaction.commit()
+                    tx.commit()
                 }
             }
         }
@@ -328,58 +310,52 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     private fun initOperationSets(session: TypeDBSession, companies: List<Company>, operationSets: List<OperationSet>) {
         companies.parallelStream().forEach { company: Company ->
             operationSets.parallelStream().forEach { operationSet: OperationSet ->
-                session.transaction(WRITE, options).use { transaction ->
-                    transaction.query().insert(
+                session.transaction(WRITE, options).use { tx ->
+                    tx.query().insert(
                         match(
-                            `var`(C).isa(COMPANY)
-                                .has(NAME, company.name)
+                            cvar(C).isa(COMPANY).has(NAME, company.name),
                         ).insert(
-                            `var`(S).isa(OPERATION_SET)
-                                .has(ACTION_NAME, operationSet.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP)
+                            cvar(S).isa(OPERATION_SET).has(ACTION_NAME, operationSet.name),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                         )
                     )
 
-                    transaction.commit()
+                    tx.commit()
                 }
             }
         }
         operationSets.parallelStream().forEach { operationSet: OperationSet ->
             operationSet.objectTypes.parallelStream().forEach { objectType: String ->
-                session.transaction(WRITE, options).use { transaction ->
-                    transaction.query().insert(
+                session.transaction(WRITE, options).use { tx ->
+                    tx.query().insert(
                         match(
-                            `var`(O).isa(OPERATION_SET)
-                                .has(ACTION_NAME, operationSet.name)
+                            cvar(O).isa(OPERATION_SET).has(ACTION_NAME, operationSet.name),
                         ).insert(
-                            `var`(O).has(OBJECT_TYPE, objectType)
+                            cvar(O).has(OBJECT_TYPE, objectType),
                         )
                     )
 
-                    transaction.commit()
+                    tx.commit()
                 }
             }
         }
         companies.parallelStream().forEach { company: Company ->
             operationSets.parallelStream().forEach { operationSet: OperationSet ->
                 operationSet.setMembers.parallelStream().forEach { setMember: String ->
-                    session.transaction(WRITE, options).use { transaction ->
-                        transaction.query().insert(
+                    session.transaction(WRITE, options).use { tx ->
+                        tx.query().insert(
                             match(
-                                `var`(S).isa(OPERATION_SET)
-                                    .has(ACTION_NAME, operationSet.name),
-                                `var`(A).isa(ACTION)
-                                    .has(ACTION_NAME, setMember),
-                                `var`(C).isa(COMPANY)
-                                    .has(NAME, company.name),
+                                cvar(S).isa(OPERATION_SET).has(ACTION_NAME, operationSet.name),
+                                cvar(A).isa(ACTION).has(ACTION_NAME, setMember),
+                                cvar(C).isa(COMPANY).has(NAME, company.name),
                                 rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP)
+                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
                             ).insert(
-                                rel(PARENT_SET, S).rel(SET_MEMBER, A).isa(SET_MEMBERSHIP)
+                                rel(PARENT_SET, S).rel(SET_MEMBER, A).isa(SET_MEMBERSHIP),
                             )
                         )
 
-                        transaction.commit()
+                        tx.commit()
                     }
                 }
             }

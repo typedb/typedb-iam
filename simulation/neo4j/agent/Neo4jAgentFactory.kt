@@ -28,23 +28,23 @@ class Neo4jAgentFactory(client: Neo4jClient, context: Context) : AgentFactory<Ne
         }
     }
 
-    override fun user(client: Neo4jClient, context: Context): User<*> {
+    override fun user(client: Neo4jClient, context: Context): UserAgent<*> {
         TODO("Not yet implemented")
     }
 
-    override fun owner(client: Neo4jClient, context: Context): Owner<*> {
+    override fun owner(client: Neo4jClient, context: Context): OwnerAgent<*> {
         TODO("Not yet implemented")
     }
 
-    override fun supervisor(client: Neo4jClient, context: Context): Supervisor<*> {
+    override fun supervisor(client: Neo4jClient, context: Context): SupervisorAgent<*> {
         TODO("Not yet implemented")
     }
 
-    override fun policyManager(client: Neo4jClient, context: Context): PolicyManager<*> {
+    override fun policyManager(client: Neo4jClient, context: Context): PolicyManagerAgent<*> {
         TODO("Not yet implemented")
     }
 
-    override fun sysAdmin(client: Neo4jClient, context: Context): SysAdmin<*> {
+    override fun sysAdmin(client: Neo4jClient, context: Context): SysAdminAgent<*> {
         TODO("Not yet implemented")
     }
 }

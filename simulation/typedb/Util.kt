@@ -12,6 +12,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.ID
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typeql.lang.TypeQL.*
+import com.vaticle.typeql.lang.pattern.variable.UnboundVariable
 import java.lang.IllegalArgumentException
 import java.time.LocalDateTime
 
@@ -19,6 +20,14 @@ import kotlin.streams.toList
 
 object Util {
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
+
+    fun cvar(): UnboundVariable {
+        return `var`()
+    }
+
+    fun cvar(name: String): UnboundVariable {
+        return `var`(name)
+    }
 
     fun typeLabel(typeConcept: Concept): String {
         assert(typeConcept.isType)
@@ -81,12 +90,10 @@ object Util {
         session.transaction(READ, options).use { transaction ->
             candidateEntities = transaction.query().match(
                 match(
-                    `var`(E).isaX(`var`(E_TYPE))
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(`var`(E_ID)),
-                    `var`(E_ID).isaX(`var`(E_ID_TYPE)),
-                    `var`(E_TYPE).sub(entityType),
-                    `var`(E_ID_TYPE).sub(ID)
+                    cvar(E).isaX(cvar(E_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(E_ID)),
+                    cvar(E_ID).isaX(cvar(E_ID_TYPE)),
+                    cvar(E_TYPE).sub(entityType),
+                    cvar(E_ID_TYPE).sub(ID)
                 )
             ).toList().map { TypeDBEntity(it[E_TYPE], it[E_ID_TYPE], it[E_ID]) }
         }
