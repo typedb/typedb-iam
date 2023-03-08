@@ -47,8 +47,8 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.concept.*
-import com.vaticle.typedb.iam.simulation.common.`object`.Company
-import com.vaticle.typedb.iam.simulation.common.`object`.Person
+import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.common.concept.Person
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT_OWNER
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT_OWNERSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED_OBJECT

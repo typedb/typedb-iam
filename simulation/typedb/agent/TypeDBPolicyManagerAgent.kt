@@ -35,7 +35,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Proof
 import com.vaticle.typedb.iam.simulation.typedb.Util.getProofs
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.concept.*
-import com.vaticle.typedb.iam.simulation.common.`object`.Company
+import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SEGREGATION_VIOLATION
 import com.vaticle.typedb.simulation.common.seed.RandomSource
