@@ -22,12 +22,12 @@ import com.vaticle.typedb.iam.simulation.common.Util.double
 import com.vaticle.typedb.iam.simulation.common.Util.string
 import com.vaticle.typedb.iam.simulation.common.Util.map
 import com.vaticle.typedb.iam.simulation.common.Util.list
-import com.vaticle.typedb.iam.simulation.common.`object`.Application
-import com.vaticle.typedb.iam.simulation.common.`object`.BusinessUnit
-import com.vaticle.typedb.iam.simulation.common.`object`.Company
-import com.vaticle.typedb.iam.simulation.common.`object`.Operation
-import com.vaticle.typedb.iam.simulation.common.`object`.OperationSet
-import com.vaticle.typedb.iam.simulation.common.`object`.UserRole
+import com.vaticle.typedb.iam.simulation.common.concept.Application
+import com.vaticle.typedb.iam.simulation.common.concept.BusinessUnit
+import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.common.concept.Operation
+import com.vaticle.typedb.iam.simulation.common.concept.OperationSet
+import com.vaticle.typedb.iam.simulation.common.concept.UserRole
 import mu.KotlinLogging
 import java.nio.file.Paths
 

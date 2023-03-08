@@ -20,7 +20,8 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
-import com.vaticle.typedb.iam.simulation.common.`object`.Company
+import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
