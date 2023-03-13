@@ -309,12 +309,12 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
         val parent = getRandomEntity(session, company, randomSource, parentType.label)?.asObject() ?: return
 
         val obj = when (objectType) {
-            TypeDBObjectType.FILE -> TypeDBFile.initialise(parent.idValue, context.seedData, randomSource).asObject()
-            TypeDBObjectType.DIRECTORY -> TypeDBDirectory.initialise(parent.idValue, context.seedData, randomSource).asObject()
-            TypeDBObjectType.INTERFACE -> TypeDBInterface.initialise(parent.idValue, context.seedData, randomSource).asObject()
+            TypeDBObjectType.FILE -> TypeDBFile.initialise(parent.idValue, context.seedData, randomSource)
+            TypeDBObjectType.DIRECTORY -> TypeDBDirectory.initialise(parent.idValue, context.seedData, randomSource)
+            TypeDBObjectType.INTERFACE -> TypeDBInterface.initialise(parent.idValue, context.seedData, randomSource)
             TypeDBObjectType.APPLICATION -> throw IllegalArgumentException()
-            TypeDBObjectType.RECORD -> TypeDBRecord.initialise(randomSource).asObject()
-            TypeDBObjectType.TABLE -> TypeDBTable.initialise(parent.idValue, context.seedData, randomSource).asObject()
+            TypeDBObjectType.RECORD -> TypeDBRecord.initialise(randomSource)
+            TypeDBObjectType.TABLE -> TypeDBTable.initialise(parent.idValue, context.seedData, randomSource)
             TypeDBObjectType.DATABASE -> throw IllegalArgumentException()
         }
 

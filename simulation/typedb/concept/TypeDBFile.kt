@@ -21,11 +21,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.FILE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PATH
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-data class TypeDBFile(val path: String) {
-    fun asObject(): TypeDBObject {
-        return TypeDBObject(FILE, PATH, path)
-    }
-
+data class TypeDBFile(val path: String): TypeDBObject(FILE, PATH, path) {
     companion object {
         fun initialise(directory: TypeDBDirectory, seedData: SeedData, randomSource: RandomSource): TypeDBFile {
             val adjective = randomSource.choose(seedData.adjectives)
@@ -35,11 +31,11 @@ data class TypeDBFile(val path: String) {
             return TypeDBFile(filepath)
         }
 
-        fun initialise(directoryName: String, seedData: SeedData, randomSource: RandomSource): TypeDBFile {
+        fun initialise(directoryPath: String, seedData: SeedData, randomSource: RandomSource): TypeDBFile {
             val adjective = randomSource.choose(seedData.adjectives)
             val noun = randomSource.choose(seedData.nouns)
             val fileExtension = randomSource.choose(seedData.fileExtensions)
-            val filepath = "${directoryName}/${adjective}_${noun}.${fileExtension}"
+            val filepath = "${directoryPath}/${adjective}_${noun}.${fileExtension}"
             return TypeDBFile(filepath)
         }
     }
