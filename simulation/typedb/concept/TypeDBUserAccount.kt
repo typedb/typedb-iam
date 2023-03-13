@@ -22,10 +22,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_ACCOUNT
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 
-data class TypeDBUserAccount(val email: String) {
-    fun asSubject(): TypeDBSubject {
-        return TypeDBSubject(USER_ACCOUNT, EMAIL, email)
-    }
+data class TypeDBUserAccount(val email: String): TypeDBSubject(USER_ACCOUNT, EMAIL, email) {
     companion object {
         fun initialise(company: Company, seedData: SeedData, randomSource: RandomSource): TypeDBUserAccount {
             val adjective = randomSource.choose(seedData.adjectives)

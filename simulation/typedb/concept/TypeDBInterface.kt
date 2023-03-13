@@ -21,11 +21,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.INTERFACE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-data class TypeDBInterface(val name: String) {
-    fun asObject(): TypeDBObject {
-        return TypeDBObject(INTERFACE, NAME, name)
-    }
-
+data class TypeDBInterface(val name: String): TypeDBObject(INTERFACE, NAME, name) {
     companion object {
         fun initialise(application: TypeDBApplication, seedData: SeedData, randomSource: RandomSource): TypeDBInterface {
             val adjective = randomSource.choose(seedData.adjectives)

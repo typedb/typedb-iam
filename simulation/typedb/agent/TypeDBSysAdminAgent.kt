@@ -91,7 +91,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             TypeDBSubjectType.PERSON -> throw IllegalArgumentException()
             TypeDBSubjectType.BUSINESS_UNIT -> throw IllegalArgumentException()
             TypeDBSubjectType.USER_ROLE -> throw IllegalArgumentException()
-            TypeDBSubjectType.USER_ACCOUNT -> TypeDBUserAccount.initialise(company, context.seedData, randomSource).asSubject()
+            TypeDBSubjectType.USER_ACCOUNT -> TypeDBUserAccount.initialise(company, context.seedData, randomSource)
         }
 
         val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()

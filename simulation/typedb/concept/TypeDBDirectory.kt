@@ -5,11 +5,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.DIRECTORY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PATH
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-data class TypeDBDirectory(val path: String) {
-    fun asObject(): TypeDBObject {
-        return TypeDBObject(DIRECTORY, PATH, path)
-    }
-
+data class TypeDBDirectory(val path: String): TypeDBObject(DIRECTORY, PATH, path) {
     companion object {
         fun initialise(parent: TypeDBDirectory, seedData: SeedData, randomSource: RandomSource): TypeDBDirectory {
             val noun = randomSource.choose(seedData.nouns)
@@ -17,9 +13,9 @@ data class TypeDBDirectory(val path: String) {
             return TypeDBDirectory(filepath)
         }
 
-        fun initialise(parentName: String, seedData: SeedData, randomSource: RandomSource): TypeDBDirectory {
+        fun initialise(parentPath: String, seedData: SeedData, randomSource: RandomSource): TypeDBDirectory {
             val noun = randomSource.choose(seedData.nouns)
-            val filepath = "${parentName}/${noun}"
+            val filepath = "${parentPath}/${noun}"
             return TypeDBDirectory(filepath)
         }
     }

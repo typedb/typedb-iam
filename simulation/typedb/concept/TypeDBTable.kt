@@ -5,11 +5,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.TABLE
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
-data class TypeDBTable(val name: String) {
-    fun asObject(): TypeDBObject {
-        return TypeDBObject(TABLE, NAME, name)
-    }
-
+data class TypeDBTable(val name: String): TypeDBObject(TABLE, NAME, name) {
     companion object {
         fun initialise(database: TypeDBDatabase, seedData: SeedData, randomSource: RandomSource): TypeDBTable {
             val adjective = randomSource.choose(seedData.adjectives)
