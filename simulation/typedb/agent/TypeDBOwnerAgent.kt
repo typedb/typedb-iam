@@ -2,6 +2,7 @@ package com.vaticle.typedb.iam.simulation.typedb.agent
 
 import com.vaticle.typedb.client.api.TypeDBOptions
 import com.vaticle.typedb.client.api.TypeDBSession
+import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.iam.simulation.agent.OwnerAgent
 import com.vaticle.typedb.iam.simulation.common.Context
@@ -21,10 +22,12 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_GROUP
 import com.vaticle.typedb.iam.simulation.common.concept.Company
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
+import kotlin.streams.toList
 
 class TypeDBOwnerAgent(client: TypeDBClient, context:Context): OwnerAgent<TypeDBSession>(client, context) {
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
@@ -33,7 +36,19 @@ class TypeDBOwnerAgent(client: TypeDBClient, context:Context): OwnerAgent<TypeDB
         val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
         val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(READ, options).use { tx ->
+            if (
+                tx.query().match(
+                    match(
+                        cvar(S).isa(group.type).has(group.idType, group.idValue).has(PARENT_COMPANY_NAME, company.name),
+                        cvar(S_OWNER).isa(owner.type).has(owner.idType, owner.idValue).has(PARENT_COMPANY_NAME, company.name),
+                        rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP)
+                    )
+                ).toList().isNotEmpty()
+            ) return listOf<Report>()
+        }
+
+        session.transaction(WRITE).use { tx ->
             tx.query().delete(
                 match(
                     cvar(S).isa(group.type).has(group.idType, group.idValue),
@@ -67,7 +82,19 @@ class TypeDBOwnerAgent(client: TypeDBClient, context:Context): OwnerAgent<TypeDB
         val obj = getRandomEntity(session, company, randomSource, OBJECT)?.asObject() ?: return listOf<Report>()
         val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(READ, options).use { tx ->
+            if (
+                tx.query().match(
+                    match(
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue).has(PARENT_COMPANY_NAME, company.name),
+                        cvar(S).isa(owner.type).has(owner.idType, owner.idValue).has(PARENT_COMPANY_NAME, company.name),
+                        rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP)
+                    )
+                ).toList().isNotEmpty()
+            ) return listOf<Report>()
+        }
+
+        session.transaction(WRITE).use { tx ->
             tx.query().delete(
                 match(
                     cvar(O).isa(obj.type).has(obj.idType, obj.idValue),

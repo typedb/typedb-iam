@@ -98,7 +98,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
 
     private fun initCompanies(session: TypeDBSession, companies: List<Company>) {
         companies.parallelStream().forEach { company: Company ->
-            session.transaction(WRITE, options).use { tx ->
+            session.transaction(WRITE).use { tx ->
                 tx.query().insert(
                     insert(
                         cvar().isa(COMPANY).has(NAME, company.name),
@@ -115,7 +115,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         companies.parallelStream().forEach { company: Company ->
             repeat(100) {
                 val person = Person.initialise(company, seedData, randomSource)
-                session.transaction(WRITE, options).use { tx ->
+                session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
                             cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -149,7 +149,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
             businessUnits.parallelStream().forEach { businessUnit: BusinessUnit ->
                 val person = randomSource.choose(persons)
 
-                session.transaction(WRITE, options).use { tx ->
+                session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
                             cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -185,7 +185,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
             userRoles.parallelStream().forEach { userRole: UserRole ->
                 val person = randomSource.choose(persons)
 
-                session.transaction(WRITE, options).use { tx ->
+                session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
                             cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -221,7 +221,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
             applications.parallelStream().forEach { application: Application ->
                 val person = randomSource.choose(persons)
 
-                session.transaction(WRITE, options).use { tx ->
+                session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
                             cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -256,7 +256,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
 
             val person = randomSource.choose(persons)
 
-            session.transaction(WRITE, options).use { tx ->
+            session.transaction(WRITE).use { tx ->
                 tx.query().insert(
                     match(
                         cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -276,7 +276,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     private fun initOperations(session: TypeDBSession, companies: List<Company>, operations: List<Operation>) {
         companies.parallelStream().forEach { company: Company ->
             operations.parallelStream().forEach { operation: Operation ->
-                session.transaction(WRITE, options).use { tx ->
+                session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
                             cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -292,7 +292,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         }
         operations.parallelStream().forEach { operation: Operation ->
             operation.objectTypes.parallelStream().forEach { objectType: String ->
-                session.transaction(WRITE, options).use { tx ->
+                session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
                             cvar(O).isa(OPERATION).has(ACTION_NAME, operation.name),
@@ -310,7 +310,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     private fun initOperationSets(session: TypeDBSession, companies: List<Company>, operationSets: List<OperationSet>) {
         companies.parallelStream().forEach { company: Company ->
             operationSets.parallelStream().forEach { operationSet: OperationSet ->
-                session.transaction(WRITE, options).use { tx ->
+                session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
                             cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -326,7 +326,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         }
         operationSets.parallelStream().forEach { operationSet: OperationSet ->
             operationSet.objectTypes.parallelStream().forEach { objectType: String ->
-                session.transaction(WRITE, options).use { tx ->
+                session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
                             cvar(O).isa(OPERATION_SET).has(ACTION_NAME, operationSet.name),
@@ -342,7 +342,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         companies.parallelStream().forEach { company: Company ->
             operationSets.parallelStream().forEach { operationSet: OperationSet ->
                 operationSet.setMembers.parallelStream().forEach { setMember: String ->
-                    session.transaction(WRITE, options).use { tx ->
+                    session.transaction(WRITE).use { tx ->
                         tx.query().insert(
                             match(
                                 cvar(S).isa(OPERATION_SET).has(ACTION_NAME, operationSet.name),

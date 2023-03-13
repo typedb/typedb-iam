@@ -34,7 +34,19 @@ class TypeDBSupervisorAgent(client: TypeDBClient, context:Context): SupervisorAg
         val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
         val member = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(READ, options).use { tx ->
+            if (
+                tx.query().match(
+                    match(
+                        cvar(S).isa(group.type).has(group.idType, group.idValue).has(PARENT_COMPANY_NAME, company.name),
+                        cvar(S_MEMBER).isa(member.type).has(member.idType, member.idValue).has(PARENT_COMPANY_NAME, company.name),
+                        rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP)
+                    )
+                ).toList().isNotEmpty()
+            ) return listOf<Report>()
+        }
+
+        session.transaction(WRITE).use { tx ->
             tx.query().insert(
                 match(
                     cvar(S).isa(group.type).has(group.idType, group.idValue),
@@ -73,7 +85,7 @@ class TypeDBSupervisorAgent(client: TypeDBClient, context:Context): SupervisorAg
         if (candidateMembers.isEmpty()) return listOf<Report>()
         val member = randomSource.choose(candidateMembers)
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             tx.query().delete(
                 match(
                     cvar(S).isa(group.type).has(group.idType, group.idValue),

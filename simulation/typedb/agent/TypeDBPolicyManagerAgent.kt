@@ -42,6 +42,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
+import java.lang.Exception
 import kotlin.streams.toList
 
 class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyManagerAgent<TypeDBSession>(client, context) {
@@ -125,7 +126,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             val accessedObject = permission.permittedAccess.accessedObject
             val validAction = permission.permittedAccess.validAction
 
-            session.transaction(WRITE, options).use { tx ->
+            session.transaction(WRITE).use { tx ->
                 tx.query().delete(
                     match(
                         cvar(S).isa(permittedSubject.type).has(permittedSubject.idType, permittedSubject.idValue),
@@ -171,7 +172,19 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
         val action1 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf<Report>()
         val action2 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf<Report>()
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(READ, options).use { tx ->
+            if (
+                tx.query().match(
+                    match(
+                        cvar(A1).isa(action1.type).has(action1.idType, action1.idValue).has(PARENT_COMPANY_NAME, company.name),
+                        cvar(A2).isa(action2.type).has(action2.idType, action2.idValue).has(PARENT_COMPANY_NAME, company.name),
+                        rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY)
+                    )
+                ).toList().isNotEmpty()
+            ) return listOf<Report>()
+        }
+
+        session.transaction(WRITE).use { tx ->
             tx.query().insert(
                 match(
                     cvar(A1).isa(action1.type).has(action1.idType, action1.idValue),
@@ -236,7 +249,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
         val action1 = segregationPolicy.action1
         val action2 = segregationPolicy.action2
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             tx.query().delete(
                 match(
                     cvar(A1).isa(action1.type).has(action1.idType, action1.idValue),
@@ -289,6 +302,8 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
     }
 
     override fun reviewSegregationViolations(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
+        throw Exception("TypeDBPolicyManagerAgent.reviewSegregationViolations is not yet implemented.")
+
         val segregationViolations: Map<TypeDBSegregationViolation, Set<Proof>>
 
         session.transaction(READ, options).use { tx ->
