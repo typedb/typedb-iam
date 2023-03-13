@@ -273,45 +273,112 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             val requestedSubject = request.requestedSubject
             val accessedObject = request.requestedAccess.accessedObject
             val validAction = request.requestedAccess.validAction
+            val directPermissionExists: Boolean
 
-            session.transaction(WRITE).use { tx ->
-                tx.query().delete(
+            session.transaction(READ).use { tx ->
+                directPermissionExists = tx.query().match(
                     match(
+                        cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                         cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                         cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
                         cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                        cvar(S_REQUESTING).isa(requestingSubject.type).has(requestingSubject.idType, requestingSubject.idValue),
-                        cvar(S_REQUESTED).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
-                        cvar(R).rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                        rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
+                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTING).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTED).isa(COMPANY_MEMBERSHIP),
-                    ).delete(
-                        cvar(R).isa(CHANGE_REQUEST),
                     )
-                )
+                ).toList().isNotEmpty()
+            }
 
-                if (randomSource.nextInt(100) < context.model.requestApprovalPercentage) {
-                    tx.query().insert(
+            if (directPermissionExists) {
+                session.transaction(WRITE).use { tx ->
+                    tx.query().delete(
                         match(
-                            cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                             cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                             cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
                             cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                            cvar(S_REQUESTING).isa(requestingSubject.type).has(requestingSubject.idType, requestingSubject.idValue),
+                            cvar(S_REQUESTED).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
+                            cvar(R).rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
                             cvar(C).isa(COMPANY).has(NAME, company.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
-                        ).insert(
-                            rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
-                                .has(REVIEW_DATE, iterationDate(context.iterationNumber + context.model.permissionReviewAge)),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTING).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTED).isa(COMPANY_MEMBERSHIP),
+                        ).delete(
+                            cvar(R).isa(CHANGE_REQUEST),
                         )
                     )
-                }
 
-                tx.commit()
+                    if (randomSource.nextInt(100) < context.model.requestApprovalPercentage) {
+                        tx.query().delete(
+                            match(
+                                cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
+                                cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
+                                cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
+                                cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                                cvar(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION),
+                                cvar(C).isa(COMPANY).has(NAME, company.name),
+                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                            ).delete(
+                                cvar(P).isa(PERMISSION)
+                            )
+                        )
+                    }
+
+                    tx.commit()
+                }
+            }
+            else {
+                session.transaction(WRITE).use { tx ->
+                    tx.query().delete(
+                        match(
+                            cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
+                            cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
+                            cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                            cvar(S_REQUESTING).isa(requestingSubject.type)
+                                .has(requestingSubject.idType, requestingSubject.idValue),
+                            cvar(S_REQUESTED).isa(requestedSubject.type)
+                                .has(requestedSubject.idType, requestedSubject.idValue),
+                            cvar(R).rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED)
+                                .rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                            cvar(C).isa(COMPANY).has(NAME, company.name),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTING).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTED).isa(COMPANY_MEMBERSHIP),
+                        ).delete(
+                            cvar(R).isa(CHANGE_REQUEST),
+                        )
+                    )
+
+                    if (randomSource.nextInt(100) < context.model.requestApprovalPercentage) {
+                        tx.query().insert(
+                            match(
+                                cvar(S).isa(requestedSubject.type)
+                                    .has(requestedSubject.idType, requestedSubject.idValue),
+                                cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
+                                cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
+                                cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                                cvar(C).isa(COMPANY).has(NAME, company.name),
+                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                            ).insert(
+                                rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
+                                    .has(
+                                        REVIEW_DATE,
+                                        iterationDate(context.iterationNumber + context.model.permissionReviewAge)
+                                    ),
+                            )
+                        )
+                    }
+
+                    tx.commit()
+                }
             }
         }
 
