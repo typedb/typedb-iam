@@ -64,7 +64,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
     override fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val objectType = randomSource.choose(TypeDBObjectType.values().asList().filter { it.generable })
 
-        when (objectType) {
+        val reportList =  when (objectType) {
             TypeDBObjectType.FILE -> createObject(session, company, randomSource, objectType)
             TypeDBObjectType.DIRECTORY -> createObject(session, company, randomSource, objectType)
             TypeDBObjectType.INTERFACE -> createObject(session, company, randomSource, objectType)
@@ -74,7 +74,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             TypeDBObjectType.DATABASE -> createDatabase(session, company, randomSource) // Databases have no parent collections so must be handled uniquely.
         }
 
-        return listOf<Report>()
+        return reportList
     }
 
     override fun deleteObject(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -113,7 +113,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
 
         val objectsToDelete = members + listOf(obj)
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             objectsToDelete.parallelStream().forEach { obj ->
                 tx.query().delete(
                     match(
@@ -272,7 +272,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
 
         val action = randomSource.choose(candidateOperations)
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             tx.query().insert(
                 match(
                     cvar(S_REQUESTING).isa(requestingSubject.type)
@@ -295,7 +295,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
         return listOf<Report>()
     }
 
-    private fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource, objectType: TypeDBObjectType) {
+    private fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource, objectType: TypeDBObjectType): List<Report> {
         val parentType = when (objectType) {
             TypeDBObjectType.FILE -> TypeDBObjectType.DIRECTORY
             TypeDBObjectType.DIRECTORY -> TypeDBObjectType.DIRECTORY
@@ -306,7 +306,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             TypeDBObjectType.DATABASE -> throw IllegalArgumentException()
         }
 
-        val parent = getRandomEntity(session, company, randomSource, parentType.label)?.asObject() ?: return
+        val parent = getRandomEntity(session, company, randomSource, parentType.label)?.asObject() ?: return listOf<Report>()
 
         val obj = when (objectType) {
             TypeDBObjectType.FILE -> TypeDBFile.initialise(parent.idValue, context.seedData, randomSource)
@@ -318,7 +318,17 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             TypeDBObjectType.DATABASE -> throw IllegalArgumentException()
         }
 
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return
+        session.transaction(READ, options).use { tx ->
+            if (
+                tx.query().match(
+                    match(
+                        cvar(O).isa(obj.type).has(obj.idType, obj.idValue).has(PARENT_COMPANY_NAME, company.name)
+                    )
+                ).toList().isNotEmpty()
+            ) return listOf<Report>()
+        }
+
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
         val validActions: List<TypeDBAction>
 
         session.transaction(READ, options).use { tx ->
@@ -333,7 +343,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             ).toList().map { TypeDBAction(it[A_TYPE], it[A_NAME]) }
         }
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             tx.query().insert(
                 match(
                     cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -365,11 +375,24 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
 
             tx.commit()
         }
+        
+        return listOf<Report>()
     }
 
-    private fun createDatabase(session: TypeDBSession, company: Company, randomSource: RandomSource) {
+    private fun createDatabase(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val database = TypeDBDatabase.initialise(context.seedData, randomSource)
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return
+
+        session.transaction(READ, options).use { tx ->
+            if (
+                tx.query().match(
+                    match(
+                        cvar(O).isa(DATABASE).has(NAME, database.name).has(PARENT_COMPANY_NAME, company.name)
+                    )
+                ).toList().isNotEmpty()
+            ) return listOf<Report>()
+        }
+
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
         val validActions: List<TypeDBAction>
 
         session.transaction(READ, options).use { tx ->
@@ -384,7 +407,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             ).toList().map { TypeDBAction(it[A_TYPE], it[A_NAME]) }
         }
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             tx.query().insert(
                 match(
                     cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -413,6 +436,8 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
 
             tx.commit()
         }
+        
+        return listOf<Report>()
     }
 
     companion object {

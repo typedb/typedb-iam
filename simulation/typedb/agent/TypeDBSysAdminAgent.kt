@@ -61,6 +61,16 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
 
     override fun addUser(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val user = Person.initialise(company, context.seedData, randomSource)
+        
+        session.transaction(READ, options).use { tx ->
+            if (
+                tx.query().match(
+                    match(
+                        cvar(S).isa(PERSON).has(EMAIL, user.email).has(PARENT_COMPANY_NAME, company.name)
+                    )
+                ).toList().isNotEmpty()
+            ) return listOf<Report>()
+        }
 
         session.transaction(WRITE).use { tx ->
             tx.query().insert(
@@ -94,9 +104,19 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             TypeDBSubjectType.USER_ACCOUNT -> TypeDBUserAccount.initialise(company, context.seedData, randomSource)
         }
 
+        session.transaction(READ, options).use { tx ->
+            if (
+                tx.query().match(
+                    match(
+                        cvar(S).isa(group.type).has(group.idType, group.idValue).has(PARENT_COMPANY_NAME, company.name)
+                    )
+                ).toList().isNotEmpty()
+            ) return listOf<Report>()
+        }
+
         val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             tx.query().insert(
                 match(
                     cvar(C).isa(COMPANY).has(NAME, company.name),
@@ -136,11 +156,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP),
                 )
             ).toList().map {
-                TypeDBSubject(
-                    it[S_TYPE],
-                    it[S_ID_TYPE],
-                    it[S_ID]
-                )
+                TypeDBSubject(it[S_TYPE], it[S_ID_TYPE], it[S_ID])
             }
         }
 
@@ -258,7 +274,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             val accessedObject = request.requestedAccess.accessedObject
             val validAction = request.requestedAccess.validAction
 
-            session.transaction(WRITE, options).use { tx ->
+            session.transaction(WRITE).use { tx ->
                 tx.query().delete(
                     match(
                         cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
@@ -303,7 +319,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
     }
 
     override fun collectGarbage(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             tx.query().delete(
                 match(
                     cvar(AT).isa(ATTRIBUTE),
@@ -357,7 +373,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
-        session.transaction(WRITE, options).use { tx ->
+        session.transaction(WRITE).use { tx ->
             ownedGroups.parallelStream().forEach { group ->
                 tx.query().delete(
                     match(
