@@ -31,8 +31,8 @@ class TypeDBSupervisorAgent(client: TypeDBClient, context:Context): SupervisorAg
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun assignGroupMembership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
-        val member = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf()
+        val member = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
 
         session.transaction(READ, options).use { tx ->
             if (
@@ -43,7 +43,7 @@ class TypeDBSupervisorAgent(client: TypeDBClient, context:Context): SupervisorAg
                         rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP)
                     )
                 ).toList().isNotEmpty()
-            ) return listOf<Report>()
+            ) return listOf()
         }
 
         session.transaction(WRITE).use { tx ->
@@ -62,11 +62,11 @@ class TypeDBSupervisorAgent(client: TypeDBClient, context:Context): SupervisorAg
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun revokeGroupMembership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
+        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf()
         val candidateMembers: List<TypeDBSubject>
 
         session.transaction(READ, options).use { tx ->
@@ -82,7 +82,7 @@ class TypeDBSupervisorAgent(client: TypeDBClient, context:Context): SupervisorAg
             ).toList().map { TypeDBSubject(it[S_MEMBER_TYPE], it[S_MEMBER_ID_TYPE], it[S_MEMBER_ID]) }
         }
 
-        if (candidateMembers.isEmpty()) return listOf<Report>()
+        if (candidateMembers.isEmpty()) return listOf()
         val member = randomSource.choose(candidateMembers)
 
         session.transaction(WRITE).use { tx ->
@@ -102,7 +102,7 @@ class TypeDBSupervisorAgent(client: TypeDBClient, context:Context): SupervisorAg
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     companion object {

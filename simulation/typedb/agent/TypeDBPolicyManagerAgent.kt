@@ -83,7 +83,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             }
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun reviewPermissions(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -165,12 +165,12 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             }
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun assignSegregationPolicy(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val action1 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf<Report>()
-        val action2 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf<Report>()
+        val action1 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf()
+        val action2 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf()
 
         session.transaction(READ, options).use { tx ->
             if (
@@ -181,7 +181,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                         rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY)
                     )
                 ).toList().isNotEmpty()
-            ) return listOf<Report>()
+            ) return listOf()
         }
 
         session.transaction(WRITE).use { tx ->
@@ -198,7 +198,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             )
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun listSegregationPolicies(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -221,7 +221,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             }
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun revokeSegregationPolicy(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -244,7 +244,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             }
         }
 
-        if (segregationPolicies.isEmpty()) return listOf<Report>()
+        if (segregationPolicies.isEmpty()) return listOf()
         val segregationPolicy = randomSource.choose(segregationPolicies)
         val action1 = segregationPolicy.action1
         val action2 = segregationPolicy.action2
@@ -264,7 +264,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             )
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun listSegregationViolations(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -298,7 +298,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             }
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun reviewSegregationViolations(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -334,7 +334,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
             }.toMap()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     companion object {

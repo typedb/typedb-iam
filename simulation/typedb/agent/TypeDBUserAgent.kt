@@ -5,10 +5,9 @@ import com.vaticle.typedb.client.api.TypeDBSession
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.READ
 import com.vaticle.typedb.client.api.TypeDBTransaction.Type.WRITE
 import com.vaticle.typedb.client.api.answer.ConceptMap
-import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.agent.UserAgent
-import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
-import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
+import com.vaticle.typedb.iam.simulation.common.Context
+import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACTION
@@ -30,6 +29,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.OPERATION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COLLECTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PERMISSION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PERMITTED_ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PERMITTED_SUBJECT
@@ -40,31 +40,23 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.ROOT_COLLECTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SUBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALIDITY
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBAction
-import com.vaticle.typedb.iam.simulation.common.concept.Company
-import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBDatabase
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBDirectory
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBFile
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBInterface
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBObject
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBObjectType
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBRecord
-import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBTable
+import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
+import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
+import com.vaticle.typedb.iam.simulation.typedb.concept.*
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
-import com.vaticle.typeql.lang.TypeQL.*
-import java.lang.IllegalArgumentException
+import com.vaticle.typeql.lang.TypeQL.match
+import com.vaticle.typeql.lang.TypeQL.rel
 import kotlin.streams.toList
 
-class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSession>(client, context) {
+class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDBSession>(client, context) {
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val objectType = randomSource.choose(TypeDBObjectType.values().asList().filter { it.generable })
 
-        val reportList =  when (objectType) {
+        val reportList = when (objectType) {
             TypeDBObjectType.FILE -> createObject(session, company, randomSource, objectType)
             TypeDBObjectType.DIRECTORY -> createObject(session, company, randomSource, objectType)
             TypeDBObjectType.INTERFACE -> createObject(session, company, randomSource, objectType)
@@ -94,7 +86,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
-        if (candidateObjects.isEmpty()) return listOf<Report>()
+        if (candidateObjects.isEmpty()) return listOf()
         val obj = randomSource.choose(candidateObjects)
         val members: List<TypeDBObject>
 
@@ -187,12 +179,13 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun attemptAccess(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
         val candidateObjects: List<TypeDBObject>
+        val candidateOperations: List<TypeDBAction>
+        val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
 
         session.transaction(READ, options).use { tx ->
             candidateObjects = tx.query().match(
@@ -206,9 +199,8 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
-        if (candidateObjects.isEmpty()) return listOf<Report>()
+        if (candidateObjects.isEmpty()) return listOf()
         val obj = randomSource.choose(candidateObjects)
-        val candidateOperations: List<TypeDBAction>
 
         session.transaction(READ, options).use { tx ->
             candidateOperations = tx.query().match(
@@ -236,12 +228,16 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
         }
 
         val result = matches.isNotEmpty()
-        return listOf<Report>()
+        return listOf()
     }
 
-    override fun submitChangeRequest(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val requestingSubject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
-        val requestedSubject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+    override fun submitChangeRequest(
+        session: TypeDBSession,
+        company: Company,
+        randomSource: RandomSource
+    ): List<Report> {
+        val requestingSubject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
+        val requestedSubject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
         val candidateObjects: List<TypeDBObject>
 
         session.transaction(READ, options).use { tx ->
@@ -256,7 +252,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
 
-        if (candidateObjects.isEmpty()) return listOf<Report>()
+        if (candidateObjects.isEmpty()) return listOf()
         val obj = randomSource.choose(candidateObjects)
         val candidateOperations: List<TypeDBAction>
 
@@ -275,15 +271,16 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
         session.transaction(WRITE).use { tx ->
             tx.query().insert(
                 match(
-                    cvar(S_REQUESTING).isa(requestingSubject.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(requestingSubject.idType, requestingSubject.idValue),
-                    cvar(S_REQUESTED).isa(requestedSubject.type)
-                        .has(PARENT_COMPANY_NAME, company.name)
-                        .has(requestedSubject.idType, requestedSubject.idValue),
-                    cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
-                    cvar(A).isa(action.type).has(PARENT_COMPANY_NAME, company.name).has(action.idType, action.idValue),
+                    cvar(S_REQUESTING).isa(requestingSubject.type).has(requestingSubject.idType, requestingSubject.idValue),
+                    cvar(S_REQUESTED).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
+                    cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                    cvar(A).isa(action.type).has(action.idType, action.idValue),
+                    cvar(C).isa(COMPANY).has(NAME, company.name),
                     cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTING).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTED).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
                 ).insert(
                     rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST)
                 )
@@ -292,10 +289,15 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
-    private fun createObject(session: TypeDBSession, company: Company, randomSource: RandomSource, objectType: TypeDBObjectType): List<Report> {
+    private fun createObject(
+        session: TypeDBSession,
+        company: Company,
+        randomSource: RandomSource,
+        objectType: TypeDBObjectType
+    ): List<Report> {
         val parentType = when (objectType) {
             TypeDBObjectType.FILE -> TypeDBObjectType.DIRECTORY
             TypeDBObjectType.DIRECTORY -> TypeDBObjectType.DIRECTORY
@@ -306,7 +308,7 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
             TypeDBObjectType.DATABASE -> throw IllegalArgumentException()
         }
 
-        val parent = getRandomEntity(session, company, randomSource, parentType.label)?.asObject() ?: return listOf<Report>()
+        val parent = getRandomEntity(session, company, randomSource, parentType.label)?.asObject() ?: return listOf()
 
         val obj = when (objectType) {
             TypeDBObjectType.FILE -> TypeDBFile.initialise(parent.idValue, context.seedData, randomSource)
@@ -325,10 +327,10 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue).has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().isNotEmpty()
-            ) return listOf<Report>()
+            ) return listOf()
         }
 
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
         val validActions: List<TypeDBAction>
 
         session.transaction(READ, options).use { tx ->
@@ -375,8 +377,8 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
 
             tx.commit()
         }
-        
-        return listOf<Report>()
+
+        return listOf()
     }
 
     private fun createDatabase(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -389,10 +391,10 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
                         cvar(O).isa(DATABASE).has(NAME, database.name).has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().isNotEmpty()
-            ) return listOf<Report>()
+            ) return listOf()
         }
 
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
         val validActions: List<TypeDBAction>
 
         session.transaction(READ, options).use { tx ->
@@ -436,8 +438,8 @@ class TypeDBUserAgent(client: TypeDBClient, context:Context): UserAgent<TypeDBSe
 
             tx.commit()
         }
-        
-        return listOf<Report>()
+
+        return listOf()
     }
 
     companion object {
