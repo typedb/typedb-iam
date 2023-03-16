@@ -234,45 +234,45 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
     }
 
     override fun reviewChangeRequests(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val requests: List<TypeDBChangeRequest>
+        while (true) {
+            val requests: List<TypeDBChangeRequest>
 
-        session.transaction(READ, options).use { tx ->
-            requests = tx.query().match(
-                match(
-                    cvar(O).isaX(cvar(O_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(O_ID)),
-                    cvar(O_ID).isaX(cvar(O_ID_TYPE)),
-                    cvar(A).isa(cvar(A_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
-                    cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                    cvar(S_REQUESTING).isaX(cvar(S_REQUESTING_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(S_REQUESTING_ID)),
-                    cvar(S_REQUESTING_ID).isaX(cvar(S_REQUESTING_ID_TYPE)),
-                    cvar(S_REQUESTED).isaX(cvar(S_REQUESTED_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(S_REQUESTED_ID)),
-                    cvar(S_REQUESTED_ID).isaX(cvar(S_REQUESTED_ID_TYPE)),
-                    cvar(O_TYPE).sub(OBJECT),
-                    cvar(O_ID_TYPE).sub(ID),
-                    cvar(A_TYPE).sub(ACTION),
-                    cvar(S_REQUESTING_TYPE).sub(SUBJECT),
-                    cvar(S_REQUESTING_ID_TYPE).sub(ID),
-                    cvar(S_REQUESTED_TYPE).sub(SUBJECT),
-                    cvar(S_REQUESTED_ID_TYPE).sub(ID),
-                    rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
-                )
-            ).toList().map {
-                TypeDBChangeRequest(
-                    TypeDBSubject(it[S_REQUESTING_TYPE], it[S_REQUESTING_ID_TYPE], it[S_REQUESTING_ID]),
-                    TypeDBSubject(it[S_REQUESTED_TYPE], it[S_REQUESTED_ID_TYPE], it[S_REQUESTED_ID]),
-                    TypeDBAccess(
-                        TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]),
-                        TypeDBAction(it[A_TYPE], it[A_NAME])
+            session.transaction(READ, options).use { tx ->
+                requests = tx.query().match(
+                    match(
+                        cvar(O).isaX(cvar(O_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(O_ID)),
+                        cvar(O_ID).isaX(cvar(O_ID_TYPE)),
+                        cvar(A).isa(cvar(A_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
+                        cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                        cvar(S_REQUESTING).isaX(cvar(S_REQUESTING_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(S_REQUESTING_ID)),
+                        cvar(S_REQUESTING_ID).isaX(cvar(S_REQUESTING_ID_TYPE)),
+                        cvar(S_REQUESTED).isaX(cvar(S_REQUESTED_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(S_REQUESTED_ID)),
+                        cvar(S_REQUESTED_ID).isaX(cvar(S_REQUESTED_ID_TYPE)),
+                        cvar(O_TYPE).sub(OBJECT),
+                        cvar(O_ID_TYPE).sub(ID),
+                        cvar(A_TYPE).sub(ACTION),
+                        cvar(S_REQUESTING_TYPE).sub(SUBJECT),
+                        cvar(S_REQUESTING_ID_TYPE).sub(ID),
+                        cvar(S_REQUESTED_TYPE).sub(SUBJECT),
+                        cvar(S_REQUESTED_ID_TYPE).sub(ID),
+                        rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                    ).limit(1)
+                ).toList().map {
+                    TypeDBChangeRequest(
+                        TypeDBSubject(it[S_REQUESTING_TYPE], it[S_REQUESTING_ID_TYPE], it[S_REQUESTING_ID]),
+                        TypeDBSubject(it[S_REQUESTED_TYPE], it[S_REQUESTED_ID_TYPE], it[S_REQUESTED_ID]),
+                        TypeDBAccess(
+                            TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]),
+                            TypeDBAction(it[A_TYPE], it[A_NAME])
+                        )
                     )
-                )
+                }
             }
-        }
 
-        requests.forEach { request ->
-            val requestingSubject = request.requestingSubject
-            val requestedSubject = request.requestedSubject
-            val accessedObject = request.requestedAccess.accessedObject
-            val validAction = request.requestedAccess.validAction
+            if (requests.isEmpty()) break
+            val requestedSubject = requests.first().requestedSubject
+            val accessedObject = requests.first().requestedAccess.accessedObject
+            val validAction = requests.first().requestedAccess.validAction
             val directPermissionExists: Boolean
 
             session.transaction(READ).use { tx ->
@@ -295,17 +295,15 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                 session.transaction(WRITE).use { tx ->
                     tx.query().delete(
                         match(
+                            cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                             cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                             cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
                             cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                            cvar(S_REQUESTING).isa(requestingSubject.type).has(requestingSubject.idType, requestingSubject.idValue),
-                            cvar(S_REQUESTED).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
-                            cvar(R).rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                            cvar(R).rel(REQUESTED_SUBJECT, S).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
                             cvar(C).isa(COMPANY).has(NAME, company.name),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTING).isa(COMPANY_MEMBERSHIP),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTED).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                         ).delete(
                             cvar(R).isa(CHANGE_REQUEST),
                         )
@@ -314,7 +312,8 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     if (randomSource.nextInt(100) < context.model.requestApprovalPercentage) {
                         tx.query().delete(
                             match(
-                                cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
+                                cvar(S).isa(requestedSubject.type)
+                                    .has(requestedSubject.idType, requestedSubject.idValue),
                                 cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                                 cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
                                 cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
@@ -331,25 +330,19 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
 
                     tx.commit()
                 }
-            }
-            else {
+            } else {
                 session.transaction(WRITE).use { tx ->
                     tx.query().delete(
                         match(
+                            cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                             cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                             cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
                             cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                            cvar(S_REQUESTING).isa(requestingSubject.type)
-                                .has(requestingSubject.idType, requestingSubject.idValue),
-                            cvar(S_REQUESTED).isa(requestedSubject.type)
-                                .has(requestedSubject.idType, requestedSubject.idValue),
-                            cvar(R).rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED)
-                                .rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                            cvar(R).rel(REQUESTED_SUBJECT, S).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
                             cvar(C).isa(COMPANY).has(NAME, company.name),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTING).isa(COMPANY_MEMBERSHIP),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTED).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                         ).delete(
                             cvar(R).isa(CHANGE_REQUEST),
                         )
@@ -358,8 +351,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     if (randomSource.nextInt(100) < context.model.requestApprovalPercentage) {
                         tx.query().insert(
                             match(
-                                cvar(S).isa(requestedSubject.type)
-                                    .has(requestedSubject.idType, requestedSubject.idValue),
+                                cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                                 cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                                 cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
                                 cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
@@ -369,10 +361,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                                 rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
                             ).insert(
                                 rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
-                                    .has(
-                                        REVIEW_DATE,
-                                        iterationDate(context.iterationNumber + context.model.permissionReviewAge)
-                                    ),
+                                    .has(REVIEW_DATE, iterationDate(context.iterationNumber + context.model.permissionReviewAge)),
                             )
                         )
                     }
@@ -382,7 +371,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             }
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun collectGarbage(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
