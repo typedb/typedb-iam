@@ -33,8 +33,8 @@ class TypeDBOwnerAgent(client: TypeDBClient, context:Context): OwnerAgent<TypeDB
     private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
 
     override fun changeGroupOwnership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf<Report>()
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+        val group = getRandomEntity(session, company, randomSource, USER_GROUP)?.asSubject() ?: return listOf()
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
 
         session.transaction(READ, options).use { tx ->
             if (
@@ -45,7 +45,7 @@ class TypeDBOwnerAgent(client: TypeDBClient, context:Context): OwnerAgent<TypeDB
                         rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP)
                     )
                 ).toList().isNotEmpty()
-            ) return listOf<Report>()
+            ) return listOf()
         }
 
         session.transaction(WRITE).use { tx ->
@@ -75,12 +75,12 @@ class TypeDBOwnerAgent(client: TypeDBClient, context:Context): OwnerAgent<TypeDB
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun changeObjectOwnership(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val obj = getRandomEntity(session, company, randomSource, OBJECT)?.asObject() ?: return listOf<Report>()
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+        val obj = getRandomEntity(session, company, randomSource, OBJECT)?.asObject() ?: return listOf()
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
 
         session.transaction(READ, options).use { tx ->
             if (
@@ -91,7 +91,7 @@ class TypeDBOwnerAgent(client: TypeDBClient, context:Context): OwnerAgent<TypeDB
                         rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP)
                     )
                 ).toList().isNotEmpty()
-            ) return listOf<Report>()
+            ) return listOf()
         }
 
         session.transaction(WRITE).use { tx ->
@@ -121,7 +121,7 @@ class TypeDBOwnerAgent(client: TypeDBClient, context:Context): OwnerAgent<TypeDB
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     companion object {

@@ -69,7 +69,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(S).isa(PERSON).has(EMAIL, user.email).has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().isNotEmpty()
-            ) return listOf<Report>()
+            ) return listOf()
         }
 
         session.transaction(WRITE).use { tx ->
@@ -85,13 +85,13 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun removeUser(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val userType = randomSource.choose(TypeDBSubjectType.values().asList().filter { it.type == USER })
         deleteSubject(session, company, randomSource, userType)
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun createUserGroup(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -111,10 +111,10 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(S).isa(group.type).has(group.idType, group.idValue).has(PARENT_COMPANY_NAME, company.name)
                     )
                 ).toList().isNotEmpty()
-            ) return listOf<Report>()
+            ) return listOf()
         }
 
-        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+        val owner = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
 
         session.transaction(WRITE).use { tx ->
             tx.query().insert(
@@ -132,17 +132,17 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun deleteUserGroup(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val groupType = TypeDBSubjectType.USER_ACCOUNT
         deleteSubject(session, company, randomSource, groupType)
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun listSubjectGroupMemberships(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+        val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
         val groups: List<TypeDBSubject>
 
         session.transaction(READ, options).use { tx ->
@@ -160,11 +160,11 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             }
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun listSubjectPermissions(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf<Report>()
+        val subject = getRandomEntity(session, company, randomSource, SUBJECT)?.asSubject() ?: return listOf()
         val permissions: List<TypeDBPermission>
 
         session.transaction(READ, options).use { tx ->
@@ -195,11 +195,11 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             }
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun listObjectPermissionHolders(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
-        val obj = getRandomEntity(session, company, randomSource, OBJECT)?.asObject() ?: return listOf<Report>()
+        val obj = getRandomEntity(session, company, randomSource, OBJECT)?.asObject() ?: return listOf()
         val permissions: List<TypeDBPermission>
 
         session.transaction(READ, options).use { tx ->
@@ -230,7 +230,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             }
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     override fun reviewChangeRequests(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
@@ -390,12 +390,8 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             tx.query().delete(
                 match(
                     cvar(AT).isa(ATTRIBUTE),
-                    not(
-                        cvar().has(ATTRIBUTE, cvar(AT))
-                    ),
-                    not(
-                        cvar(AT).isa(PARENT_COMPANY_NAME)
-                    )
+                    not(cvar().has(ATTRIBUTE, cvar(AT))),
+                    not(cvar(AT).isa(PARENT_COMPANY_NAME)),
                 ).delete(
                     cvar(AT).isa(ATTRIBUTE)
                 )
@@ -404,7 +400,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
             tx.commit()
         }
 
-        return listOf<Report>()
+        return listOf()
     }
 
     private fun deleteSubject(session: TypeDBSession, company: Company, randomSource: RandomSource, subjectType: TypeDBSubjectType) {

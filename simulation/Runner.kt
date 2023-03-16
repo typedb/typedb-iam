@@ -32,7 +32,7 @@ class Runner : com.vaticle.typedb.simulation.Runner<ModelParams>() {
         return when (options.database) {
             Database.TYPEDB -> TypeDBSimulation.core(options.address, context)
             Database.TYPEDB_CLUSTER -> TypeDBSimulation.cluster(options.address, context)
-            Database.NEO4J -> throw IllegalArgumentException() // until Neo4jSimulation.create(options.address, context) is implemented
+            Database.NEO4J -> throw IllegalArgumentException("Neo4j simulation is not currently implemented.") //Neo4jSimulation.create(options.address, context)
         }
     }
 
