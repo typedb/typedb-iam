@@ -37,6 +37,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.concept.*
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
+import com.vaticle.typedb.iam.simulation.typedb.Labels.POLICY_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.SEGREGATION_VIOLATION
 import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.simulation.common.seed.RandomSource
@@ -171,6 +172,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
     override fun assignSegregationPolicy(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val action1 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf()
         val action2 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf()
+        val policyName = "\"${action1.idValue}\" or \"${action2.idValue}\" policy"
 
         session.transaction(READ, options).use { tx ->
             if (
@@ -178,7 +180,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     match(
                         cvar(A1).isa(action1.type).has(action1.idType, action1.idValue).has(PARENT_COMPANY_NAME, company.name),
                         cvar(A2).isa(action2.type).has(action2.idType, action2.idValue).has(PARENT_COMPANY_NAME, company.name),
-                        rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY)
+                        rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, policyName)
                     )
                 ).toList().isNotEmpty()
             ) return listOf()
@@ -211,12 +213,13 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     cvar(A2).isaX(cvar(A2_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A2_NAME)),
                     cvar(A1_TYPE).sub(ACTION),
                     cvar(A2_TYPE).sub(ACTION),
-                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
+                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, SP_NAME),
                 )
             ).toList().map {
                 TypeDBSegregationPolicy(
                     TypeDBAction(it[A1_TYPE], it[A1_NAME]),
-                    TypeDBAction(it[A2_TYPE], it[A2_NAME])
+                    TypeDBAction(it[A2_TYPE], it[A2_NAME]),
+                    it[SP_NAME]
                 )
             }
         }
@@ -234,12 +237,13 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     cvar(A2).isaX(cvar(A2_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A2_NAME)),
                     cvar(A1_TYPE).sub(ACTION),
                     cvar(A2_TYPE).sub(ACTION),
-                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
+                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, SP_NAME),
                 )
             ).toList().map {
                 TypeDBSegregationPolicy(
                     TypeDBAction(it[A1_TYPE], it[A1_NAME]),
-                    TypeDBAction(it[A2_TYPE], it[A2_NAME])
+                    TypeDBAction(it[A2_TYPE], it[A2_NAME]),
+                    it[SP_NAME]
                 )
             }
         }
@@ -279,7 +283,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     cvar(O_ID).isaX(cvar(O_ID_TYPE)),
                     cvar(A1).isa(ACTION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A1_NAME)),
                     cvar(A2).isa(ACTION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A2_NAME)),
-                    cvar(SP).rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
+                    cvar(SP).rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, SP_NAME),
                     cvar(S_TYPE).sub(SUBJECT),
                     cvar(S_ID_TYPE).sub(ID),
                     cvar(O_TYPE).sub(OBJECT),
@@ -292,7 +296,8 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]),
                     TypeDBSegregationPolicy(
                         TypeDBAction(it[A1_TYPE], it[A1_NAME]),
-                        TypeDBAction(it[A2_TYPE], it[A2_NAME])
+                        TypeDBAction(it[A2_TYPE], it[A2_NAME]),
+                        it[SP_NAME]
                     )
                 )
             }
@@ -315,7 +320,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     cvar(O_ID).isaX(cvar(O_ID_TYPE)),
                     cvar(A1).isa(ACTION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A1_NAME)),
                     cvar(A2).isa(ACTION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A2_NAME)),
-                    cvar(SP).rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
+                    cvar(SP).rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, SP_NAME),
                     cvar(S_TYPE).sub(SUBJECT),
                     cvar(S_ID_TYPE).sub(ID),
                     cvar(O_TYPE).sub(OBJECT),
@@ -328,7 +333,8 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]),
                     TypeDBSegregationPolicy(
                         TypeDBAction(it[A1_TYPE], it[A1_NAME]),
-                        TypeDBAction(it[A2_TYPE], it[A2_NAME])
+                        TypeDBAction(it[A2_TYPE], it[A2_NAME]),
+                        it[SP_NAME]
                     )
                 ) to getProofs(tx, it)
             }.toMap()
@@ -358,6 +364,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
         private const val P_VALIDITY = "p-validity"
         private const val S = "s"
         private const val SP = "sp"
+        private const val SP_NAME = "sp-name"
         private const val S_ID = "s-id"
         private const val S_ID_TYPE = "s-id-type"
         private const val S_TYPE = "s-type"
