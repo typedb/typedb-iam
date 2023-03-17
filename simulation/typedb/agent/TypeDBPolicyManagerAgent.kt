@@ -172,7 +172,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
     override fun assignSegregationPolicy(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val action1 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf()
         val action2 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf()
-        val policyName = "\"${action1.idValue}\" or \"${action2.idValue}\" policy"
+        val policyName = "'${action1.idValue}' or '${action2.idValue}' policy"
 
         session.transaction(READ, options).use { tx ->
             if (
@@ -195,9 +195,11 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A1).isa(COMPANY_MEMBERSHIP),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A2).isa(COMPANY_MEMBERSHIP),
                 ).insert(
-                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY),
+                    rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, policyName),
                 )
             )
+
+            tx.commit()
         }
 
         return listOf()
@@ -266,6 +268,8 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     cvar(SP).isa(SEGREGATION_POLICY),
                 )
             )
+
+            tx.commit()
         }
 
         return listOf()
