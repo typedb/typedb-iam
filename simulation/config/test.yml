@@ -16,128 +16,133 @@
 #
 
 agents:
-  - name: "SysAdmin"
+
+#  Startup stuff
+
+  - name: "SysAdminAgent"
     action: "addUser"
     runsPerIteration: 50
     trace: true
 
-  - name: "SysAdmin"
+  - name: "SysAdminAgent"
     action: "createUserGroup"
     runsPerIteration: 5
     trace: true
 
-  - name: "Supervisor"
+  - name: "SupervisorAgent"
     action: "assignGroupMembership"
     runsPerIteration: 20
     trace: true
 
-  - name: "PolicyManager"
+  - name: "PolicyManagerAgent"
     action: "listSegregationPolicies"
-    runsPerIteration: 1
+    runsPerIteration: 0
     trace: true
 
-  - name: "PolicyManager"
+  - name: "PolicyManagerAgent"
     action: "revokeSegregationPolicy"
     runsPerIteration: 3
     trace: true
 
-  - name: "PolicyManager"
+  - name: "PolicyManagerAgent"
     action: "assignSegregationPolicy"
     runsPerIteration: 3
     trace: true
 
 
 
-  - name: "SysAdmin"
+  - name: "SysAdminAgent"
     action: "reviewChangeRequests"
     runsPerIteration: 1
     trace: true
 
-  - name: "PolicyManager"
+  - name: "PolicyManagerAgent"
     action: "listPermissionsPendingReview"
-    runsPerIteration: 1
+    runsPerIteration: 0
     trace: true
 
-  - name: "PolicyManager"
+  - name: "PolicyManagerAgent"
     action: "reviewPermissions"
     runsPerIteration: 1
     trace: true
 
-  - name: "PolicyManager"
+  - name: "PolicyManagerAgent"
     action: "listSegregationViolations"
-    runsPerIteration: 1
+    runsPerIteration: 0
     trace: true
 
-  - name: "PolicyManager"
+  - name: "PolicyManagerAgent"
     action: "reviewSegregationViolations"
     runsPerIteration: 0
     trace: true
 
 
 
-  - name: "User"
+  - name: "UserAgent"
     action: "attemptAccess"
-    runsPerIteration: 2000
+    runsPerIteration: 0
     trace: true
 
-  - name: "User"
+  - name: "UserAgent"
     action: "submitChangeRequest"
-    runsPerIteration: 100
+    runsPerIteration: 0
     trace: true
 
-  - name: "User"
+  - name: "UserAgent"
     action: "createObject"
-    runsPerIteration: 200
+    runsPerIteration: 0
     trace: true
 
-  - name: "Owner"
+  - name: "OwnerAgent"
     action: "changeGroupOwnership"
-    runsPerIteration: 10
+    runsPerIteration: 0
     trace: true
 
-  - name: "Owner"
+  - name: "OwnerAgent"
     action: "changeObjectOwnership"
-    runsPerIteration: 100
+    runsPerIteration: 0
     trace: true
 
-  - name: "User"
+  - name: "UserAgent"
     action: "deleteObject"
-    runsPerIteration: 50
+    runsPerIteration: 0
     trace: true
 
-  - name: "SysAdmin"
+  - name: "SysAdminAgent"
     action: "listSubjectGroupMemberships"
-    runsPerIteration: 1
+    runsPerIteration: 0
     trace: true
 
-  - name: "SysAdmin"
+  - name: "SysAdminAgent"
     action: "listSubjectPermissions"
-    runsPerIteration: 1
+    runsPerIteration: 0
     trace: true
 
-  - name: "SysAdmin"
+  - name: "SysAdminAgent"
     action: "listObjectPermissionHolders"
-    runsPerIteration: 1
+    runsPerIteration: 0
     trace: true
 
 
 
-  - name: "Supervisor"
+  - name: "SupervisorAgent"
     action: "revokeGroupMembership"
-    runsPerIteration: 10
+    runsPerIteration: 0
     trace: true
 
-  - name: "SysAdmin"
+  - name: "SysAdminAgent"
     action: "removeUser"
-    runsPerIteration: 20
+    runsPerIteration: 0
     trace: true
 
-  - name: "SysAdmin"
+  - name: "SysAdminAgent"
     action: "deleteUserGroup"
-    runsPerIteration: 2
+    runsPerIteration: 0
     trace: true
 
-  - name: "SysAdmin"
+
+
+  - name: "SysAdminAgent"
     action: "collectGarbage"
     runsPerIteration: 1
     trace: true
@@ -153,6 +158,7 @@ run:
   iterations: 1
   partitions: 1
   databaseName: "iam-simulation"
+  recreateDatabase: true
 
 model:
   requestApprovalPercentage: 80

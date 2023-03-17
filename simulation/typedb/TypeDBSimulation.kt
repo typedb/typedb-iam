@@ -60,8 +60,14 @@ import com.vaticle.typedb.iam.simulation.common.concept.Operation
 import com.vaticle.typedb.iam.simulation.common.concept.OperationSet
 import com.vaticle.typedb.iam.simulation.common.concept.Person
 import com.vaticle.typedb.iam.simulation.common.concept.UserRole
+import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
+import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
+import com.vaticle.typedb.iam.simulation.typedb.Labels.ID
+import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
+import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
+import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBObject
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.insert
@@ -76,11 +82,11 @@ import kotlin.streams.toList
 class TypeDBSimulation private constructor(client: TypeDBClient, context: Context):
     com.vaticle.typedb.simulation.typedb.TypeDBSimulation<Context>(client, context, TypeDBAgentFactory(client, context)) {
 
-    override val agentPackage: String = UserAgent::class.java.packageName
+    override val agentPackage = UserAgent::class.java.packageName
     override val name = "IAM"
     // TODO: Update this filepath
-    override val schemaFile: File = Paths.get("/Users/jameswhiteside/repos/typedb-iam/iam-schema.tql").toFile()
-    private val options: TypeDBOptions = TypeDBOptions.core().infer(true)
+    override val schemaFile = Paths.get("/Users/jameswhiteside/repos/typedb-iam/iam-schema.tql").toFile()
+    private val options = TypeDBOptions.core().infer(true)
 
     override fun initData(nativeSession: TypeDBSession, randomSource: RandomSource) {
         LOGGER.info("TypeDB initialisation of world simulation data started ...")
@@ -93,11 +99,12 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         initDirectories(nativeSession, context.seedData.companies, randomSource)
         initOperations(nativeSession, context.seedData.companies, context.seedData.operations)
         initOperationSets(nativeSession, context.seedData.companies, context.seedData.operationSets)
+        initAccesses(nativeSession, context.seedData.companies)
         LOGGER.info("TypeDB initialisation of world simulation data ended in: {}", printDuration(start, Instant.now()))
     }
 
     private fun initCompanies(session: TypeDBSession, companies: List<Company>) {
-        companies.parallelStream().forEach { company: Company ->
+        companies.parallelStream().forEach { company ->
             session.transaction(WRITE).use { tx ->
                 tx.query().insert(
                     insert(
@@ -112,7 +119,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     }
 
     private fun initPersons(session: TypeDBSession, companies: List<Company>, seedData: SeedData, randomSource: RandomSource) {
-        companies.parallelStream().forEach { company: Company ->
+        companies.parallelStream().forEach { company ->
             repeat(100) {
                 val person = Person.initialise(company, seedData, randomSource)
                 session.transaction(WRITE).use { tx ->
@@ -132,7 +139,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     }
 
     private fun initBusinessUnits(session: TypeDBSession, companies: List<Company>, businessUnits: List<BusinessUnit>, randomSource: RandomSource) {
-        companies.parallelStream().forEach { company: Company ->
+        companies.parallelStream().forEach { company ->
             val persons: List<Person>
 
             session.transaction(READ, options).use { tx ->
@@ -146,7 +153,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }
 
-            businessUnits.parallelStream().forEach { businessUnit: BusinessUnit ->
+            businessUnits.parallelStream().forEach { businessUnit ->
                 val person = randomSource.choose(persons)
 
                 session.transaction(WRITE).use { tx ->
@@ -168,7 +175,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     }
 
     private fun initUserRoles(session: TypeDBSession, companies: List<Company>, userRoles: List<UserRole>, randomSource: RandomSource) {
-        companies.parallelStream().forEach { company: Company ->
+        companies.parallelStream().forEach { company ->
             val persons: List<Person>
 
             session.transaction(READ, options).use { tx ->
@@ -182,7 +189,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }
 
-            userRoles.parallelStream().forEach { userRole: UserRole ->
+            userRoles.parallelStream().forEach { userRole ->
                 val person = randomSource.choose(persons)
 
                 session.transaction(WRITE).use { tx ->
@@ -204,7 +211,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     }
 
     private fun initApplications(session: TypeDBSession, companies: List<Company>, applications: List<Application>, randomSource: RandomSource) {
-        companies.parallelStream().forEach { company: Company ->
+        companies.parallelStream().forEach { company ->
             val persons: List<Person>
 
             session.transaction(READ, options).use { tx ->
@@ -218,7 +225,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 ).toList().map { Person(stringValue(it[P_NAME]), stringValue(it[P_EMAIL])) }
             }
 
-            applications.parallelStream().forEach { application: Application ->
+            applications.parallelStream().forEach { application ->
                 val person = randomSource.choose(persons)
 
                 session.transaction(WRITE).use { tx ->
@@ -240,7 +247,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     }
 
     private fun initDirectories(session: TypeDBSession, companies: List<Company>, randomSource: RandomSource) {
-        companies.parallelStream().forEach { company: Company ->
+        companies.parallelStream().forEach { company ->
             val persons: List<Person>
 
             session.transaction(READ, options).use { tx ->
@@ -274,8 +281,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     }
 
     private fun initOperations(session: TypeDBSession, companies: List<Company>, operations: List<Operation>) {
-        companies.parallelStream().forEach { company: Company ->
-            operations.parallelStream().forEach { operation: Operation ->
+        companies.parallelStream().forEach { company ->
+            operations.parallelStream().forEach { operation ->
                 session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
@@ -290,8 +297,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 }
             }
         }
-        operations.parallelStream().forEach { operation: Operation ->
-            operation.objectTypes.parallelStream().forEach { objectType: String ->
+        operations.parallelStream().forEach { operation ->
+            operation.objectTypes.parallelStream().forEach { objectType ->
                 session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
@@ -308,8 +315,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     }
 
     private fun initOperationSets(session: TypeDBSession, companies: List<Company>, operationSets: List<OperationSet>) {
-        companies.parallelStream().forEach { company: Company ->
-            operationSets.parallelStream().forEach { operationSet: OperationSet ->
+        companies.parallelStream().forEach { company ->
+            operationSets.parallelStream().forEach { operationSet ->
                 session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
@@ -324,8 +331,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 }
             }
         }
-        operationSets.parallelStream().forEach { operationSet: OperationSet ->
-            operationSet.objectTypes.parallelStream().forEach { objectType: String ->
+        operationSets.parallelStream().forEach { operationSet ->
+            operationSet.objectTypes.parallelStream().forEach { objectType ->
                 session.transaction(WRITE).use { tx ->
                     tx.query().insert(
                         match(
@@ -339,9 +346,9 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                 }
             }
         }
-        companies.parallelStream().forEach { company: Company ->
-            operationSets.parallelStream().forEach { operationSet: OperationSet ->
-                operationSet.setMembers.parallelStream().forEach { setMember: String ->
+        companies.parallelStream().forEach { company ->
+            operationSets.parallelStream().forEach { operationSet ->
+                operationSet.setMembers.parallelStream().forEach { setMember ->
                     session.transaction(WRITE).use { tx ->
                         tx.query().insert(
                             match(
@@ -362,6 +369,38 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         }
     }
 
+    private fun initAccesses(session: TypeDBSession, companies: List<Company>) {
+        companies.parallelStream().forEach { company ->
+            val objects: List<TypeDBObject>
+
+            session.transaction(READ, options).use { tx ->
+                objects = tx.query().match(
+                    match(
+                        cvar(O).isaX(cvar(O_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(O_ID)),
+                        cvar(O_ID).isaX(cvar(O_ID_TYPE)),
+                        cvar(O_TYPE).sub(OBJECT),
+                        cvar(O_ID_TYPE).sub(ID)
+                    )
+                ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
+            }
+
+            objects.parallelStream().forEach { obj ->
+                session.transaction(WRITE).use { tx ->
+                    tx.query().insert(
+                        match(
+                            cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                            cvar(A).isa(ACTION).has(OBJECT_TYPE, obj.type),
+                        ).insert(
+                            rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS)
+                        )
+                    )
+
+                    tx.commit()
+                }
+            }
+        }
+    }
+
     companion object {
         private val LOGGER = KotlinLogging.logger {}
         private const val A = "a"
@@ -369,6 +408,9 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         private const val C = "c"
         private const val D = "d"
         private const val O = "o"
+        private const val O_ID = "o-id"
+        private const val O_ID_TYPE = "o-id-type"
+        private const val O_TYPE = "o-type"
         private const val P = "p"
         private const val P_EMAIL = "p-email"
         private const val P_NAME = "p-name"
