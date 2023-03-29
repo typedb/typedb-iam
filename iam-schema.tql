@@ -270,31 +270,31 @@ rule transitive-membership:
         ($parent-role: $e1, $member-role: $e3) isa $membership-type;
     };
 
-rule transitive-object-access:
-    when {
-        (parent-collection: $c1, collection-member: $c2) isa collection-membership;
-        $c1 isa! $c1-type;
-        $c2 isa! $c2-type;
-        $c1-type is $c2-type;
-        (accessed-object: $c1, valid-action: $a) isa access;
-    } then {
-        (accessed-object: $c2, valid-action: $a) isa access;
-    };
-
-rule transitive-action-access:
-    when {
-        (parent-set: $s, set-member: $a) isa set-membership;
-        (accessed-object: $o, valid-action: $s) isa access;
-    } then {
-        (accessed-object: $o, valid-action: $a) isa access;
-    };
+#rule transitive-object-access:
+#    when {
+#        (parent-collection: $c1, collection-member: $c2) isa collection-membership;
+#        $c1 isa! $c1-type;
+#        $c2 isa! $c2-type;
+#        $c1-type is $c2-type;
+#        (accessed-object: $c1, valid-action: $a) isa access;
+#    } then {
+#        (accessed-object: $c2, valid-action: $a) isa access;
+#    };
+#
+#rule transitive-action-access:
+#    when {
+#        (parent-set: $s, set-member: $a) isa set-membership;
+#        (accessed-object: $o, valid-action: $s) isa access;
+#    } then {
+#        (accessed-object: $o, valid-action: $a) isa access;
+#    };
 
 rule transitive-subject-permission:
     when {
         (parent-group: $g, group-member: $s) isa group-membership;
-        (permitted-subject: $g, permitted-access: $a) isa permission;
+        (permitted-subject: $g, permitted-access: $ac) isa permission;
     } then {
-        (permitted-subject: $s, permitted-access: $a) isa permission;
+        (permitted-subject: $s, permitted-access: $ac) isa permission;
     };
 
 rule transitive-object-permission:
@@ -309,32 +309,32 @@ rule transitive-object-permission:
 
 rule transitive-action-permission:
     when {
-        (parent-set: $s, set-member: $a) isa set-membership;
-        $ac-s(accessed-object: $o, valid-action: $s) isa access;
+        (parent-set: $se, set-member: $a) isa set-membership;
+        $ac-s(accessed-object: $o, valid-action: $se) isa access;
         $ac-a(accessed-object: $o, valid-action: $a) isa access;
-        (permitted-subject: $su, permitted-access: $ac-s) isa permission;
+        (permitted-subject: $s, permitted-access: $ac-s) isa permission;
     } then {
-        (permitted-subject: $su, permitted-access: $ac-a) isa permission;
+        (permitted-subject: $s, permitted-access: $ac-a) isa permission;
     };
 
 rule automatic-segregation-violation:
     when {
-        $s(segregated-action: $a1, segregated-action: $a2) isa segregation-policy;
+        $po(segregated-action: $a1, segregated-action: $a2) isa segregation-policy;
         $ac1(accessed-object: $o, valid-action: $a1) isa access;
         $ac2(accessed-object: $o, valid-action: $a2) isa access;
-        $p1(permitted-subject: $su, permitted-access: $ac1) isa permission;
-        $p2(permitted-subject: $su, permitted-access: $ac2) isa permission;
+        $p1(permitted-subject: $s, permitted-access: $ac1) isa permission;
+        $p2(permitted-subject: $s, permitted-access: $ac2) isa permission;
     } then {
-        (violating-subject: $su, violating-object: $o, violated-policy: $s) isa segregation-violation;
+        (violating-subject: $s, violating-object: $o, violated-policy: $po) isa segregation-violation;
     };
 
 rule automatic-permission-invalidity:
     when {
-        $s(segregated-action: $a1, segregated-action: $a2) isa segregation-policy;
+        $po(segregated-action: $a1, segregated-action: $a2) isa segregation-policy;
         $ac1(accessed-object: $o, valid-action: $a1) isa access;
         $ac2(accessed-object: $o, valid-action: $a2) isa access;
-        $p1(permitted-subject: $su, permitted-access: $ac1) isa permission;
-        $p2(permitted-subject: $su, permitted-access: $ac2) isa permission;
+        $p1(permitted-subject: $s, permitted-access: $ac1) isa permission;
+        $p2(permitted-subject: $s, permitted-access: $ac2) isa permission;
     } then {
         $p1 has validity false;
     };
