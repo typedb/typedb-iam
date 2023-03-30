@@ -166,6 +166,8 @@ permission sub relation,
     owns review-date,
     owns validity;
 
+inherited-permission sub permission;
+
 change-request sub relation,
     relates requesting-subject,
     relates requested-subject,
@@ -289,32 +291,32 @@ rule transitive-membership:
 #        (accessed-object: $o, valid-action: $a) isa access;
 #    };
 
-rule transitive-subject-permission:
+rule subject-permission-inheritance:
     when {
         (parent-group: $g, group-member: $s) isa group-membership;
         (permitted-subject: $g, permitted-access: $ac) isa permission;
     } then {
-        (permitted-subject: $s, permitted-access: $ac) isa permission;
+        (permitted-subject: $s, permitted-access: $ac) isa inherited-permission;
     };
 
-rule transitive-object-permission:
+rule object-permission-inheritance:
     when {
         (parent-collection: $c, collection-member: $o) isa collection-membership;
         $ac-c(accessed-object: $c, valid-action: $a) isa access;
         $ac-o(accessed-object: $o, valid-action: $a) isa access;
         (permitted-subject: $s, permitted-access: $ac-c) isa permission;
     } then {
-        (permitted-subject: $s, permitted-access: $ac-o) isa permission;
+        (permitted-subject: $s, permitted-access: $ac-o) isa inherited-permission;
     };
 
-rule transitive-action-permission:
+rule action-permission-inheritance:
     when {
         (parent-set: $se, set-member: $a) isa set-membership;
         $ac-s(accessed-object: $o, valid-action: $se) isa access;
         $ac-a(accessed-object: $o, valid-action: $a) isa access;
         (permitted-subject: $s, permitted-access: $ac-s) isa permission;
     } then {
-        (permitted-subject: $s, permitted-access: $ac-a) isa permission;
+        (permitted-subject: $s, permitted-access: $ac-a) isa inherited-permission;
     };
 
 rule automatic-segregation-violation:
