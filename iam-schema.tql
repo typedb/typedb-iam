@@ -87,7 +87,8 @@ user sub subject,
 user-group sub subject,
     abstract,
     plays group-membership:parent-group,
-    plays group-ownership:owned-group;
+    plays group-ownership:owned-group,
+    plays group-maximisation-violation:violating-group;
 
 object sub entity,
     abstract,
@@ -164,8 +165,11 @@ permission sub relation,
     relates permitted-subject,
     relates permitted-access,
     owns review-date,
-    owns validity;
+    owns validity,
+    plays permission-maximisation-violation:violating-permission,
+    plays permission-maximisation-violation:violated-permission;
 
+direct-permission sub permission;
 inherited-permission sub permission;
 
 change-request sub relation,
@@ -178,10 +182,23 @@ segregation-policy sub relation,
     owns policy-name,
     plays segregation-violation:violated-policy;
 
-segregation-violation sub relation,
+violation sub relation,
+    abstract;
+
+segregation-violation sub violation,
     relates violating-subject,
     relates violating-object,
     relates violated-policy;
+
+maximization-violation sub violation,
+    abstract;
+
+permission-maximisation-violation sub maximization-violation,
+    relates violating-permission,
+    relates violated-permission;
+
+group-maximisation-violation sub maximization-violation,
+    relates violating-group;
 
 credential sub attribute,
     value string;
@@ -319,7 +336,7 @@ rule action-permission-inheritance:
         (permitted-subject: $s, permitted-access: $ac-a) isa inherited-permission;
     };
 
-rule automatic-segregation-violation:
+rule segregation-violation-detection:
     when {
         $po(segregated-action: $a1, segregated-action: $a2) isa segregation-policy;
         $ac1(accessed-object: $o, valid-action: $a1) isa access;
@@ -328,6 +345,28 @@ rule automatic-segregation-violation:
         $p2(permitted-subject: $s, permitted-access: $ac2) isa permission;
     } then {
         (violating-subject: $s, violating-object: $o, violated-policy: $po) isa segregation-violation;
+    };
+
+rule permission-maximisation-violation-detection:
+    when {
+        $p-d(permitted-subject: $s, permitted-access: $ac) isa direct-permission;
+        $p-i(permitted-subject: $s, permitted-access: $ac) isa inherited-permission;
+    } then {
+        (violating-permission: $p-d, violated-permission: $p-i) isa permission-maximisation-violation;
+    };
+
+rule group-maximisation-violation-detection:
+    when {
+        $g1 isa user-group;
+        $g2 isa user-group;
+        not {
+            (permitted-subject: $g1, permitted-access: $ac) isa permission;
+            not { (permitted-subject: $g2, permitted-access: $ac) isa permission; };
+            not { (parent-group: $g1, group-member: $s) isa group-membership; };
+            (parent-group: $g2, group-member: $s) isa group-membership;
+        };
+    } then {
+        (violating-group: $g1, violating-group: $g2) isa group-maximisation-violation;
     };
 
 rule automatic-permission-invalidity:
