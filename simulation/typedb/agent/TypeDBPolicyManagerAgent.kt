@@ -213,6 +213,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                 match(
                     cvar(A1).isaX(cvar(A1_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A1_NAME)),
                     cvar(A2).isaX(cvar(A2_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A2_NAME)),
+                    cvar(A1_NAME).lt(cvar(A2_NAME)),
                     cvar(A1_TYPE).sub(ACTION),
                     cvar(A2_TYPE).sub(ACTION),
                     rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, SP_NAME),
@@ -237,6 +238,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                 match(
                     cvar(A1).isaX(cvar(A1_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A1_NAME)),
                     cvar(A2).isaX(cvar(A2_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A2_NAME)),
+                    cvar(A1_NAME).lt(cvar(A2_NAME)),
                     cvar(A1_TYPE).sub(ACTION),
                     cvar(A2_TYPE).sub(ACTION),
                     rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, SP_NAME),
@@ -288,6 +290,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     cvar(A1).isa(ACTION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A1_NAME)),
                     cvar(A2).isa(ACTION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A2_NAME)),
                     cvar(SP).rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, SP_NAME),
+                    cvar(A1_NAME).lt(cvar(A2_NAME)),
                     cvar(S_TYPE).sub(SUBJECT),
                     cvar(S_ID_TYPE).sub(ID),
                     cvar(O_TYPE).sub(OBJECT),
@@ -325,6 +328,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
                     cvar(A1).isa(ACTION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A1_NAME)),
                     cvar(A2).isa(ACTION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A2_NAME)),
                     cvar(SP).rel(SEGREGATED_ACTION, A1).rel(SEGREGATED_ACTION, A2).isa(SEGREGATION_POLICY).has(POLICY_NAME, SP_NAME),
+                    cvar(A1_NAME).lt(cvar(A2_NAME)),
                     cvar(S_TYPE).sub(SUBJECT),
                     cvar(S_ID_TYPE).sub(ID),
                     cvar(O_TYPE).sub(OBJECT),
