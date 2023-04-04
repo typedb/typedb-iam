@@ -41,7 +41,7 @@ agents:
 
   - name: "PolicyManagerAgent"
     action: "revokeSegregationPolicy"
-    runsPerIteration: 3
+    runsPerIteration: 0
     trace: true
 
   - name: "PolicyManagerAgent"
@@ -63,7 +63,7 @@ agents:
 
   - name: "PolicyManagerAgent"
     action: "reviewPermissions"
-    runsPerIteration: 1
+    runsPerIteration: 0
     trace: true
 
   - name: "PolicyManagerAgent"
@@ -85,27 +85,27 @@ agents:
 
   - name: "UserAgent"
     action: "submitChangeRequest"
-    runsPerIteration: 0
+    runsPerIteration: 100
     trace: true
 
   - name: "UserAgent"
     action: "createObject"
-    runsPerIteration: 0
+    runsPerIteration: 200
     trace: true
 
   - name: "OwnerAgent"
     action: "changeGroupOwnership"
-    runsPerIteration: 0
+    runsPerIteration: 10
     trace: true
 
   - name: "OwnerAgent"
     action: "changeObjectOwnership"
-    runsPerIteration: 0
+    runsPerIteration: 100
     trace: true
 
   - name: "UserAgent"
     action: "deleteObject"
-    runsPerIteration: 0
+    runsPerIteration: 50
     trace: true
 
   - name: "SysAdminAgent"
@@ -127,17 +127,17 @@ agents:
 
   - name: "SupervisorAgent"
     action: "revokeGroupMembership"
-    runsPerIteration: 0
+    runsPerIteration: 10
     trace: true
 
   - name: "SysAdminAgent"
     action: "removeUser"
-    runsPerIteration: 0
+    runsPerIteration: 20
     trace: true
 
   - name: "SysAdminAgent"
     action: "deleteUserGroup"
-    runsPerIteration: 0
+    runsPerIteration: 2
     trace: true
 
 
