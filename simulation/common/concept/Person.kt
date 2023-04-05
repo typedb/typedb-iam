@@ -20,6 +20,10 @@ import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 
 data class Person(val name: String, val email: String) {
+    constructor(firstName: String, lastName: String, company: Company): this(
+        name = "$firstName $lastName",
+        email = "${firstName.lowercase()}.${lastName.lowercase()}@${company.domainName}.com",
+    )
 
     companion object {
         private const val MAX_NAME_PERCENTILE = 90

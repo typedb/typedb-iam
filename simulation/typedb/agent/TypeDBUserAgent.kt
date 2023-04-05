@@ -354,7 +354,7 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, CO).isa(COMPANY_MEMBERSHIP),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
                 ).insert(
-                    cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
+                    cvar(O).isa(obj.type).has(obj.idType, obj.idValue).has(OBJECT_TYPE, obj.type),
                     rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
                     rel(PARENT_COLLECTION, CO).rel(COLLECTION_MEMBER, O).isa(COLLECTION_MEMBERSHIP),
                     rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
