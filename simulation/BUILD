@@ -41,6 +41,7 @@ kt_jvm_library(
 
 java_binary(
     name = "run",
+    data = ["//simulation/config:simulation_config"],
     runtime_deps = [":runner"],
     main_class = "com.vaticle.typedb.iam.simulation.Runner",
     classpath_resources = ["//simulation/config:logback.xml"],
