@@ -17,9 +17,18 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-exports_files([
-    "logback.xml",
-])
+package(default_visibility = ["//simulation:__pkg__"])
+
+filegroup(
+    name = "simulation_config",
+    srcs = [
+        "logback.xml",
+        "benchmarking.yml",
+        "data-generation.yml",
+        "demo-setup.yml",
+        "test.yml",
+    ],
+)
 
 checkstyle_test(
     name = "checkstyle",
