@@ -1,0 +1,15 @@
+match
+$u isa business-unit, has name "Engineering";
+$f isa directory, has path "root/typedb/src";
+$o isa operation-set, has name "manage directory";
+$a (object: $f, action: $o) isa access;
+insert
+(subject: $u, access: $a) isa permission;
+
+match
+$u isa business-unit, has name "Engineering";
+$f isa directory, has path "root/typedb/src";
+$o isa operation-set, has name "manage permissions";
+$a (object: $f, action: $o) isa access;
+insert
+(subject: $u, access: $a) isa permission;

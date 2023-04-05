@@ -1,0 +1,11 @@
+match
+$o isa object, has object-type $type;
+$a isa action, has object-type $type;
+not { (object: $o, action: $a) isa access; };
+not {
+  $o has object-type $type2;
+  $a has object-type $type2;
+  $type2 < $type;
+};
+insert
+(object: $o, action: $a) isa access;

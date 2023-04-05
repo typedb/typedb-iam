@@ -1,0 +1,15 @@
+match
+$requester isa subject;
+$requestee isa subject;
+$o isa object;
+$a isa action;
+$ac (object: $o, action: $a) isa access;
+$r (requester: $requester, requestee: $requestee, change: $ac) isa change-request;
+not { (subject: $requestee, access: $ac) isa permission; };
+$o-grant isa operation, has name "grant permissions";
+$ac-grant (object: $f, action: $a-grant) isa access;
+(subject: $requester, access: $ac-grant) isa permission, has validity true;
+delete
+$r isa change-request;
+insert
+(subject: $requestee, access: $ac) isa permission;
