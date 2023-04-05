@@ -1,0 +1,5 @@
+match
+$p isa person, has email "kevin.morrison@vaticle.com";
+insert
+$u isa business-unit, has name "Cloud";
+(group: $u, owner: $p) isa group-ownership;

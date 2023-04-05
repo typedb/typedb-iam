@@ -1,0 +1,21 @@
+#match
+#$f isa file, has path "root/typedb/src/readme.md";
+#$o (object: $f) isa object-ownership;
+#$p isa person, has email "gavin.harrison@vaticle.com";
+#delete
+#$o isa object-ownership;
+#insert
+#(object: $f, owner: $p) isa object-ownership;
+# ^ This version doesn't run due to a bug, waiting on fix from Josh.
+
+match
+$f isa file, has path "root/typedb/src/readme.md";
+$o (object: $f) isa object-ownership;
+delete
+$o isa object-ownership;
+
+match
+$f isa file, has path "root/typedb/src/readme.md";
+$p isa person, has email "gavin.harrison@vaticle.com";
+insert
+(object: $f, owner: $p) isa object-ownership;

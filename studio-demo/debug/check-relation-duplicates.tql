@@ -1,0 +1,8 @@
+match
+$t1 isa thing;
+$t2 isa thing;
+$r1 ($role1: $t1, $role2: $t2) isa! $relation;
+$r2 ($role1: $t1, $role2: $t2) isa! $relation;
+not {$t1 is $t2;};
+not {$r1 is $r2;};
+$relation sub relation;

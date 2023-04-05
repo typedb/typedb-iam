@@ -1,0 +1,5 @@
+match
+$t1 isa thing, has $a;
+$t2 isa thing, has $a;
+$a isa id;
+not {$t1 is $t2;};

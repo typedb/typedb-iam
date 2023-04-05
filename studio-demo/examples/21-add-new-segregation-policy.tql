@@ -1,0 +1,6 @@
+match
+$a1 isa operation, has name "submit pull request";
+$a2 isa operation, has name "approve pull request";
+insert
+(action: $a1, action: $a2) isa segregation-policy, has name $n;
+$n = "independent pull request approval";
