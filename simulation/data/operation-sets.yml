@@ -15,6 +15,12 @@
     - "move subdirectory"
     - "delete subdirectory"
     - "move file"
+- value: "manage directory"
+  objectTypes:
+    - "directory"
+  setMembers:
+    - "write file"
+    - "manage subdirectories"
 - value: "manage interface"
   objectTypes:
     - "interface"
