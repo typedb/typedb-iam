@@ -29,6 +29,7 @@ object Util {
             .lowercase()
     }
 
+    fun boolean(yaml: YAML?): Boolean = yaml!!.asBoolean().value()
     fun int(yaml: YAML?): Int = yaml!!.asInt().value()
     fun double(yaml: YAML?): Double = yaml!!.asDouble().value()
     fun string(yaml: YAML?): String = yaml!!.asString().value()

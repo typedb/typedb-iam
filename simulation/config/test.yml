@@ -164,3 +164,4 @@ model:
   requestApprovalPercentage: 80
   permissionReviewAge: 5
   permissionRenewalPercentage: 80
+  createDemoConcepts: false

@@ -36,7 +36,7 @@ agents:
 
   - name: "PolicyManagerAgent"
     action: "listSegregationPolicies"
-    runsPerIteration: 0
+    runsPerIteration: 1
     trace: true
 
   - name: "PolicyManagerAgent"
@@ -58,7 +58,7 @@ agents:
 
   - name: "PolicyManagerAgent"
     action: "listPermissionsPendingReview"
-    runsPerIteration: 0
+    runsPerIteration: 1
     trace: true
 
   - name: "PolicyManagerAgent"
@@ -68,7 +68,7 @@ agents:
 
   - name: "PolicyManagerAgent"
     action: "listSegregationViolations"
-    runsPerIteration: 0
+    runsPerIteration: 1
     trace: true
 
   - name: "PolicyManagerAgent"
@@ -80,7 +80,7 @@ agents:
 
   - name: "UserAgent"
     action: "attemptAccess"
-    runsPerIteration: 0
+    runsPerIteration: 2000
     trace: true
 
   - name: "UserAgent"
@@ -110,17 +110,17 @@ agents:
 
   - name: "SysAdminAgent"
     action: "listSubjectGroupMemberships"
-    runsPerIteration: 0
+    runsPerIteration: 1
     trace: true
 
   - name: "SysAdminAgent"
     action: "listSubjectPermissions"
-    runsPerIteration: 0
+    runsPerIteration: 1
     trace: true
 
   - name: "SysAdminAgent"
     action: "listObjectPermissionHolders"
-    runsPerIteration: 0
+    runsPerIteration: 1
     trace: true
 
 

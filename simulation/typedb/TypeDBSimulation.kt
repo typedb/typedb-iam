@@ -62,8 +62,11 @@ import com.vaticle.typedb.iam.simulation.common.concept.Person
 import com.vaticle.typedb.iam.simulation.common.concept.UserRole
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESS
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ACCESSED_OBJECT
+import com.vaticle.typedb.iam.simulation.typedb.Labels.COLLECTION_MEMBER
+import com.vaticle.typedb.iam.simulation.typedb.Labels.COLLECTION_MEMBERSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.ID
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT
+import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COLLECTION
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
@@ -85,7 +88,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     override val agentPackage = UserAgent::class.java.packageName
     override val name = "IAM"
     // TODO: Update this filepath
-    override val schemaFile = Paths.get("/Users/jameswhiteside/repos/typedb-iam/iam-schema.tql").toFile()
+    override val schemaFile = Paths.get(SCHEMA_FILE).toFile()
     private val options = TypeDBOptions.core().infer(true)
 
     override fun initData(nativeSession: TypeDBSession, randomSource: RandomSource) {
@@ -99,6 +102,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         initDirectories(nativeSession, context.seedData.companies, randomSource)
         initOperations(nativeSession, context.seedData.companies, context.seedData.operations)
         initOperationSets(nativeSession, context.seedData.companies, context.seedData.operationSets)
+        if (context.model.createDemoConcepts) initDemoConcepts(nativeSession, context.seedData.companies)
         initAccesses(nativeSession, context.seedData.companies)
         LOGGER.info("TypeDB initialisation of world simulation data ended in: {}", printDuration(start, Instant.now()))
     }
@@ -234,7 +238,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                             cvar(C).isa(COMPANY).has(NAME, company.name),
                             cvar(P).isa(PERSON).has(EMAIL, person.email),
                         ).insert(
-                            cvar(A).isa(APPLICATION).has(NAME, application.name),
+                            cvar(A).isa(APPLICATION).has(NAME, application.name).has(OBJECT_TYPE, APPLICATION),
                             rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
                             rel(OWNED_OBJECT, A).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
                         )
@@ -269,7 +273,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                         cvar(C).isa(COMPANY).has(NAME, company.name),
                         cvar(P).isa(PERSON).has(EMAIL, person.email),
                     ).insert(
-                        cvar(D).isa(DIRECTORY).has(PATH, ROOT),
+                        cvar(D).isa(DIRECTORY).has(PATH, ROOT).has(OBJECT_TYPE, DIRECTORY),
                         rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D).isa(COMPANY_MEMBERSHIP),
                         rel(OWNED_OBJECT, D).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
                     )
@@ -401,12 +405,60 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         }
     }
 
+    private fun initDemoConcepts(session: TypeDBSession, companies: List<Company>) {
+        if (companies.size > 1) throw IllegalStateException("Cannot create demo concepts in a simulation with multiple companies.")
+        val company = companies.firstOrNull { it.name == VATICLE }
+            ?: throw IllegalStateException("Cannot create demo concepts without company \"Vaticle\".")
+        if (ROOT != "root") throw IllegalStateException("Cannot create demo concepts without \"root\" as root directory.")
+
+        val person = Person("Gavin", "Harrison", company)
+
+        session.transaction(WRITE).use { tx ->
+            tx.query().insert(
+                match(
+                    cvar(C).isa(COMPANY).has(NAME, company.name),
+                ).insert(
+                    cvar(P).isa(PERSON).has(FULL_NAME, person.name).has(EMAIL, person.email),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, P).isa(COMPANY_MEMBERSHIP),
+                )
+            )
+
+            tx.query().insert(
+                match(
+                    cvar(C).isa(COMPANY).has(NAME, company.name),
+                    cvar(D1).isa(DIRECTORY).has(PATH, ROOT),
+                    cvar(P).isa(PERSON).has(EMAIL, person.email),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D1).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, P).isa(COMPANY_MEMBERSHIP),
+                ).insert(
+                    cvar(D2).isa(DIRECTORY).has(PATH, "${ROOT}/typedb").has(OBJECT_TYPE, DIRECTORY),
+                    cvar(D3).isa(DIRECTORY)
+                        .has(PATH, "${ROOT}/typedb/src")
+                        .has(OBJECT_TYPE, DIRECTORY)
+                        .has(OBJECT_TYPE, REPOSITORY),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D2).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D3).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COLLECTION, D1).rel(COLLECTION_MEMBER, D2).isa(COLLECTION_MEMBERSHIP),
+                    rel(PARENT_COLLECTION, D2).rel(COLLECTION_MEMBER, D3).isa(COLLECTION_MEMBERSHIP),
+                    rel(OWNED_OBJECT, D2).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
+                    rel(OWNED_OBJECT, D3).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
+                )
+            )
+
+            tx.commit()
+        }
+    }
+
     companion object {
         private val LOGGER = KotlinLogging.logger {}
+        private const val SCHEMA_FILE = "iam-schema.tql"
         private const val A = "a"
         private const val B = "b"
         private const val C = "c"
         private const val D = "d"
+        private const val D1 = "d1"
+        private const val D2 = "d2"
+        private const val D3 = "d3"
         private const val O = "o"
         private const val O_ID = "o-id"
         private const val O_ID_TYPE = "o-id-type"
@@ -415,8 +467,10 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
         private const val P_EMAIL = "p-email"
         private const val P_NAME = "p-name"
         private const val R = "r"
-        private const val S = "s"
+        private const val REPOSITORY = "repository"
         private const val ROOT = "root"
+        private const val S = "s"
+        private const val VATICLE = "Vaticle"
 
         fun core(address: String, context: Context): TypeDBSimulation {
             return TypeDBSimulation(TypeDBClient.core(address, context.dbName), context).apply { init() }
