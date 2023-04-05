@@ -1,3 +1,5 @@
+# This does not run, and the equivalent can only be run in one of the clients.
+
 match
 $requester isa subject;
 $requestee isa subject;
