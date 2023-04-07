@@ -1,0 +1,6 @@
+match
+$s isa subject, has id $s-id;
+$o isa object, has id $o-id;
+$p isa segregation-policy, has name $n;
+(subject: $s, object: $o, policy: $p) isa segregation-violation;
+get $s-id, $o-id, $n;

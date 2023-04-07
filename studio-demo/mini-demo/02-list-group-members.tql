@@ -1,0 +1,4 @@
+match
+$p isa person, has email $e;
+$g isa user-role, has name "engineer";
+$m (group: $g, member: $p) isa group-membership;

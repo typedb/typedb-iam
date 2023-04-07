@@ -1,0 +1,235 @@
+# users
+insert $s isa person, has full-name "Kevin Morrison", has email "kevin.morrison@vaticle.com"; # Engineering director
+insert $s isa person, has full-name "Douglas Schmidt", has email "douglas.schmidt@vaticle.com"; # Software engineer (core)
+insert $s isa person, has full-name "Genevieve Gallegos", has email "genevieve.gallegos@vaticle.com"; # Software engineer (client)
+insert $s isa person, has full-name "Masako Holley", has email "masako.holley@vaticle.com"; # Product director
+insert $s isa person, has full-name "Pearle Goodman", has email "pearle.goodman@vaticle.com"; # Research engineer
+insert $s isa person, has full-name "Russell Mills", has email "russell.mills@vaticle.com"; # Technical writer
+insert $s isa person, has full-name "Richard Pelosi", has email "richard.pelosi@vaticle.com"; # Sales manager
+insert $s isa person, has full-name "Lucy Wynn", has email "lucy.wynn@vaticle.com"; # Hiring manager
+insert $s isa person, has full-name "Scott Ward", has email "scott.ward@vaticle.com"; # Sys admin
+
+# user groups
+insert $s isa business-unit, has name "Engineering";
+insert $s isa business-unit, has name "Core";
+insert $s isa business-unit, has name "Client";
+insert $s isa business-unit, has name "Product";
+insert $s isa business-unit, has name "Operations";
+insert $s isa user-role, has name "engineer";
+insert $s isa user-role, has name "docs admin";
+insert $s isa user-role, has name "docs editor";
+insert $s isa user-role, has name "sys admin";
+insert $s isa user-role, has name "director";
+insert $s isa user-role, has name "manager";
+insert $s isa user-account, has email "sales@vaticle.com";
+
+# group memberships
+match $s isa subject, has name "Engineering"; $g isa user-group, has name "engineer"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has name "Core"; $g isa user-group, has name "Engineering"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has name "Client"; $g isa user-group, has name "Engineering"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has name "docs admin"; $g isa user-group, has name "docs editor"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has name "director"; $g isa user-group, has name "manager"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has name "director"; $g isa user-group, has email "sales@vaticle.com"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "kevin.morrison@vaticle.com"; $g isa user-group, has name "Engineering"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "kevin.morrison@vaticle.com"; $g isa user-group, has name "docs admin"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "kevin.morrison@vaticle.com"; $g isa user-group, has name "director"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "douglas.schmidt@vaticle.com"; $g isa user-group, has name "Core"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "genevieve.gallegos@vaticle.com"; $g isa user-group, has name "Client"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "masako.holley@vaticle.com"; $g isa user-group, has name "Product"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "masako.holley@vaticle.com"; $g isa user-group, has name "director"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "pearle.goodman@vaticle.com"; $g isa user-group, has name "Product"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "pearle.goodman@vaticle.com"; $g isa user-group, has name "engineer"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "russell.mills@vaticle.com"; $g isa user-group, has name "Product"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "russell.mills@vaticle.com"; $g isa user-group, has name "docs admin"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "richard.pelosi@vaticle.com"; $g isa user-group, has name "Operations"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "richard.pelosi@vaticle.com"; $g isa user-group, has name "manager"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "richard.pelosi@vaticle.com"; $g isa user-group, has name "sales@vaticle.com"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "lucy.wynn@vaticle.com"; $g isa user-group, has name "Operations"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "lucy.wynn@vaticle.com"; $g isa user-group, has name "manager"; insert (group: $g, member: $s) isa group-membership;
+match $s isa subject, has email "scott.ward@vaticle.com"; $g isa user-group, has name "sys admin"; insert (group: $g, member: $s) isa group-membership;
+
+# resources
+insert $o isa file, has path "root/engineering/roadmap.docx", has object-type "file";
+insert $o isa file, has path "root/engineering/typedb/src/TypeDB.java", has object-type "file";
+insert $o isa file, has path "root/engineering/typedb/src/README.md", has object-type "file";
+insert $o isa file, has path "root/engineering/typedb/src/deployment.bzl", has object-type "file";
+insert $o isa file, has path "root/engineering/typedb-studio/src/Studio.kt", has object-type "file";
+insert $o isa file, has path "root/engineering/typedb-studio/src/README.md", has object-type "file";
+insert $o isa file, has path "root/engineering/typedb-studio/src/deployment.bzl", has object-type "file";
+insert $o isa file, has path "root/product/research-projects/new_project_ideas.docx", has object-type "file";
+insert $o isa file, has path "root/product/research-projects/typedb-iam/Simulation.kt", has object-type "file";
+insert $o isa file, has path "root/product/research-projects/typedb-iam/iam-schema.tql", has object-type "file";
+insert $o isa file, has path "root/product/research-projects/typedb-iam/README.MD", has object-type "file";
+insert $o isa file, has path "root/product/research-projects/typedb-cti/cti-schema.kt", has object-type "file";
+insert $o isa file, has path "root/product/documentation/typedb.md", has object-type "file";
+insert $o isa file, has path "root/product/documentation/typeql.md", has object-type "file";
+insert $o isa file, has path "root/product/documentation/clients.md", has object-type "file";
+insert $o isa file, has path "root/product/documentation/cluster.md", has object-type "file";
+insert $o isa file, has path "root/operations/sales/invoices/IBM_nov22.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/sales/invoices/IBM_nov21.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/sales/invoices/Apple_aug22.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/sales/invoices/Google_feb23.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/sales/accounts/IBM.xlsx", has object-type "file";
+insert $o isa file, has path "root/operations/sales/accounts/Apple.xlsx", has object-type "file";
+insert $o isa file, has path "root/operations/sales/accounts/Google.xlsx", has object-type "file";
+insert $o isa file, has path "root/operations/people/hiring/Junior_Engineer.docx", has object-type "file";
+insert $o isa file, has path "root/operations/people/hiring/Senior_Engineer.docx", has object-type "file";
+insert $o isa file, has path "root/operations/people/hiring/Marketing_Director.docx", has object-type "file";
+insert $o isa file, has path "root/operations/people/contracts/Kevin_Morrison.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/people/contracts/Douglas_Schmidt.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/people/contracts/Genevieve_Gallegos.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/people/contracts/Masako_Holley.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/people/contracts/Pearle_Goodman.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/people/contracts/Russell_Mills.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/people/contracts/Richard_Pelosi.pdf", has object-type "file";
+insert $o isa file, has path "root/operations/people/contracts/Lucy_Wynn.pdf", has object-type "file";
+
+# resource collections
+insert $o isa directory, has path "root", has object-type "directory";
+insert $o isa directory, has path "root/engineering", has object-type "directory";
+insert $o isa directory, has path "root/engineering/typedb", has object-type "directory";
+insert $o isa directory, has path "root/engineering/typedb/src", has object-type "directory", has object-type "repository";
+insert $o isa directory, has path "root/engineering/typedb-studio", has object-type "directory";
+insert $o isa directory, has path "root/engineering/typedb-studio/src", has object-type "directory", has object-type "repository";
+insert $o isa directory, has path "root/product", has object-type "directory";
+insert $o isa directory, has path "root/product/research-projects", has object-type "directory";
+insert $o isa directory, has path "root/product/research-projects/typedb-iam", has object-type "directory", has object-type "repository";
+insert $o isa directory, has path "root/product/research-projects/typedb-cti", has object-type "directory", has object-type "repository";
+insert $o isa directory, has path "root/product/documentation", has object-type "directory", has object-type "repository";
+insert $o isa directory, has path "root/operations", has object-type "directory";
+insert $o isa directory, has path "root/operations/sales", has object-type "directory";
+insert $o isa directory, has path "root/operations/sales/invoices", has object-type "directory";
+insert $o isa directory, has path "root/operations/sales/accounts", has object-type "directory";
+insert $o isa directory, has path "root/operations/people", has object-type "directory";
+insert $o isa directory, has path "root/operations/people/hiring", has object-type "directory";
+insert $o isa directory, has path "root/operations/people/contracts", has object-type "directory";
+
+# collection memberships
+
+match $o isa object, has path "root/engineering"; $c isa resource-collection, has path "root"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb"; $c isa resource-collection, has path "root/engineering"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb/src"; $c isa resource-collection, has path "root/engineering/typedb"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb-studio"; $c isa resource-collection, has path "root/engineering"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb-studio/src"; $c isa resource-collection, has path "root/engineering/typedb-studio"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product"; $c isa resource-collection, has path "root"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/research-projects"; $c isa resource-collection, has path "root/product"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/research-projects/typedb-iam"; $c isa resource-collection, has path "root/product/research-projects"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/research-projects/typedb-cti"; $c isa resource-collection, has path "root/product/research-projects"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/documentation"; $c isa resource-collection, has path "root/product"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations"; $c isa resource-collection, has path "root"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales"; $c isa resource-collection, has path "root/operations"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/invoices"; $c isa resource-collection, has path "root/operations/sales"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/accounts"; $c isa resource-collection, has path "root/operations/sales"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people"; $c isa resource-collection, has path "root/operations"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/hiring"; $c isa resource-collection, has path "root/operations/people"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts"; $c isa resource-collection, has path "root/operations/people"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/roadmap.docx"; $c isa resource-collection, has path "root/engineering"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb/src/TypeDB.java"; $c isa resource-collection, has path "root/engineering/typedb/src"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb/src/README.md"; $c isa resource-collection, has path "root/engineering/typedb/src"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb/src/deployment.bzl"; $c isa resource-collection, has path "root/engineering/typedb/src"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb-studio/src/Studio.kt"; $c isa resource-collection, has path "root/engineering/typedb-studio/src"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb-studio/src/README.md"; $c isa resource-collection, has path "root/engineering/typedb-studio/src"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/engineering/typedb-studio/src/deployment.bzl"; $c isa resource-collection, has path "root/engineering/typedb-studio/src"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/research-projects/new_project_ideas.docx"; $c isa resource-collection, has path "root/product/research-projects"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/research-projects/typedb-iam/Simulation.kt"; $c isa resource-collection, has path "root/product/research-projects/typedb-iam"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/research-projects/typedb-iam/iam-schema.tql"; $c isa resource-collection, has path "root/product/research-projects/typedb-iam"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/research-projects/typedb-iam/README.MD"; $c isa resource-collection, has path "root/product/research-projects/typedb-iam"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/research-projects/typedb-cti/cti-schema.kt"; $c isa resource-collection, has path "root/product/research-projects/typedb-cti"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/documentation/typedb.md"; $c isa resource-collection, has path "root/product/documentation"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/documentation/typeql.md"; $c isa resource-collection, has path "root/product/documentation"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/documentation/clients.md"; $c isa resource-collection, has path "root/product/documentation"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/product/documentation/cluster.md"; $c isa resource-collection, has path "root/product/documentation"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/invoices/IBM_Nov22.pdf"; $c isa resource-collection, has path "root/operations/sales/invoices"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/invoices/IBM_Nov21.pdf"; $c isa resource-collection, has path "root/operations/sales/invoices"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/invoices/Apple_Aug22.pdf"; $c isa resource-collection, has path "root/operations/sales/invoices"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/invoices/Google_Feb23.pdf"; $c isa resource-collection, has path "root/operations/sales/invoices"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/accounts/IBM.xlsx"; $c isa resource-collection, has path "root/operations/sales/accounts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/accounts/Apple.xlsx"; $c isa resource-collection, has path "root/operations/sales/accounts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/sales/accounts/Google.xlsx"; $c isa resource-collection, has path "root/operations/sales/accounts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/hiring/Junior_Engineer.docx"; $c isa resource-collection, has path "root/operations/people/hiring"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/hiring/Senior_Engineer.docx"; $c isa resource-collection, has path "root/operations/people/hiring"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/hiring/Marketing_Director.docx"; $c isa resource-collection, has path "root/operations/people/hiring"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts/Kevin_Morrison.pdf"; $c isa resource-collection, has path "root/operations/people/contracts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts/Douglas_Schmidt.pdf"; $c isa resource-collection, has path "root/operations/people/contracts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts/Genevieve_Gallegos.pdf"; $c isa resource-collection, has path "root/operations/people/contracts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts/Masako_Holley.pdf"; $c isa resource-collection, has path "root/operations/people/contracts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts/Pearle_Goodman.pdf"; $c isa resource-collection, has path "root/operations/people/contracts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts/Russell_Mills.pdf"; $c isa resource-collection, has path "root/operations/people/contracts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts/Richard_Pelosi.pdf"; $c isa resource-collection, has path "root/operations/people/contracts"; insert (collection: $c, member: $o) isa collection-membership;
+match $o isa object, has path "root/operations/people/contracts/Lucy_Wynn.pdf"; $c isa resource-collection, has path "root/operations/people/contracts"; insert (collection: $c, member: $o) isa collection-membership;
+
+# operations
+insert $a isa operation, has name "create file", has object-type "directory";
+insert $a isa operation, has name "view file", has object-type "file", has object-type "directory";
+insert $a isa operation, has name "move file", has object-type "directory";
+insert $a isa operation, has name "edit file", has object-type "file", has object-type "directory";
+insert $a isa operation, has name "delete file", has object-type "file", has object-type "directory";
+insert $a isa operation, has name "create subdirectory", has object-type "directory";
+insert $a isa operation, has name "move subdirectory", has object-type "directory";
+insert $a isa operation, has name "delete subdirectory", has object-type "directory";
+insert $a isa operation, has name "grant permission", has object-type "file", has object-type "directory";
+insert $a isa operation, has name "revoke permission", has object-type "file", has object-type "directory";
+insert $a isa operation, has name "grant ownership", has object-type "file", has object-type "directory";
+insert $a isa operation, has name "revoke ownership", has object-type "file", has object-type "directory";
+insert $a isa operation, has name "submit pull request", has object-type "repository";
+insert $a isa operation, has name "approve pull request", has object-type "repository";
+
+# operation sets
+insert $a isa operation-set, has name "write file", has object-type "file", has object-type "directory";
+insert $a isa operation-set, has name "manage subdirectories", has object-type "directory";
+insert $a isa operation-set, has name "manage directory", has object-type "directory";
+insert $a isa operation-set, has name "manage permissions", has object-type "file", has object-type "directory";
+insert $a isa operation-set, has name "manage ownership", has object-type "file", has object-type "directory";
+
+# set memberships
+match $a isa action, has name "create file"; $s isa operation-set, has name "write file"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "view file"; $s isa operation-set, has name "write file"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "edit file"; $s isa operation-set, has name "write file"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "delete file"; $s isa operation-set, has name "write file"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "create subdirectory"; $s isa operation-set, has name "manage subdirectories"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "move subdirectory"; $s isa operation-set, has name "manage subdirectories"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "delete subdirectory"; $s isa operation-set, has name "manage subdirectories"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "move file"; $s isa operation-set, has name "manage subdirectories"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "write file"; $s isa operation-set, has name "manage directory"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "manage subdirectories"; $s isa operation-set, has name "manage directory"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "grant permission"; $s isa operation-set, has name "manage permissions"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "revoke permission"; $s isa operation-set, has name "manage permissions"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "grant ownership"; $s isa operation-set, has name "manage ownership"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "revoke ownership"; $s isa operation-set, has name "manage ownership"; insert (set: $s, member: $a) isa set-membership;
+match $a isa action, has name "manage permissions"; $s isa operation-set, has name "manage ownership"; insert (set: $s, member: $a) isa set-membership;
+
+# accesses
+match
+$o isa object, has object-type $type;
+$a isa action, has object-type $type;
+not { (object: $o, action: $a) isa access; };
+not {
+  $o has object-type $type2;
+  $a has object-type $type2;
+  $type2 < $type;
+};
+insert
+(object: $o, action: $a) isa access;
+
+# permissions
+match $s isa subject, has name "Core"; $o isa object, has path "root/engineering/typedb"; $a isa action, has name "manage directory"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "Client"; $o isa object, has path "root/engineering/typedb-studio"; $a isa action, has name "manage directory"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "Product"; $o isa object, has path "root/engineering"; $a isa action, has name "view file"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "Product"; $o isa object, has path "root/product"; $a isa action, has name "write file"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "Product"; $o isa object, has path "root/product/research-projects"; $a isa action, has name "manage directory"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "Product"; $o isa object, has path "root/product/documentation"; $a isa action, has name "manage directory"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "Product"; $o isa object, has path "root/product/documentation"; $a isa action, has name "view file"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "Operations"; $o isa object, has path "root/operations"; $a isa action, has name "manage directory"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "engineer"; $o isa object, has path "root/engineering"; $a isa action, has name "write file"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "docs admin"; $o isa object, has path "root/product/documentation"; $a isa action, has name "manage directory"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "sys admin"; $o isa object, has path "root"; $a isa action, has name "manage ownership"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "sys admin"; $o isa object, has path "root"; $a isa action, has name "manage directory"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "manager"; $o isa object, has path "root/operations/people"; $a isa action, has name "view file"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has email "sales@vaticle.com"; $o isa object, has path "root/operations/sales"; $a isa action, has name "manage directory"; $ac (object: $o, action: $a) isa access; insert (subject: $s, access: $ac) isa direct-permission;
+match $s isa subject, has name "engineer"; $o isa object, has path "root/engineering/typedb/src"; $a isa action, has name "submit pull request"; $ac (object: $o, action: $a) isa access; insert (subject:$s, access: $ac) isa direct-permission;
+match $s isa subject, has name "engineer"; $o isa object, has path "root/engineering/typedb-studio/src"; $a isa action, has name "submit pull request"; $ac (object: $o, action: $a) isa access; insert (subject:$s, access: $ac) isa direct-permission;
+match $s isa subject, has email "genevieve.gallegos@vaticle.com"; $o isa object, has path "root/engineering/typedb-studio/src"; $a isa action, has name "approve pull request"; $ac (object: $o, action: $a) isa access; insert (subject:$s, access: $ac) isa direct-permission;
+
+# segregation policies
+# Adding in this line causes severe hangs
+# match $a1 isa action, has name "submit pull request"; $a2 isa action, has name "approve pull request"; insert (action: $a1, action: $a2) isa segregation-policy, has name "independent pull request approval";

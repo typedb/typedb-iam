@@ -1,0 +1,6 @@
+match
+$p isa person, has email "douglas.schmidt@vaticle.com";
+$f isa file, has path "root/engineering/typedb-studio/src/README.md";
+$o isa operation, has name "edit file";
+$a (object: $f, action: $o) isa access;
+$pe (subject: $p, access: $a) isa permission, has validity true;
