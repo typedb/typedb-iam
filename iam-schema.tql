@@ -399,11 +399,11 @@ rule automatic-permission-validity:
 
 rule add-view-permission:
     when {
-        $modify isa action, has action-name "modify_file";
-        $view isa action, has action-name "view_file";
-        $ac_modify (accessed-object: $obj, valid-action: $modify) isa access;
-        $ac_view (accessed-object: $obj, valid-action: $view) isa access;
-        (permitted-subject: $subj, permitted-access: $ac_modify) isa permission;
+        $modify isa action, has name "modify_file";
+        $view isa action, has name "view_file";
+        $ac_modify (object: $obj, action: $modify) isa access;
+        $ac_view (object: $obj, action: $view) isa access;
+        (subject: $subj, access: $ac_modify) isa permission;
     } then {
-        (permitted-subject: $subj, permitted-access: $ac_view) isa permission;
+        (subject: $subj, access: $ac_view) isa permission;
     };
