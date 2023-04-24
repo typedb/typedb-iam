@@ -88,7 +88,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     override val agentPackage = UserAgent::class.java.packageName
     override val name = "IAM"
     // TODO: Update this filepath
-    override val schemaFile = Paths.get(SCHEMA_FILE).toFile()
+    override val schemaFiles = listOf(Paths.get(SCHEMA_FILE).toFile())
     private val options = TypeDBOptions.core().infer(true)
 
     override fun initData(nativeSession: TypeDBSession, randomSource: RandomSource) {
