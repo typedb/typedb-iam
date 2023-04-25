@@ -172,6 +172,7 @@ class TypeDBPolicyManagerAgent(client: TypeDBClient, context:Context): PolicyMan
     override fun assignSegregationPolicy(session: TypeDBSession, company: Company, randomSource: RandomSource): List<Report> {
         val action1 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf()
         val action2 = getRandomEntity(session, company, randomSource, OPERATION)?.asAction() ?: return listOf()
+        if (action1.idValue == action2.idValue) return listOf()
         val policyName = "'${action1.idValue}' or '${action2.idValue}' policy"
 
         session.transaction(READ, options).use { tx ->
