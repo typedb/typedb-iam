@@ -1,0 +1,17 @@
+[
+  {
+    "first name": "Luke",
+    "last name": "Skywalker",
+    "employment type": "permanent",
+    "start date": "2020-09-25",
+    "end date": null,
+    "salary": 65000.00
+  },
+  {
+    "first name": "Han",
+    "last name": "Solo",
+    "employment type": "contractor",
+    "agency": "Hutt Holdings PLC",
+    "hourly rate": 50.00
+  }
+]

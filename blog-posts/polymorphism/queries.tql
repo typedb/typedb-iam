@@ -1,0 +1,86 @@
+define
+
+employee sub entity,
+    owns id @key,
+    owns first-name @card(1),
+    owns last-name @card(1),
+    plays business-unit-membership:member @card(1);
+
+permanent-employee sub employee,
+    owns start-date @card(1),
+    owns end-date @card(0,1),
+    owns salary @card(1);
+
+contractor sub employee,
+    owns hourly-rate @card(1),
+    plays agency-membership:member @card(1);
+
+business-unit sub entity,
+    owns id @key,
+    owns name @card(1),
+    plays business-unit-membership:unit @card(0,*),
+    plays business-unit-membership:member @card(1);
+
+agency sub entity,
+    owns id @key,
+    owns name @card(1),
+    plays agency-membership:agency @card(0,*);
+
+business-unit-membership sub relation,
+    relates unit,
+    relates member;
+
+agency-membership sub relation,
+    relates agency,
+    relates member;
+
+id sub attribute, value long;
+first-name sub attribute, value string;
+last-name sub attribute, value string;
+start-date sub attribute, value datetime;
+end-date sub attribute, value datetime;
+pay sub attribute, abstract, value double;
+salary sub pay, value double;
+hourly-rate sub pay, value double;
+name sub attribute, value string;
+
+
+
+insert
+$luke isa permanent-employee,
+    has first-name "Luke",
+    has last-name "Skywalker",
+    has start-date 2020-09-25,
+    has salary 65000.00;
+
+match
+$hutt isa agency, has name "Hutt Holdings PLC";
+insert
+$han isa contractor,
+    has first-name "Han",
+    has last-name "Solo",
+    has hourly-rate 50.00;
+(agency: $hutt, member: $han) isa agency-membership;
+
+
+
+match
+$employee isa employee,
+    has first-name $first,
+    has last-name $last,
+    has $pay-type $pay;
+$pay-type sub pay;
+
+
+
+match
+$leia isa employee, has first-name "Leia", has last-name "Organa";
+$engineering isa business-unit, has name "Engineering";
+insert
+(unit: $engineering, member: $leia) isa business-unit-membership;
+
+match
+$cloud isa business-unit, has name "Cloud";
+$engineering isa business-unit, has name "Engineering";
+insert
+(unit: $engineering, member: $cloud) isa business-unit-membership;
