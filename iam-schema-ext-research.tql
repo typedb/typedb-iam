@@ -1,0 +1,113 @@
+#
+# Copyright (C) 2022 Vaticle
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+#--------------------------------------------------
+# Granular permission types addition:
+
+undefine
+
+rule subject-permission-inheritance;
+
+rule object-permission-inheritance;
+
+rule action-permission-inheritance;
+
+define
+
+# permission abstract; [https://github.com/vaticle/typeql/issues/274]
+
+direct-permission sub permission;
+
+inherited-permission sub permission;
+
+rule subject-permission-inheritance:
+    when {
+        $s isa subject;
+        (group: $g, member: $s) isa group-membership;
+        (subject: $g, access: $ac) isa permission;
+    } then {
+        (subject: $s, access: $ac) isa inherited-permission;
+    };
+
+rule object-permission-inheritance:
+    when {
+        $o isa object;
+        (collection: $c, member: $o) isa collection-membership;
+        $ac-c(object: $c, action: $a) isa access;
+        $ac-o(object: $o, action: $a) isa access;
+        (subject: $s, access: $ac-c) isa permission;
+    } then {
+        (subject: $s, access: $ac-o) isa inherited-permission;
+    };
+
+rule action-permission-inheritance:
+    when {
+        $a isa action;
+        (set: $se, member: $a) isa set-membership;
+        $ac-s(object: $o, action: $se) isa access;
+        $ac-a(object: $o, action: $a) isa access;
+        (subject: $s, access: $ac-s) isa permission;
+    } then {
+        (subject: $s, access: $ac-a) isa inherited-permission;
+    };
+
+#--------------------------------------------------
+# Maximisation violations test:
+
+define
+
+violation sub relation,
+    abstract;
+
+maximization-violation sub violation,
+    abstract;
+
+permission-maximisation-violation sub maximization-violation,
+    relates permission;
+
+group-maximisation-violation sub maximization-violation,
+    relates group;
+
+user-group plays group-maximisation-violation:group;
+
+permission plays permission-maximisation-violation:permission;
+
+rule permission-maximisation-violation-detection:
+    when {
+        $p-d(subject: $s, access: $ac) isa direct-permission;
+        $p-i(subject: $s, access: $ac) isa inherited-permission;
+    } then {
+        (permission: $p-d, permission: $p-i) isa permission-maximisation-violation;
+    };
+
+
+# [https://github.com/vaticle/typeql/issues/277]
+#rule group-maximisation-violation-detection:
+#    when {
+#        $g1 isa user-group;
+#        $g2 isa user-group;
+#        not {
+#            (permitted-subject: $g1, permitted-access: $ac) isa permission;
+#            not { (subject: $g2, access: $ac) isa permission; };
+#            not { (group: $g1, member: $s) isa group-membership; };
+#            (group: $g2, member: $s) isa group-membership;
+#        } ;
+#    } then {
+#        (group: $g1, group: $g2) isa group-maximisation-violation;
+#    };
+
+#--------------------------------------------------

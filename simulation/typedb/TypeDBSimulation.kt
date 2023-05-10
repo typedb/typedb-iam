@@ -88,7 +88,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
     override val agentPackage = UserAgent::class.java.packageName
     override val name = "IAM"
     // TODO: Update this filepath
-    override val schemaFiles = listOf(Paths.get(SCHEMA_FILE).toFile())
+    override val schemaFiles = listOf(SCHEMA_FILE_1, SCHEMA_FILE_2, SCHEMA_FILE_3).map { Paths.get(it).toFile() }
     private val options = TypeDBOptions.core().infer(true)
 
     override fun initData(nativeSession: TypeDBSession, randomSource: RandomSource) {
@@ -451,7 +451,9 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
 
     companion object {
         private val LOGGER = KotlinLogging.logger {}
-        private const val SCHEMA_FILE = "iam-schema.tql"
+        private const val SCHEMA_FILE_1 = "iam-schema-core-concepts.tql"
+        private const val SCHEMA_FILE_2 = "iam-schema-core-rules.tql"
+        private const val SCHEMA_FILE_3 = "iam-schema-ext-simulation.tql"
         private const val A = "a"
         private const val B = "b"
         private const val C = "c"

@@ -1,0 +1,162 @@
+#
+# Copyright (C) 2022 Vaticle
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+#--------------------------------------------------
+# Additional types:
+
+define
+
+person sub user,
+    owns full-name,
+    owns email;
+
+business-unit sub user-group,
+    owns name;
+
+user-role sub user-group,
+    owns name;
+
+user-account sub user-group,
+    owns email;
+
+file sub resource,
+    owns path;
+
+interface sub resource,
+    owns name;
+
+record sub resource,
+    owns number;
+
+directory sub resource-collection,
+    owns path;
+
+application sub resource-collection,
+    owns name;
+
+database sub resource-collection,
+    owns name;
+
+table sub resource-collection,
+    owns name;
+
+email sub id,
+    value string;
+
+path sub id,
+    value string;
+
+number sub id,
+    value string;
+
+full-name sub attribute,
+    value string;
+
+#--------------------------------------------------
+# Granular permission types addition:
+
+undefine
+
+rule subject-permission-inheritance;
+
+rule object-permission-inheritance;
+
+rule action-permission-inheritance;
+
+define
+
+# permission abstract; [https://github.com/vaticle/typeql/issues/274]
+
+direct-permission sub permission;
+
+inherited-permission sub permission;
+
+rule subject-permission-inheritance:
+    when {
+        $s isa subject;
+        (group: $g, member: $s) isa group-membership;
+        (subject: $g, access: $ac) isa permission;
+    } then {
+        (subject: $s, access: $ac) isa inherited-permission;
+    };
+
+rule object-permission-inheritance:
+    when {
+        $o isa object;
+        (collection: $c, member: $o) isa collection-membership;
+        $ac-c(object: $c, action: $a) isa access;
+        $ac-o(object: $o, action: $a) isa access;
+        (subject: $s, access: $ac-c) isa permission;
+    } then {
+        (subject: $s, access: $ac-o) isa inherited-permission;
+    };
+
+rule action-permission-inheritance:
+    when {
+        $a isa action;
+        (set: $se, member: $a) isa set-membership;
+        $ac-s(object: $o, action: $se) isa access;
+        $ac-a(object: $o, action: $a) isa access;
+        (subject: $s, access: $ac-s) isa permission;
+    } then {
+        (subject: $s, access: $ac-a) isa inherited-permission;
+    };
+
+#--------------------------------------------------
+# Fix for bad interaction between reasoner and Studio:
+
+undefine
+
+rule transitive-membership;
+
+define
+
+rule transitive-group-membership:
+    when {
+        (group: $g1, member: $g2) isa group-membership;
+        (group: $g2, member: $s) isa group-membership;
+    } then {
+        (group: $g1, member: $s) isa group-membership;
+    };
+
+
+rule transitive-set-membership:
+    when {
+        (set: $s1, member: $s2) isa set-membership;
+        (set: $s2, member: $a) isa set-membership;
+    } then {
+        (set: $s1, member: $a) isa set-membership;
+    };
+
+
+rule transitive-collection-membership:
+    when {
+        (collection: $c1, member: $c2) isa collection-membership;
+        (collection: $c2, member: $o) isa collection-membership;
+    } then {
+        (collection: $c1, member: $o) isa collection-membership;
+    };
+
+rule dummy-access-to-make-concludable:
+    when {
+        $dobj isa object, has name $d1; $d1 = "dummy"; $d1 != "dummy";
+        $dact isa action, has name $d2; $d2 = "dummy"; $d2 != "dummy";
+    } then {
+        (object: $dobj, action: $dact) isa access;
+    };
+
+#--------------------------------------------------

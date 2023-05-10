@@ -18,7 +18,14 @@
 load("@io_bazel_rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-exports_files(["iam-schema.tql"])
+exports_files([
+    "iam-schema-core-concepts.tql",
+    "iam-schema-core-rules.tql",
+    "iam-schema-ext-demos.tql",
+    "iam-schema-ext-docs.tql",
+    "iam-schema-ext-research.tql",
+    "iam-schema-ext-simulation.tql",
+])
 
 define_kt_toolchain(
     name = "kotlin_toolchain_strict_deps",

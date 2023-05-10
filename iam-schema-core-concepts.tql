@@ -1,0 +1,144 @@
+#
+# Copyright (C) 2022 Vaticle
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+define
+
+subject sub entity,
+    abstract,
+    owns credential,
+    plays group-membership:member,
+    plays group-ownership:owner,
+    plays object-ownership:owner,
+    plays permission:subject,
+    plays change-request:requester,
+    plays change-request:requestee,
+    plays segregation-violation:subject;
+
+user sub subject,
+    abstract;
+
+user-group sub subject,
+    abstract,
+    plays group-membership:group,
+    plays group-ownership:group;
+
+object sub entity,
+    abstract,
+    owns object-type,
+    plays collection-membership:member,
+    plays object-ownership:object,
+    plays access:object,
+    plays segregation-violation:object;
+
+resource sub object,
+    abstract;
+
+resource-collection sub object,
+    abstract,
+    plays collection-membership:collection;
+
+action sub entity,
+    abstract,
+    owns name,
+    owns object-type,
+    plays set-membership:member,
+    plays access:action,
+    plays segregation-policy:action;
+
+operation sub action;
+
+operation-set sub action,
+    plays set-membership:set;
+
+membership sub relation,
+    # abstract, [https://github.com/vaticle/typeql/issues/274]
+    relates parent,
+    relates member;
+
+group-membership sub membership,
+    relates group as parent;
+
+collection-membership sub membership,
+    relates collection as parent;
+
+set-membership sub membership,
+    relates set as parent;
+
+ownership sub relation,
+    # abstract, [https://github.com/vaticle/typeql/issues/274]
+    relates owned,
+    relates owner;
+
+group-ownership sub ownership,
+    relates group as owned,
+    owns ownership-type;
+
+object-ownership sub ownership,
+    relates object as owned,
+    owns ownership-type;
+
+access sub relation,
+    relates object,
+    relates action,
+    plays permission:access,
+    plays change-request:change;
+
+permission sub relation,
+    relates subject,
+    relates access,
+    owns review-date,
+    owns validity;
+
+change-request sub relation,
+    relates requester,
+    relates requestee,
+    relates change;
+
+segregation-policy sub relation,
+    relates action,
+    owns name,
+    plays segregation-violation:policy;
+
+violation sub relation,
+    abstract;
+
+segregation-violation sub violation,
+    relates subject,
+    relates object,
+    relates policy;
+
+credential sub attribute,
+    value string;
+
+object-type sub attribute,
+    value string;
+
+id sub attribute,
+    abstract,
+    value string;
+
+name sub id,
+    value string;
+
+ownership-type sub attribute,
+    value string;
+
+review-date sub attribute,
+    value datetime;
+
+validity sub attribute,
+    value boolean;

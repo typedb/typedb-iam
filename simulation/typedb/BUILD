@@ -40,7 +40,14 @@ kt_jvm_library(
         "@maven//:io_github_microutils_kotlin_logging_jvm",
         "@maven//:org_slf4j_slf4j_api",
     ],
-    data = ["//:iam-schema.tql"],
+    data = [
+        "//:iam-schema-core-concepts.tql",
+        "//:iam-schema-core-rules.tql",
+        "//:iam-schema-ext-demos.tql",
+        "//:iam-schema-ext-docs.tql",
+        "//:iam-schema-ext-research.tql",
+        "//:iam-schema-ext-simulation.tql",
+    ],
 )
 
 checkstyle_test(

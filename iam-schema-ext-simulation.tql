@@ -1,0 +1,142 @@
+#
+# Copyright (C) 2022 Vaticle
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+#--------------------------------------------------
+# Additional types:
+
+define
+
+person sub user,
+    owns full-name,
+    owns email;
+
+business-unit sub user-group,
+    owns name;
+
+user-role sub user-group,
+    owns name;
+
+user-account sub user-group,
+    owns email;
+
+file sub resource,
+    owns path;
+
+interface sub resource,
+    owns name;
+
+record sub resource,
+    owns number;
+
+directory sub resource-collection,
+    owns path;
+
+application sub resource-collection,
+    owns name;
+
+database sub resource-collection,
+    owns name;
+
+table sub resource-collection,
+    owns name;
+
+email sub id,
+    value string;
+
+path sub id,
+    value string;
+
+number sub id,
+    value string;
+
+full-name sub attribute,
+    value string;
+
+#--------------------------------------------------
+# Companies (simulation partitions) addition:
+
+define
+
+company sub entity,
+    owns name,
+    plays company-membership:company;
+
+company-membership sub relation,
+    relates company,
+    relates member;
+
+parent-company-name sub attribute,
+    value string;
+
+subject owns parent-company-name,
+    plays company-membership:member;
+
+object owns parent-company-name,
+    plays company-membership:member;
+
+action owns parent-company-name,
+    plays company-membership:member;
+
+# Draft rule following implementation of arithmetic:
+#rule attribute-parent-company:
+#    when {
+#        (company: $c, member: $t) isa company-membership;
+#        $c has name $c-name;
+#        ?name-value = $c-name
+#    } then {
+#        $t has parent-company-name ?name-value;
+#    };
+
+rule attribute-parent-company:
+    when {
+        (company: $c, member: $t) isa company-membership;
+        $c has name $c-name;
+        $pc isa parent-company-name;
+        $c-name = $pc;
+    } then {
+        $t has $pc;
+    };
+
+#--------------------------------------------------
+# Root collections addition:
+
+define
+
+root-collection sub attribute,
+    value boolean;
+
+resource-collection owns root-collection;
+
+rule automatic-member-collection:
+    when {
+        $c isa resource-collection;
+        (member: $c) isa collection-membership;
+    } then {
+        $c has root-collection false;
+    };
+
+rule automatic-root-collection:
+    when {
+        $c isa resource-collection;
+        not {
+            $c has root-collection false;
+        };
+    } then {
+        $c has root-collection true;
+    };
+
+#--------------------------------------------------
