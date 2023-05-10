@@ -1,0 +1,81 @@
+#
+# Copyright (C) 2022 Vaticle
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+
+#--------------------------------------------------
+# Types:
+
+define
+
+person sub user,
+    owns full-name,
+    owns email;
+
+business-unit sub user-group,
+    owns name;
+
+user-role sub user-group,
+    owns name;
+
+user-account sub user-group,
+    owns email;
+
+file sub resource,
+    owns path,
+    owns size-kb;
+
+record sub resource,
+    owns number;
+
+directory sub resource-collection,
+    owns path,
+    owns size-kb;
+
+database sub resource-collection,
+    owns name;
+
+email sub id,
+    value string;
+
+path sub id,
+    value string;
+
+number sub id,
+    value string;
+
+full-name sub attribute,
+    value string;
+
+size-kb sub attribute,
+    value long;
+
+#--------------------------------------------------
+# Rules:
+
+define
+
+rule add-view-permission:
+    when {
+        $modify isa action, has name "modify_file";
+        $view isa action, has name "view_file";
+        $ac_modify (object: $obj, action: $modify) isa access;
+        $ac_view (object: $obj, action: $view) isa access;
+        (subject: $subj, access: $ac_modify) isa permission;
+    } then {
+        (subject: $subj, access: $ac_view) isa permission;
+    };
+
+#--------------------------------------------------
