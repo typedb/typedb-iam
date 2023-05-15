@@ -1,0 +1,11 @@
+# Let's start by getting a list of users in the database:
+
+match
+$u isa user,
+    has full-name $n,
+    has email $e;
+
+# We should see seven users represented by the entities (pink), each with two attributes (blue): full-name and email,
+# which are the three variables we bound in our query. If we look closely at the entities, we can see that there are
+# actually two types: employee and contractor. This is because both are subtypes of user and so match the query we
+# wrote. This is an example of TypeDB's type inheritance at work.

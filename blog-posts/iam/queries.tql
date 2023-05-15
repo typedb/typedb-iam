@@ -1,0 +1,392 @@
+define
+
+subject sub entity, abstract;
+object sub entity, abstract;
+action sub entity, owns name;
+
+business-unit sub subject, owns name;
+user-role sub subject, owns name;
+user-account sub subject, owns email;
+contractor sub subject, owns email;
+
+directory sub object, owns path;
+application sub object, owns name;
+repository sub object, owns name;
+database sub object, owns name;
+
+name sub attribute, value string;
+path sub attribute, value string;
+email sub attribute, value string;
+
+
+
+define
+
+permission sub relation,
+    relates subject,
+    relates object,
+    relates action;
+
+subject plays permission:subject;
+object plays permission:object;
+action plays permission:action;
+
+
+
+match
+$s isa business-unit, has name "Engineering";
+$o isa directory, has path "root/engineering";
+$a isa action, has name "manage file";
+insert
+($s, $o, $a) isa permission;
+
+match
+$s isa business-unit, has name "Finance";
+$o isa application, has name "Sage";
+$a isa action, has name "approve purchase order";
+insert
+($s, $o, $a) isa permission;
+
+match
+$s isa user-role, has name "web admin";
+$o isa repository, has name "web";
+$a isa action, has name "push commit";
+insert
+($s, $o, $a) isa permission;
+
+match
+$s isa business-unit, has name "Customer Support";
+$o isa database, has name "customers";
+$a isa action, has name "view record";
+insert
+($s, $o, $a) isa permission;
+
+match
+$s isa user-account, has email "sales@vaticle.com";
+$o isa application, has name "Salesforce";
+$a isa action, has name "modify account";
+insert
+($s, $o, $a) isa permission;
+
+match
+$s isa contractor, has email "james.holden@rocinante-consulting.com";
+$o isa repository, has name "cloud";
+$a isa action, has name "view file";
+insert
+($s, $o, $a) isa permission;
+
+
+
+match
+$s isa business-unit, has name "Engineering";
+$o isa application, has name "Salesforce";
+$a isa action, has name "push commit";
+insert
+($s, $o, $a) isa permission;
+
+
+
+define
+
+access sub relation,
+    relates object,
+    relates action;
+
+object plays permission:object;
+action plays permission:action;
+
+permission sub relation,
+    relates subject,
+    relates access;
+
+subject plays permission:subject;
+access plays permission:access;
+
+
+
+match
+$s isa business-unit, has name "Engineering";
+$o isa directory, has path "root/engineering";
+$a isa action, has name "manage file";
+$ac ($o, $a) isa access;
+insert
+($s, $ac) isa permission;
+
+
+
+match
+$s isa employee, has email "naomi.nagata@vaticle.com";
+$o isa file, has path "root/engineering/typedb/readme.md";
+$a isa action, has name "view file";
+$ac ($o, $a) isa access;
+($s, $ac) isa permission;
+
+
+
+define
+
+subject sub entity, abstract;
+user sub subject, abstract;
+user-group sub subject, abstract;
+
+object sub entity, abstract;
+resource sub object, abstract;
+resource-collection sub object, abstract;
+
+action sub entity, abstract;
+operation sub action, owns name;
+operation-set sub action, owns name;
+
+
+
+define
+
+employee sub user, owns email;
+contractor sub user, owns email;
+
+business-unit sub user-group, owns name;
+user-role sub user-group, owns name;
+user-account sub user-group, owns email;
+
+file sub resource, owns path;
+purchase-order sub resource, owns reference;
+record sub resource, owns primary-key;
+customer-account sub resource, owns email;
+
+directory sub resource-collection, owns path;
+application sub resource-collection, owns name;
+repository sub resource-collection, owns name;
+database sub resource-collection, owns name;
+
+name sub attribute, value string;
+path sub attribute, value string;
+email sub attribute, value string;
+reference sub attribute, value string;
+primary-key sub attribute, value string;
+
+
+
+define
+
+group-membership sub relation,
+    relates group,
+    relates member;
+
+user-group plays group-membership:group;
+subject plays group-membership:member;
+
+collection-membership sub relation,
+    relates collection,
+    relates member;
+
+resource-collection plays collection-membership:collection;
+object plays collection-membership:member;
+
+set-membership sub relation,
+    relates set,
+    relates member;
+
+operation-set plays set-membership:set;
+action plays set-membership:member;
+
+
+
+match
+$g isa business-unit, has name "Engineering";
+$m isa employee, has email "naomi.nagata@vaticle.com";
+insert
+(group: $g, member: $m) isa group-membership;
+
+match
+$c isa directory, has path "root/engineering";
+$m isa directory, has path "root/engineering/typedb";
+insert
+(collection: $c, member: $m) isa collection-membership;
+
+match
+$c isa directory, has path "root/engineering/typedb";
+$m isa file, has path "root/engineering/typedb/readme.md";
+insert
+(collection: $c, member: $m) isa collection-membership;
+
+match
+$s isa operation-set, has name "manage file";
+$o isa operation, has name "view file";
+insert
+(set: $s, member: $m) isa set-membership;
+
+
+
+define
+
+rule subject-permission-inheritance:
+    when {
+        $m isa subject;
+        (group: $g, member: $m) isa group-membership;
+        (subject: $g, access: $ac) isa permission;
+    } then {
+        (subject: $m, access: $ac) isa permission;
+    };
+
+
+
+match
+$s isa employee, has email "naomi.nagata@vaticle.com";
+$o isa file, has path "root/engineering/typedb/readme.md";
+$a isa action, has name "view file";
+$ac ($o, $a) isa access;
+($s, $ac) isa permission;
+
+
+
+match
+$s isa employee, has email "naomi.nagata@vaticle.com";
+$o isa file, has path "root/engineering/typedb/readme.md";
+$a isa action, has name "view file";
+$ac ($o, $a) isa access;
+(group: $g, member: $s) isa group-membership;
+(subject: $g, access: $ac) isa permission;
+
+
+
+define
+
+rule object-permission-inheritance:
+    when {
+        $m isa object;
+        (collection: $c, member: $m) isa collection-membership;
+        $ac-c(object: $c, action: $a) isa access;
+        $ac-m(object: $m, action: $a) isa access;
+        (subject: $s, access: $ac-c) isa permission;
+    } then {
+        (subject: $s, access: $ac-m) isa permission;
+    };
+
+rule action-permission-inheritance:
+    when {
+        $m isa action;
+        (set: $se, member: $m) isa set-membership;
+        $ac-se(object: $o, action: $se) isa access;
+        $ac-m(object: $o, action: $m) isa access;
+        (subject: $s, access: $ac-se) isa permission;
+    } then {
+        (subject: $s, access: $ac-m) isa permission;
+    };
+
+
+
+match
+$s isa employee, has email "naomi.nagata@vaticle.com";
+$o isa file, has path "root/engineering/typedb/readme.md";
+$a isa action, has name "view file";
+$ac ($o, $a) isa access;
+(group: $g, member: $s) isa group-membership;
+(collection: $c1, member: $o) isa collection-membership;
+$ac-c1 (object: $c1, action: $a) isa access;
+(collection: $c2, member: $c1) isa collection-membership;
+$ac-c2 (object: $c2, action: $a) isa access;
+(set: $se, member: $a) isa set-membership;
+$ac-se (object: $c2, action: $se) isa access;
+(subject: $g, access: $ac-se) isa permission;
+
+
+
+define
+
+segregation-policy sub relation,
+    relates action,
+    owns name;
+
+action plays segregation-policy:action;
+
+
+
+match
+$a1 isa operation, has name "submit purchase order";
+$a2 isa operation, has name "approve purchase order";
+insert
+($a1, $a2) isa segregation-policy,
+    has name "independent purchase order approval";
+
+
+
+define
+
+access-history sub relation,
+   relates subject,
+   relates access,
+   owns access-time;
+
+subject plays access-history:subject;
+access plays access-history:access;
+
+access-time sub attribute, value datetime;
+
+
+
+define
+
+validity sub attribute, value boolean;
+
+permission owns validity;
+
+
+
+define
+
+rule automatic-permission-invalidity:
+    when {
+        ($a1, $a2) isa segregation-policy;
+        $ac1 ($a1, $o) isa access;
+        $ac2 ($a2, $o) isa access;
+        ($s, $ac1) isa access-history;
+        $p ($s, $ac2) isa permission;
+    } then {
+        $p has validity false;
+    };
+
+rule automatic-permission-validity:
+    when {
+        $p isa permission;
+        not { $p has validity false; };
+    } then {
+        $p has validity true;
+    };
+
+
+
+match
+$s isa business-unit, has name "Finance";
+$o isa application, has name "Sage";
+$a isa action, has name "submit purchase order";
+$ac ($o, $a) isa access;
+insert
+($s, $ac) isa permission;
+
+
+
+match
+$s isa employee, has email "amos.burton@vaticle.com";
+$o isa purchase-order, has reference "MCRN-01";
+$a isa action, has name "submit purchase order";
+$ac ($o, $a) isa access;
+($s, $ac) isa permission, has validity true;
+
+
+
+match
+$s isa employee, has email "amos.burton@vaticle.com";
+$o isa purchase-order, has reference "MCRN-01";
+$a isa action, has name "approve purchase order";
+$ac ($o, $a) isa access;
+($s, $ac) isa permission, has validity true;
+
+
+
+match
+$s isa employee, has email "amos.burton@vaticle.com";
+$o isa purchase-order, has reference "MCRN-01";
+$a isa action, has name "submit purchase order";
+$ac ($o, $a) isa access;
+insert
+($s, $ac) isa access-history;

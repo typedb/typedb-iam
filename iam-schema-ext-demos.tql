@@ -20,7 +20,11 @@
 
 define
 
-person sub user,
+employee sub user,
+    owns full-name,
+    owns email;
+
+contractor sub user,
     owns full-name,
     owns email;
 
@@ -36,11 +40,17 @@ user-account sub user-group,
 file sub resource,
     owns path;
 
-interface sub resource,
-    owns name;
+purchase-order sub resource,
+    owns reference;
+
+customer-account sub resource,
+    owns email;
 
 record sub resource,
-    owns number;
+    owns primary-key;
+
+pull-request sub resource,
+    owns hash;
 
 directory sub resource-collection,
     owns path;
@@ -54,13 +64,25 @@ database sub resource-collection,
 table sub resource-collection,
     owns name;
 
+branch sub resource-collection,
+    owns name;
+
+repository sub resource-collection,
+    owns name;
+
 email sub id,
     value string;
 
 path sub id,
     value string;
 
-number sub id,
+reference sub id,
+    value string;
+
+primary-key sub id,
+    value string;
+
+hash sub id,
     value string;
 
 full-name sub attribute,
@@ -114,6 +136,68 @@ rule action-permission-inheritance:
         (subject: $s, access: $ac-s) isa permission;
     } then {
         (subject: $s, access: $ac-a) isa inherited-permission;
+    };
+
+#--------------------------------------------------
+# Dynamic segregation policies addition:
+
+undefine
+
+rule segregation-violation-detection;
+
+rule automatic-permission-invalidity;
+
+define
+
+
+
+segregation-policy sub relation,
+    relates action,
+    owns name,
+    plays segregation-violation:policy;
+
+
+# segregation-policy abstract; [https://github.com/vaticle/typeql/issues/274]
+
+static-segregation-policy sub segregation-policy;
+
+dynamic-segregation-policy sub segregation-policy;
+
+access-history sub relation,
+    relates subject,
+    relates access,
+    owns access-time;
+
+subject plays access-history:subject;
+access plays access-history:access;
+
+access-time sub attribute, value datetime;
+
+rule segregation-violation-detection:
+    when {
+        $po(action: $a1, action: $a2) isa static-segregation-policy;
+        $ac1(object: $o, action: $a1) isa access;
+        $ac2(object: $o, action: $a2) isa access;
+        $p1(subject: $s, access: $ac1) isa permission;
+        $p2(subject: $s, access: $ac2) isa permission;
+    } then {
+        (subject: $s, object: $o, policy: $po) isa segregation-violation;
+    };
+
+rule automatic-permission-invalidity:
+    when {
+        $ac1(object: $o, action: $a1) isa access;
+        $ac2(object: $o, action: $a2) isa access;
+        $p1(subject: $s, access: $ac1) isa permission;
+        {
+            $po(action: $a1, action: $a2) isa static-segregation-policy;
+            $p2(subject: $s, access: $ac2) isa permission;
+        } or {
+            $po(action: $a1, action: $a2) isa dynamic-segregation-policy;
+            $p2(subject: $s, access: $ac2) isa access-history;
+        };
+    } then {
+        $p1 has validity false;
     };
 
 #--------------------------------------------------
