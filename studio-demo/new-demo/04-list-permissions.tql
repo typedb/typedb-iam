@@ -1,8 +1,0 @@
-# Now we're going to check what permissions our newly inserted user Filip has:
-
-match
-$e isa employee, has full-name "Filip Inaros";
-$o isa object, has id $id;
-$a isa action, has name $n;
-$ac ($o, $a) isa access;
-$p ($e, $ac) isa permission;
