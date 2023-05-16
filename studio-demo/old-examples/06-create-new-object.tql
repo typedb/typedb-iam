@@ -1,7 +1,0 @@
-match
-$d isa directory, has path "root/typedb/src";
-$p isa person, has email "kevin.morrison@vaticle.com";
-insert
-$f isa file, has path "root/typedb/src/readme.md", has object-type "file";
-(collection: $d, member: $f) isa collection-membership;
-(object: $f, owner: $p) isa object-ownership;

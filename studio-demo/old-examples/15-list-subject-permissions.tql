@@ -1,7 +1,0 @@
-match
-$p isa person, has email "kevin.morrison@vaticle.com";
-$o isa object, has id $id;
-$a isa action, has name $n;
-$ac (object: $o, action: $a) isa access;
-$pe (subject: $p, access: $ac) isa permission, has validity $v;
-get $id, $n, $v;

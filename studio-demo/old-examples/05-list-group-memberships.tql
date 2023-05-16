@@ -1,5 +1,0 @@
-match
-$p isa person, has email "kevin.morrison@vaticle.com";
-$g isa user-group, has name $n;
-(group: $g, member: $p) isa group-membership;
-get $n;

@@ -1,9 +1,0 @@
-match
-$requester isa person, has email "kevin.morrison@vaticle.com";
-$requestee isa person, has email "gavin.harrison@vaticle.com";
-$f isa file, has path "root/typedb/src";
-$o isa operation, has name "view file";
-$a (object: $f, action: $o) isa access;
-not { (subject: $requestee, access: $a) isa permission; };
-insert
-$r (requester: $requester, requestee: $requestee, change: $a) isa change-request;

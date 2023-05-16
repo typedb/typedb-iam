@@ -1,5 +1,0 @@
-insert
-$o isa operation, has name "submit pull request", has object-type "repository";
-
-insert
-$o isa operation, has name "approve pull request", has object-type "repository";
