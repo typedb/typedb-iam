@@ -46,8 +46,7 @@ import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
 import com.vaticle.typedb.iam.simulation.typedb.concept.*
 import com.vaticle.typedb.simulation.common.seed.RandomSource
 import com.vaticle.typedb.simulation.typedb.TypeDBClient
-import com.vaticle.typeql.lang.TypeQL.match
-import com.vaticle.typeql.lang.TypeQL.rel
+import com.vaticle.typeql.lang.TypeQL.*
 import kotlin.streams.toList
 
 class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDBSession>(client, context) {
@@ -77,11 +76,11 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                 match(
                     cvar(O).isaX(cvar(O_TYPE))
                         .has(PARENT_COMPANY_NAME, company.name)
-                        .has(ROOT_COLLECTION, false)
                         .has(cvar(O_ID)),
                     cvar(O_ID).isaX(cvar(O_ID_TYPE)),
                     cvar(O_TYPE).sub(OBJECT),
                     cvar(O_ID_TYPE).sub(ID),
+                    not(cvar(O).has(ROOT_COLLECTION, true)),
                 )
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
