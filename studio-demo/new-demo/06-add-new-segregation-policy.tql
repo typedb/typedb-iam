@@ -1,7 +1,7 @@
 # Example 06:
 
 # Before Filip can begin making purchase orders, we've got to make sure we've got the correct controls in place to
-# prevent any potentialy policy breaches. One kind of policy is a segregation-of-duty policy. This represents a set of
+# prevent any potential policy breaches. One kind of policy is a segregation-of-duty policy. This represents a set of
 # two actions that no user can be permitted to perform, for example submitting a purchase order and then approving it.
 # Let's define this policy in terms of the operations we have in the database:
 
