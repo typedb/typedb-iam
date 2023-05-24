@@ -107,36 +107,36 @@ direct-permission sub permission;
 
 inherited-permission sub permission;
 
-rule subject-permission-inheritance:
-    when {
-        $s isa subject;
-        (group: $g, member: $s) isa group-membership;
-        (subject: $g, access: $ac) isa permission;
-    } then {
-        (subject: $s, access: $ac) isa inherited-permission;
+rule permission-inheritance:
+when {
+    $s isa subject;
+    $ac (object: $o, action: $a) isa access;
+    $ac2 (object: $o2, action: $a2) isa access;
+    (subject: $s2, access: $ac2) isa direct-permission;
+    $s has id $s-id;
+    $o has id $o-id;
+    $a has id $a-id;
+    $s2 has id $s2-id;
+    $o2 has id $o2-id;
+    $a2 has id $a2-id;
+    {
+        (group: $s2, member: $s) isa group-membership;
+    }  or {
+        $s2 is $s;
     };
-
-rule object-permission-inheritance:
-    when {
-        $o isa object;
-        (collection: $c, member: $o) isa collection-membership;
-        $ac-c(object: $c, action: $a) isa access;
-        $ac-o(object: $o, action: $a) isa access;
-        (subject: $s, access: $ac-c) isa permission;
-    } then {
-        (subject: $s, access: $ac-o) isa inherited-permission;
+    {
+        (set: $a2, member: $a) isa set-membership;
+    } or {
+        $a2 is $a;
     };
-
-rule action-permission-inheritance:
-    when {
-        $a isa action;
-        (set: $se, member: $a) isa set-membership;
-        $ac-s(object: $o, action: $se) isa access;
-        $ac-a(object: $o, action: $a) isa access;
-        (subject: $s, access: $ac-s) isa permission;
-    } then {
-        (subject: $s, access: $ac-a) isa inherited-permission;
+    {
+        (collection: $o2, member: $o) isa collection-membership;
+    } or {
+        $o2 is $o;
     };
+} then {
+    (subject: $s, access: $ac) isa inherited-permission;
+};
 
 #--------------------------------------------------
 # Dynamic segregation policies addition:
@@ -149,13 +149,10 @@ rule automatic-permission-invalidity;
 
 define
 
-
-
 segregation-policy sub relation,
     relates action,
     owns name,
     plays segregation-violation:policy;
-
 
 # segregation-policy abstract; [https://github.com/vaticle/typeql/issues/274]
 
@@ -201,7 +198,7 @@ rule automatic-permission-invalidity:
     };
 
 #--------------------------------------------------
-# Fix for bad interaction between reasoner and Studio:
+# Reasoner optimisations
 
 undefine
 
@@ -213,6 +210,9 @@ rule transitive-group-membership:
     when {
         (group: $g1, member: $g2) isa group-membership;
         (group: $g2, member: $s) isa group-membership;
+        $g1 has id $g1-id;
+        $g2 has id $g2-id;
+        $s has id $s-id;
     } then {
         (group: $g1, member: $s) isa group-membership;
     };
@@ -222,6 +222,9 @@ rule transitive-set-membership:
     when {
         (set: $s1, member: $s2) isa set-membership;
         (set: $s2, member: $a) isa set-membership;
+        $s1 has id $s1-id;
+        $s2 has id $s2-id;
+        $a has id $a-id;
     } then {
         (set: $s1, member: $a) isa set-membership;
     };
@@ -231,6 +234,9 @@ rule transitive-collection-membership:
     when {
         (collection: $c1, member: $c2) isa collection-membership;
         (collection: $c2, member: $o) isa collection-membership;
+        $c1 has id $c1-id;
+        $c2 has id $c2-id;
+        $o has id $o-id;
     } then {
         (collection: $c1, member: $o) isa collection-membership;
     };
