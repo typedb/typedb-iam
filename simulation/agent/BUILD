@@ -27,8 +27,8 @@ kt_jvm_library(
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
-        "@vaticle_typedb_simulation//:typedb_simulation",
-        "@vaticle_typedb_simulation//common",
+        "@vaticle_typedb_benchmark//framework:typedb-simulation-framework",
+        "@vaticle_typedb_benchmark//framework/common",
 
         # External Maven Dependencies
         "@maven//:com_google_code_findbugs_jsr305",

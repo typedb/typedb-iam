@@ -71,8 +71,8 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Labels.VALID_ACTION
 import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.iam.simulation.typedb.concept.TypeDBObject
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import com.vaticle.typedb.simulation.typedb.TypeDBClient
+import com.vaticle.typedb.benchmark.framework.common.seed.RandomSource
+import com.vaticle.typedb.benchmark.framework.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.insert
 import com.vaticle.typeql.lang.TypeQL.match
 import com.vaticle.typeql.lang.TypeQL.rel
@@ -83,7 +83,7 @@ import java.time.Instant
 import kotlin.streams.toList
 
 class TypeDBSimulation private constructor(client: TypeDBClient, context: Context):
-    com.vaticle.typedb.simulation.typedb.TypeDBSimulation<Context>(client, context, TypeDBAgentFactory(client, context)) {
+    com.vaticle.typedb.benchmark.framework.typedb.TypeDBSimulation<Context>(client, context, TypeDBAgentFactory(client, context)) {
 
     override val agentPackage = UserAgent::class.java.packageName
     override val name = "IAM"
@@ -132,7 +132,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                             cvar(C).isa(COMPANY).has(NAME, company.name),
                         ).insert(
                             cvar(P).isa(PERSON).has(FULL_NAME, person.name).has(EMAIL, person.email),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, P).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(P)).isa(COMPANY_MEMBERSHIP),
                         )
                     )
 
@@ -167,8 +167,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                             cvar(P).isa(PERSON).has(EMAIL, person.email),
                         ).insert(
                             cvar(B).isa(BUSINESS_UNIT).has(NAME, businessUnit.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, B).isa(COMPANY_MEMBERSHIP),
-                            rel(OWNED_GROUP, B).rel(GROUP_OWNER, P).isa(GROUP_OWNERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(B)).isa(COMPANY_MEMBERSHIP),
+                            rel(OWNED_GROUP, cvar(B)).rel(GROUP_OWNER, cvar(P)).isa(GROUP_OWNERSHIP),
                         )
                     )
 
@@ -203,8 +203,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                             cvar(P).isa(PERSON).has(EMAIL, person.email),
                         ).insert(
                             cvar(R).isa(USER_ROLE).has(NAME, userRole.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, R).isa(COMPANY_MEMBERSHIP),
-                            rel(OWNED_GROUP, R).rel(GROUP_OWNER, P).isa(GROUP_OWNERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(R)).isa(COMPANY_MEMBERSHIP),
+                            rel(OWNED_GROUP, cvar(R)).rel(GROUP_OWNER, cvar(P)).isa(GROUP_OWNERSHIP),
                         )
                     )
 
@@ -239,8 +239,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                             cvar(P).isa(PERSON).has(EMAIL, person.email),
                         ).insert(
                             cvar(A).isa(APPLICATION).has(NAME, application.name).has(OBJECT_TYPE, APPLICATION),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
-                            rel(OWNED_OBJECT, A).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
+                            rel(OWNED_OBJECT, cvar(A)).rel(OBJECT_OWNER, cvar(P)).isa(OBJECT_OWNERSHIP),
                         )
                     )
 
@@ -274,8 +274,8 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                         cvar(P).isa(PERSON).has(EMAIL, person.email),
                     ).insert(
                         cvar(D).isa(DIRECTORY).has(PATH, ROOT).has(OBJECT_TYPE, DIRECTORY),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D).isa(COMPANY_MEMBERSHIP),
-                        rel(OWNED_OBJECT, D).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(D)).isa(COMPANY_MEMBERSHIP),
+                        rel(OWNED_OBJECT, cvar(D)).rel(OBJECT_OWNER, cvar(P)).isa(OBJECT_OWNERSHIP),
                     )
                 )
 
@@ -293,7 +293,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                             cvar(C).isa(COMPANY).has(NAME, company.name),
                         ).insert(
                             cvar(O).isa(OPERATION).has(ACTION_NAME, operation.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
                         )
                     )
 
@@ -327,7 +327,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                             cvar(C).isa(COMPANY).has(NAME, company.name),
                         ).insert(
                             cvar(S).isa(OPERATION_SET).has(ACTION_NAME, operationSet.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                         )
                     )
 
@@ -359,10 +359,10 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                                 cvar(S).isa(OPERATION_SET).has(ACTION_NAME, operationSet.name),
                                 cvar(A).isa(ACTION).has(ACTION_NAME, setMember),
                                 cvar(C).isa(COMPANY).has(NAME, company.name),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
                             ).insert(
-                                rel(PARENT_SET, S).rel(SET_MEMBER, A).isa(SET_MEMBERSHIP),
+                                rel(PARENT_SET, cvar(S)).rel(SET_MEMBER, cvar(A)).isa(SET_MEMBERSHIP),
                             )
                         )
 
@@ -395,7 +395,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                             cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                             cvar(A).isa(ACTION).has(OBJECT_TYPE, obj.type),
                         ).insert(
-                            rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS)
+                            rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS)
                         )
                     )
 
@@ -419,7 +419,7 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                     cvar(C).isa(COMPANY).has(NAME, company.name),
                 ).insert(
                     cvar(P).isa(PERSON).has(FULL_NAME, person.name).has(EMAIL, person.email),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, P).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(P)).isa(COMPANY_MEMBERSHIP),
                 )
             )
 
@@ -428,20 +428,20 @@ class TypeDBSimulation private constructor(client: TypeDBClient, context: Contex
                     cvar(C).isa(COMPANY).has(NAME, company.name),
                     cvar(D1).isa(DIRECTORY).has(PATH, ROOT),
                     cvar(P).isa(PERSON).has(EMAIL, person.email),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D1).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, P).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(D1)).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(P)).isa(COMPANY_MEMBERSHIP),
                 ).insert(
                     cvar(D2).isa(DIRECTORY).has(PATH, "${ROOT}/typedb").has(OBJECT_TYPE, DIRECTORY),
                     cvar(D3).isa(DIRECTORY)
                         .has(PATH, "${ROOT}/typedb/src")
                         .has(OBJECT_TYPE, DIRECTORY)
                         .has(OBJECT_TYPE, REPOSITORY),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D2).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, D3).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COLLECTION, D1).rel(COLLECTION_MEMBER, D2).isa(COLLECTION_MEMBERSHIP),
-                    rel(PARENT_COLLECTION, D2).rel(COLLECTION_MEMBER, D3).isa(COLLECTION_MEMBERSHIP),
-                    rel(OWNED_OBJECT, D2).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
-                    rel(OWNED_OBJECT, D3).rel(OBJECT_OWNER, P).isa(OBJECT_OWNERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(D2)).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(D3)).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COLLECTION, cvar(D1)).rel(COLLECTION_MEMBER, cvar(D2)).isa(COLLECTION_MEMBERSHIP),
+                    rel(PARENT_COLLECTION, cvar(D2)).rel(COLLECTION_MEMBER, cvar(D3)).isa(COLLECTION_MEMBERSHIP),
+                    rel(OWNED_OBJECT, cvar(D2)).rel(OBJECT_OWNER, cvar(P)).isa(OBJECT_OWNERSHIP),
+                    rel(OWNED_OBJECT, cvar(D3)).rel(OBJECT_OWNER, cvar(P)).isa(OBJECT_OWNERSHIP),
                 )
             )
 

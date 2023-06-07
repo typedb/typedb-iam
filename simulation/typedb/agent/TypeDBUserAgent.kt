@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2022 Vaticle
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
 import com.vaticle.typedb.client.api.TypeDBOptions
@@ -44,8 +60,8 @@ import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
 import com.vaticle.typedb.iam.simulation.typedb.Util.getRandomEntity
 import com.vaticle.typedb.iam.simulation.typedb.Util.stringValue
 import com.vaticle.typedb.iam.simulation.typedb.concept.*
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import com.vaticle.typedb.simulation.typedb.TypeDBClient
+import com.vaticle.typedb.benchmark.framework.common.seed.RandomSource
+import com.vaticle.typedb.benchmark.framework.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
 import kotlin.streams.toList
 
@@ -97,7 +113,7 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     cvar(O_MEMBER_ID).isaX(cvar(O_MEMBER_ID_TYPE)),
                     cvar(O_MEMBER_TYPE).sub(OBJECT),
                     cvar(O_MEMBER_ID_TYPE).sub(ID),
-                    rel(PARENT_COLLECTION, O).rel(COLLECTION_MEMBER, O_MEMBER).isa(COLLECTION_MEMBERSHIP),
+                    rel(PARENT_COLLECTION, cvar(O)).rel(COLLECTION_MEMBER, cvar(O_MEMBER)).isa(COLLECTION_MEMBERSHIP),
                 )
             ).toList().map { TypeDBObject(it[O_MEMBER_TYPE], it[O_MEMBER_ID_TYPE], it[O_MEMBER_ID]) }
         }
@@ -110,9 +126,9 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     match(
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        cvar(A).rel(ACCESSED_OBJECT, O).isa(ACCESS),
-                        cvar(P).rel(PERMITTED_ACCESS, A).isa(PERMISSION),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                        cvar(A).rel(ACCESSED_OBJECT, cvar(O)).isa(ACCESS),
+                        cvar(P).rel(PERMITTED_ACCESS, cvar(A)).isa(PERMISSION),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
                     ).delete(
                         cvar(P).isa(PERMISSION)
                     )
@@ -122,9 +138,9 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     match(
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        cvar(A).rel(ACCESSED_OBJECT, O).isa(ACCESS),
-                        cvar(R).rel(REQUESTED_CHANGE, A).isa(CHANGE_REQUEST),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                        cvar(A).rel(ACCESSED_OBJECT, cvar(O)).isa(ACCESS),
+                        cvar(R).rel(REQUESTED_CHANGE, cvar(A)).isa(CHANGE_REQUEST),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
                     ).delete(
                         cvar(R).isa(CHANGE_REQUEST),
                     )
@@ -134,8 +150,8 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     match(
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        cvar(A).rel(ACCESSED_OBJECT, O).isa(ACCESS),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                        cvar(A).rel(ACCESSED_OBJECT, cvar(O)).isa(ACCESS),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
                     ).delete(
                         cvar(A).isa(ACCESS),
                     )
@@ -145,8 +161,8 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     match(
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        cvar(OW).rel(OWNED_OBJECT, O).isa(OBJECT_OWNERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                        cvar(OW).rel(OWNED_OBJECT, cvar(O)).isa(OBJECT_OWNERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
                     ).delete(
                         cvar(OW).isa(OBJECT_OWNERSHIP),
                     )
@@ -156,8 +172,8 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     match(
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        cvar(ME).rel(O).isa(COLLECTION_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                        cvar(ME).rel(cvar(O)).isa(COLLECTION_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
                     ).delete(
                         cvar(ME).isa(COLLECTION_MEMBERSHIP),
                     )
@@ -167,7 +183,7 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     match(
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        cvar(ME).rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
+                        cvar(ME).rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
                     ).delete(
                         cvar(O).isa(obj.type),
                         cvar(ME).isa(COMPANY_MEMBERSHIP),
@@ -193,7 +209,7 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     cvar(O_ID).isaX(cvar(O_ID_TYPE)),
                     cvar(O_TYPE).sub(OBJECT),
                     cvar(O_ID_TYPE).sub(ID),
-                    rel(ACCESSED_OBJECT, O).isa(ACCESS),
+                    rel(ACCESSED_OBJECT, cvar(O)).isa(ACCESS),
                 )
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
@@ -206,7 +222,7 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                 match(
                     cvar(A).isa(OPERATION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
                     cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
-                    rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                    rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
                 )
             ).toList().map { TypeDBAction(OPERATION, stringValue(it[A_NAME])) }
         }
@@ -220,8 +236,8 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     cvar(S).isa(subject.type).has(PARENT_COMPANY_NAME, company.name).has(subject.idType, subject.idValue),
                     cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
                     cvar(A).isa(action.type).has(PARENT_COMPANY_NAME, company.name).has(action.idType, action.idValue),
-                    cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                    rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION).has(VALIDITY, true)
+                    cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
+                    rel(PERMITTED_SUBJECT, cvar(S)).rel(PERMITTED_ACCESS, cvar(AC)).isa(PERMISSION).has(VALIDITY, true)
                 )
             ).toList()
         }
@@ -246,7 +262,7 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     cvar(O_ID).isaX(cvar(O_ID_TYPE)),
                     cvar(O_TYPE).sub(OBJECT),
                     cvar(O_ID_TYPE).sub(ID),
-                    rel(ACCESSED_OBJECT, O).isa(ACCESS),
+                    rel(ACCESSED_OBJECT, cvar(O)).isa(ACCESS),
                 )
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
@@ -260,7 +276,7 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                 match(
                     cvar(A).isa(OPERATION).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
                     cvar(O).isa(obj.type).has(PARENT_COMPANY_NAME, company.name).has(obj.idType, obj.idValue),
-                    rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                    rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
                 )
             ).toList().map { TypeDBAction(OPERATION, stringValue(it[A_NAME])) }
         }
@@ -275,13 +291,13 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                     cvar(A).isa(action.type).has(action.idType, action.idValue),
                     cvar(C).isa(COMPANY).has(NAME, company.name),
-                    cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTING).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_REQUESTED).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                    cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S_REQUESTING)).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S_REQUESTED)).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
                 ).insert(
-                    rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST)
+                    rel(REQUESTING_SUBJECT, cvar(S_REQUESTING)).rel(REQUESTED_SUBJECT, cvar(S_REQUESTED)).rel(REQUESTED_CHANGE, cvar(AC)).isa(CHANGE_REQUEST)
                 )
             )
 
@@ -350,13 +366,13 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                     cvar(C).isa(COMPANY).has(NAME, company.name),
                     cvar(CO).isa(parent.type).has(parent.idType, parent.idValue),
                     cvar(S).isa(owner.type).has(owner.idType, owner.idValue),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, CO).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(CO)).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                 ).insert(
                     cvar(O).isa(obj.type).has(obj.idType, obj.idValue).has(OBJECT_TYPE, obj.type),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                    rel(PARENT_COLLECTION, CO).rel(COLLECTION_MEMBER, O).isa(COLLECTION_MEMBERSHIP),
-                    rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COLLECTION, cvar(CO)).rel(COLLECTION_MEMBER, cvar(O)).isa(COLLECTION_MEMBERSHIP),
+                    rel(OWNED_OBJECT, cvar(O)).rel(OBJECT_OWNER, cvar(S)).isa(OBJECT_OWNERSHIP),
                 )
             )
 
@@ -366,10 +382,10 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(A).isa(action.type).has(action.idType, action.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
                     ).insert(
-                        rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                        rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
                     )
                 )
             }
@@ -413,11 +429,11 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                 match(
                     cvar(C).isa(COMPANY).has(NAME, company.name),
                     cvar(S).isa(owner.type).has(owner.idType, owner.idValue),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                 ).insert(
                     cvar(O).isa(DATABASE).has(NAME, database.name),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                    rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                    rel(OWNED_OBJECT, cvar(O)).rel(OBJECT_OWNER, cvar(S)).isa(OBJECT_OWNERSHIP),
                 )
             )
 
@@ -427,10 +443,10 @@ class TypeDBUserAgent(client: TypeDBClient, context: Context) : UserAgent<TypeDB
                         cvar(O).isa(DATABASE).has(NAME, database.name),
                         cvar(A).isa(action.type).has(action.idType, action.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
                     ).insert(
-                        rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                        rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
                     )
                 )
             }

@@ -17,7 +17,7 @@
 package com.vaticle.typedb.iam.simulation.common.concept
 
 import com.vaticle.typedb.iam.simulation.common.SeedData
-import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.benchmark.framework.common.seed.RandomSource
 
 data class Person(val name: String, val email: String) {
     constructor(firstName: String, lastName: String, company: Company): this(

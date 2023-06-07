@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2022 Vaticle
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package com.vaticle.typedb.iam.simulation.typedb.agent
 
 import com.vaticle.typedb.client.api.TypeDBOptions
@@ -50,8 +66,8 @@ import com.vaticle.typedb.iam.simulation.typedb.Labels.OBJECT_OWNERSHIP
 import com.vaticle.typedb.iam.simulation.typedb.Labels.OWNED_OBJECT
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PARENT_COMPANY_NAME
 import com.vaticle.typedb.iam.simulation.typedb.Util.cvar
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import com.vaticle.typedb.simulation.typedb.TypeDBClient
+import com.vaticle.typedb.benchmark.framework.common.seed.RandomSource
+import com.vaticle.typedb.benchmark.framework.typedb.TypeDBClient
 import com.vaticle.typeql.lang.TypeQL.*
 import java.lang.IllegalArgumentException
 import kotlin.streams.toList
@@ -78,7 +94,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     cvar(C).isa(COMPANY).has(NAME, company.name),
                 ).insert(
                     cvar(S).isa(PERSON).has(FULL_NAME, user.name).has(EMAIL, user.email),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                 )
             )
 
@@ -121,11 +137,11 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                 match(
                     cvar(C).isa(COMPANY).has(NAME, company.name),
                     cvar(S_OWNER).isa(owner.type).has(owner.idType, owner.idValue),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_OWNER).isa(COMPANY_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S_OWNER)).isa(COMPANY_MEMBERSHIP),
                 ).insert(
                     cvar(S).isa(group.type).has(group.idType, group.idValue),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                    rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
+                    rel(OWNED_GROUP, cvar(S)).rel(GROUP_OWNER, cvar(S_OWNER)).isa(GROUP_OWNERSHIP),
                 )
             )
 
@@ -153,7 +169,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     cvar(S_ID).isaX(cvar(S_ID_TYPE)),
                     cvar(S_TYPE).sub(USER_GROUP),
                     cvar(S_ID_TYPE).sub(ID),
-                    rel(PARENT_GROUP, S).rel(GROUP_MEMBER, S_MEMBER).isa(GROUP_MEMBERSHIP),
+                    rel(PARENT_GROUP, cvar(S)).rel(GROUP_MEMBER, cvar(S_MEMBER)).isa(GROUP_MEMBERSHIP),
                 )
             ).toList().map {
                 TypeDBSubject(it[S_TYPE], it[S_ID_TYPE], it[S_ID])
@@ -174,8 +190,8 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     cvar(O).isaX(cvar(O_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(O_ID)),
                     cvar(O_ID).isaX(cvar(O_ID_TYPE)),
                     cvar(A).isaX(cvar(A_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
-                    cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                    cvar(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
+                    cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
+                    cvar(P).rel(PERMITTED_SUBJECT, cvar(S)).rel(PERMITTED_ACCESS, cvar(AC)).isa(PERMISSION)
                         .has(VALIDITY, cvar(P_VALIDITY))
                         .has(REVIEW_DATE, cvar(P_DATE)),
                     cvar(O_TYPE).sub(OBJECT),
@@ -209,8 +225,8 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     cvar(S).isaX(cvar(S_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(S_ID)),
                     cvar(S_ID).isaX(cvar(S_ID_TYPE)),
                     cvar(A).isaX(cvar(A_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
-                    cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                    cvar(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
+                    cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
+                    cvar(P).rel(PERMITTED_SUBJECT, cvar(S)).rel(PERMITTED_ACCESS, cvar(AC)).isa(PERMISSION)
                         .has(VALIDITY, cvar(P_VALIDITY))
                         .has(REVIEW_DATE, cvar(P_DATE)),
                     cvar(S_TYPE).sub(SUBJECT),
@@ -243,7 +259,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(O).isaX(cvar(O_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(O_ID)),
                         cvar(O_ID).isaX(cvar(O_ID_TYPE)),
                         cvar(A).isa(cvar(A_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(ACTION_NAME, cvar(A_NAME)),
-                        cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                        cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
                         cvar(S_REQUESTING).isaX(cvar(S_REQUESTING_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(S_REQUESTING_ID)),
                         cvar(S_REQUESTING_ID).isaX(cvar(S_REQUESTING_ID_TYPE)),
                         cvar(S_REQUESTED).isaX(cvar(S_REQUESTED_TYPE)).has(PARENT_COMPANY_NAME, company.name).has(cvar(S_REQUESTED_ID)),
@@ -255,7 +271,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(S_REQUESTING_ID_TYPE).sub(ID),
                         cvar(S_REQUESTED_TYPE).sub(SUBJECT),
                         cvar(S_REQUESTED_ID_TYPE).sub(ID),
-                        rel(REQUESTING_SUBJECT, S_REQUESTING).rel(REQUESTED_SUBJECT, S_REQUESTED).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                        rel(REQUESTING_SUBJECT, cvar(S_REQUESTING)).rel(REQUESTED_SUBJECT, cvar(S_REQUESTED)).rel(REQUESTED_CHANGE, cvar(AC)).isa(CHANGE_REQUEST),
                     ).limit(1)
                 ).toList().map {
                     TypeDBChangeRequest(
@@ -281,12 +297,12 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                         cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                         cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
-                        cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                        rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION),
+                        cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
+                        rel(PERMITTED_SUBJECT, cvar(S)).rel(PERMITTED_ACCESS, cvar(AC)).isa(PERMISSION),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
                     )
                 ).toList().isNotEmpty()
             }
@@ -298,12 +314,12 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                             cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                             cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                             cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
-                            cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                            cvar(R).rel(REQUESTED_SUBJECT, S).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                            cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
+                            cvar(R).rel(REQUESTED_SUBJECT, cvar(S)).rel(REQUESTED_CHANGE, cvar(AC)).isa(CHANGE_REQUEST),
                             cvar(C).isa(COMPANY).has(NAME, company.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                         ).delete(
                             cvar(R).isa(CHANGE_REQUEST),
                         )
@@ -316,12 +332,12 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                                     .has(requestedSubject.idType, requestedSubject.idValue),
                                 cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                                 cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
-                                cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                                cvar(P).rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION),
+                                cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
+                                cvar(P).rel(PERMITTED_SUBJECT, cvar(S)).rel(PERMITTED_ACCESS, cvar(AC)).isa(PERMISSION),
                                 cvar(C).isa(COMPANY).has(NAME, company.name),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
                             ).delete(
                                 cvar(P).isa(PERMISSION)
                             )
@@ -337,12 +353,12 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                             cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                             cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                             cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
-                            cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
-                            cvar(R).rel(REQUESTED_SUBJECT, S).rel(REQUESTED_CHANGE, AC).isa(CHANGE_REQUEST),
+                            cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
+                            cvar(R).rel(REQUESTED_SUBJECT, cvar(S)).rel(REQUESTED_CHANGE, cvar(AC)).isa(CHANGE_REQUEST),
                             cvar(C).isa(COMPANY).has(NAME, company.name),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
-                            rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
+                            rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                         ).delete(
                             cvar(R).isa(CHANGE_REQUEST),
                         )
@@ -354,13 +370,13 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                                 cvar(S).isa(requestedSubject.type).has(requestedSubject.idType, requestedSubject.idValue),
                                 cvar(O).isa(accessedObject.type).has(accessedObject.idType, accessedObject.idValue),
                                 cvar(A).isa(validAction.type).has(validAction.idType, validAction.idValue),
-                                cvar(AC).rel(ACCESSED_OBJECT, O).rel(VALID_ACTION, A).isa(ACCESS),
+                                cvar(AC).rel(ACCESSED_OBJECT, cvar(O)).rel(VALID_ACTION, cvar(A)).isa(ACCESS),
                                 cvar(C).isa(COMPANY).has(NAME, company.name),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                                rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, A).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                                rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(A)).isa(COMPANY_MEMBERSHIP),
                             ).insert(
-                                rel(PERMITTED_SUBJECT, S).rel(PERMITTED_ACCESS, AC).isa(PERMISSION)
+                                rel(PERMITTED_SUBJECT, cvar(S)).rel(PERMITTED_ACCESS, cvar(AC)).isa(PERMISSION)
                                     .has(REVIEW_DATE, iterationDate(context.iterationNumber + context.model.permissionReviewAge)),
                             )
                         )
@@ -405,7 +421,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     cvar(S_OWNER).isa(subject.type).has(PARENT_COMPANY_NAME, company.name).has(subject.idType, subject.idValue),
                     cvar(S_TYPE).sub(USER_GROUP),
                     cvar(S_ID_TYPE).sub(ID),
-                    rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP),
+                    rel(OWNED_GROUP, cvar(S)).rel(GROUP_OWNER, cvar(S_OWNER)).isa(GROUP_OWNERSHIP),
                 )
             ).toList().map { TypeDBSubject(it[S_TYPE], it[S_ID_TYPE], it[S_ID]) }
         }
@@ -420,7 +436,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                     cvar(S).isa(subject.type).has(PARENT_COMPANY_NAME, company.name).has(subject.idType, subject.idValue),
                     cvar(O_TYPE).sub(OBJECT),
                     cvar(O_ID_TYPE).sub(ID),
-                    rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
+                    rel(OWNED_OBJECT, cvar(O)).rel(OBJECT_OWNER, cvar(S)).isa(OBJECT_OWNERSHIP),
                 )
             ).toList().map { TypeDBObject(it[O_TYPE], it[O_ID_TYPE], it[O_ID]) }
         }
@@ -432,9 +448,9 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(S).isa(group.type).has(group.idType, group.idValue),
                         cvar(S_OWNER).isa(subject.type).has(subject.idType, subject.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        cvar(OW).rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_OWNER).isa(COMPANY_MEMBERSHIP),
+                        cvar(OW).rel(OWNED_GROUP, cvar(S)).rel(GROUP_OWNER, cvar(S_OWNER)).isa(GROUP_OWNERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S_OWNER)).isa(COMPANY_MEMBERSHIP),
                     ).delete(
                         cvar(OW).isa(GROUP_OWNERSHIP),
                     )
@@ -445,10 +461,10 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(S).isa(group.type).has(group.idType, group.idValue),
                         cvar(S_OWNER).isa(newOwner.type).has(newOwner.idType, newOwner.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S_OWNER).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S_OWNER)).isa(COMPANY_MEMBERSHIP),
                     ).insert(
-                        rel(OWNED_GROUP, S).rel(GROUP_OWNER, S_OWNER).isa(GROUP_OWNERSHIP),
+                        rel(OWNED_GROUP, cvar(S)).rel(GROUP_OWNER, cvar(S_OWNER)).isa(GROUP_OWNERSHIP),
                     )
                 )
             }
@@ -459,9 +475,9 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(S).isa(subject.type).has(subject.idType, subject.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        cvar(OW).rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                        cvar(OW).rel(OWNED_OBJECT, cvar(O)).rel(OBJECT_OWNER, cvar(S)).isa(OBJECT_OWNERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                     ).delete(
                         cvar(OW).isa(OBJECT_OWNERSHIP),
                     )
@@ -472,10 +488,10 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                         cvar(O).isa(obj.type).has(obj.idType, obj.idValue),
                         cvar(S).isa(newOwner.type).has(newOwner.idType, newOwner.idValue),
                         cvar(C).isa(COMPANY).has(NAME, company.name),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, O).isa(COMPANY_MEMBERSHIP),
-                        rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(O)).isa(COMPANY_MEMBERSHIP),
+                        rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                     ).insert(
-                        rel(OWNED_OBJECT, O).rel(OBJECT_OWNER, S).isa(OBJECT_OWNERSHIP),
+                        rel(OWNED_OBJECT, cvar(O)).rel(OBJECT_OWNER, cvar(S)).isa(OBJECT_OWNERSHIP),
                     )
                 )
             }
@@ -484,8 +500,8 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                 match(
                     cvar(S).isa(subject.type).has(subject.idType, subject.idValue),
                     cvar(C).isa(COMPANY).has(NAME, company.name),
-                    cvar(ME).rel(S).isa(GROUP_MEMBERSHIP),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                    cvar(ME).rel(cvar(S)).isa(GROUP_MEMBERSHIP),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                 ).delete(
                     cvar(ME).isa(GROUP_MEMBERSHIP),
                 )
@@ -495,8 +511,8 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                 match(
                     cvar(S).isa(subject.type).has(subject.idType, subject.idValue),
                     cvar(C).isa(COMPANY).has(NAME, company.name),
-                    cvar(P).rel(PERMITTED_SUBJECT, S).isa(PERMISSION),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                    cvar(P).rel(PERMITTED_SUBJECT, cvar(S)).isa(PERMISSION),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                 ).delete(
                     cvar(P).isa(PERMISSION),
                 )
@@ -506,8 +522,8 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                 match(
                     cvar(S).isa(subject.type).has(subject.idType, subject.idValue),
                     cvar(C).isa(COMPANY).has(NAME, company.name),
-                    cvar(R).rel(S).isa(CHANGE_REQUEST),
-                    rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                    cvar(R).rel(cvar(S)).isa(CHANGE_REQUEST),
+                    rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                 ).delete(
                     cvar(R).isa(CHANGE_REQUEST),
                 )
@@ -517,7 +533,7 @@ class TypeDBSysAdminAgent(client: TypeDBClient, context:Context): SysAdminAgent<
                 match(
                     cvar(S).isa(subject.type).has(subject.idType, subject.idValue),
                     cvar(C).isa(COMPANY).has(NAME, company.name),
-                    cvar(ME).rel(PARENT_COMPANY, C).rel(COMPANY_MEMBER, S).isa(COMPANY_MEMBERSHIP),
+                    cvar(ME).rel(PARENT_COMPANY, cvar(C)).rel(COMPANY_MEMBER, cvar(S)).isa(COMPANY_MEMBERSHIP),
                 ).delete(
                     cvar(S).isa(subject.type),
                     cvar(ME).isa(COMPANY_MEMBERSHIP),

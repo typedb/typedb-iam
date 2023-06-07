@@ -17,7 +17,12 @@
 
 load("@vaticle_dependencies//tool/checkstyle:rules.bzl", "checkstyle_test")
 
-package(default_visibility = ["//simulation:__pkg__"])
+package(
+    default_visibility = [
+        "//simulation:__pkg__",
+        "//simulation/test:__pkg__",
+    ]
+)
 
 filegroup(
     name = "simulation_config",
