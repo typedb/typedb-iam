@@ -19,7 +19,7 @@ package com.vaticle.typedb.iam.simulation.typedb.concept
 import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.iam.simulation.typedb.Labels.FILE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.PATH
-import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.benchmark.framework.common.seed.RandomSource
 
 data class TypeDBFile(val path: String): TypeDBObject(FILE, PATH, path) {
     companion object {

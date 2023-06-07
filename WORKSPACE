@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-workspace(name = "vaticle_typedb_benchmark")
+workspace(name = "vaticle_typedb_iam")
 
 ################################
 # Load @vaticle_dependencies #
@@ -89,9 +89,9 @@ rules_pkg_dependencies()
 ################################
 
 # Load repositories
-load("//dependencies/vaticle:repositories.bzl", "vaticle_typedb_simulation")
-vaticle_typedb_simulation()
-load("@vaticle_typedb_simulation//dependencies/vaticle:repositories.bzl", "vaticle_factory_tracing", "vaticle_typedb_client_java")
+load("//dependencies/vaticle:repositories.bzl", "vaticle_typedb_benchmark")
+vaticle_typedb_benchmark()
+load("@vaticle_typedb_benchmark//dependencies/vaticle:repositories.bzl", "vaticle_factory_tracing", "vaticle_typedb_client_java")
 vaticle_factory_tracing()
 vaticle_typedb_client_java()
 load("@vaticle_typedb_client_java//dependencies/vaticle:repositories.bzl", "vaticle_typedb_common", "vaticle_typeql", "vaticle_typedb_protocol")
@@ -105,7 +105,7 @@ vaticle_typedb_artifacts()
 vaticle_typedb_cluster_artifacts()
 
 # Load maven
-load("//dependencies/maven:artifacts.bzl", vaticle_typedb_benchmark_artifacts = "artifacts")
+load("//dependencies/maven:artifacts.bzl", vaticle_typedb_iam_artifacts = "artifacts")
 load("@vaticle_typedb_client_java//dependencies/maven:artifacts.bzl", vaticle_typedb_client_java_artifacts = "artifacts")
 load("@vaticle_factory_tracing//dependencies/maven:artifacts.bzl", vaticle_factory_tracing_artifacts = "artifacts")
 load("@vaticle_typedb_protocol//dependencies/maven:artifacts.bzl", vaticle_typedb_protocol_artifacts = "artifacts")
@@ -129,7 +129,7 @@ maven_install(
 
 load("@vaticle_dependencies//library/maven:rules.bzl", "maven")
 maven(
-    vaticle_typedb_benchmark_artifacts +
+    vaticle_typedb_iam_artifacts +
     vaticle_typeql_artifacts +
     vaticle_typedb_protocol_artifacts +
     vaticle_typedb_client_java_artifacts +

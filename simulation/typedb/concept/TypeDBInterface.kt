@@ -19,7 +19,7 @@ package com.vaticle.typedb.iam.simulation.typedb.concept
 import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.iam.simulation.typedb.Labels.INTERFACE
 import com.vaticle.typedb.iam.simulation.typedb.Labels.NAME
-import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.benchmark.framework.common.seed.RandomSource
 
 data class TypeDBInterface(val name: String): TypeDBObject(INTERFACE, NAME, name) {
     companion object {

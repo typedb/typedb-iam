@@ -19,7 +19,7 @@ package com.vaticle.typedb.iam.simulation.typedb.concept
 import com.vaticle.typedb.iam.simulation.common.SeedData
 import com.vaticle.typedb.iam.simulation.typedb.Labels.EMAIL
 import com.vaticle.typedb.iam.simulation.typedb.Labels.USER_ACCOUNT
-import com.vaticle.typedb.simulation.common.seed.RandomSource
+import com.vaticle.typedb.benchmark.framework.common.seed.RandomSource
 import com.vaticle.typedb.iam.simulation.common.concept.Company
 
 data class TypeDBUserAccount(val email: String): TypeDBSubject(USER_ACCOUNT, EMAIL, email) {

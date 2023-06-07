@@ -24,9 +24,9 @@ def vaticle_dependencies():
         commit = "20566a03cf11b821e9f1b88698f3099b39616ae6",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_dependencies
     )
 
-def vaticle_typedb_simulation():
+def vaticle_typedb_benchmark():
     git_repository(
-        name = "vaticle_typedb_simulation",
-        remote = "https://github.com/vaticle/typedb-simulation",
-        commit = "842114f7b2fa6bbaf318cb13f3361748f89579b3",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_simulation
+        name = "vaticle_typedb_benchmark",
+        remote = "https://github.com/vaticle/typedb-benchmark",
+        commit = "0aa46e8be6024539dfb7d85a21669414598d8885",  # sync-marker: do not remove this comment, this is used for sync-dependencies by @vaticle_typedb_benchmark
     )

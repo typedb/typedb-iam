@@ -157,6 +157,7 @@ run:
   randomSeed: 1
   iterations: 1
   partitions: 1
+  parallelism: 1
   databaseName: "iam-simulation"
   recreateDatabase: true
 

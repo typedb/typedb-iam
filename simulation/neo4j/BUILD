@@ -28,7 +28,7 @@ kt_jvm_library(
 
         # External Vaticle Dependencies
         "@vaticle_typedb_common//:common",
-        "@vaticle_typedb_simulation//neo4j",
+        "@vaticle_typedb_benchmark//framework/neo4j",
 
         # External Maven Dependencies
         "@maven//:io_github_microutils_kotlin_logging_jvm",

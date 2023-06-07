@@ -19,14 +19,14 @@ package com.vaticle.typedb.iam.simulation.neo4j
 import com.vaticle.typedb.iam.simulation.agent.UserAgent
 import com.vaticle.typedb.iam.simulation.common.Context
 import com.vaticle.typedb.iam.simulation.neo4j.agent.Neo4jAgentFactory
-import com.vaticle.typedb.simulation.common.seed.RandomSource
-import com.vaticle.typedb.simulation.neo4j.Neo4jClient
+import com.vaticle.typedb.benchmark.framework.common.seed.RandomSource
+import com.vaticle.typedb.benchmark.framework.neo4j.Neo4jClient
 import mu.KotlinLogging
 import org.neo4j.driver.Driver
 import org.neo4j.driver.Session
 
 class Neo4jSimulation private constructor(client: Neo4jClient, context: Context)
-    : com.vaticle.typedb.simulation.neo4j.Neo4jSimulation<Context>(client, context, Neo4jAgentFactory(client, context)) {
+    : com.vaticle.typedb.benchmark.framework.neo4j.Neo4jSimulation<Context>(client, context, Neo4jAgentFactory(client, context)) {
 
     override val agentPackage: String = UserAgent::class.java.packageName
 
