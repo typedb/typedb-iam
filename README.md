@@ -6,6 +6,6 @@
 
 ## TypeDB IAM: Open Source IAM Schema and Simulation
 
-**Note: this code been copied into the typedb-benchmark repository, please refer to it there.**
+**Note: this code been copied into the [typedb-benchmark](https://github.com/typedb/typedb-benchmark/tree/development/iam) repository, please refer to it there.**
 
 TypeDB IAM schema, data generator, simulation and benchmark.
